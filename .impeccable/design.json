@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T23:35:00-05:00",
+  "title": "Design System: FastWS",
+  "extensions": {
+    "colorMeta": {
+      "coal":        { "role": "neutral", "displayName": "Carbón Fondo",     "canonical": "oklch(14% 0.012 250)", "tonalRamp": ["#06080b", "#0a0d11", "#10151c", "#181f28", "#222b36", "#313d4b", "#4a5867", "#677788"] },
+      "coal-panel":  { "role": "neutral", "displayName": "Carbón Panel",     "canonical": "oklch(19% 0.014 250)", "tonalRamp": ["#090c11", "#0e1219", "#141a22", "#1b222c", "#242e3a", "#33404f", "#4a5969", "#697887"] },
+      "coal-raised": { "role": "neutral", "displayName": "Carbón Alzado",    "canonical": "oklch(23% 0.016 250)", "tonalRamp": ["#0b0f14", "#111720", "#1a222c", "#222c38", "#2d3948", "#3f4d5e", "#57677a", "#748396"] },
+      "paper":       { "role": "neutral", "displayName": "Papel",            "canonical": "oklch(96% 0.006 250)", "tonalRamp": ["#12161b", "#252b33", "#3c444f", "#565f6c", "#737d8c", "#98a3b2", "#c6cfda", "#eef2f6"] },
+      "paper-muted": { "role": "neutral", "displayName": "Papel Tenue",      "canonical": "oklch(79% 0.015 250)", "tonalRamp": ["#141820", "#282e38", "#414956", "#5c6573", "#798393", "#9aa5b5", "#c2ccd8", "#aebbc9"] },
+      "paper-dim":   { "role": "neutral", "displayName": "Papel Apagado",    "canonical": "oklch(66% 0.012 250)", "tonalRamp": ["#13171d", "#262b33", "#3e454f", "#585f6b", "#747c8a", "#95a0af", "#bcc6d2", "#8a98a8"] },
+      "paper-faint": { "role": "neutral", "displayName": "Papel Pálido",     "canonical": "oklch(62% 0.014 250)", "tonalRamp": ["#12161b", "#242a32", "#3b434d", "#555d69", "#717a88", "#929dac", "#b9c3cf", "#7d8a9a"] },
+      "rule":        { "role": "neutral", "displayName": "Regla",            "canonical": "oklch(31% 0.018 250)", "tonalRamp": ["#0d1116", "#171d26", "#232c37", "#2a3542", "#3a4756", "#515f70", "#6f7d8f", "#8f9dae"] },
+      "verde":         { "role": "primary", "displayName": "Verde FastWS",  "canonical": "oklch(77% 0.218 148)", "tonalRamp": ["#042a11", "#095d27", "#0e913c", "#12c451", "#24eb6a", "#57ef8d", "#8ff5b3", "#c7fad9"] },
+      "verde-bright":  { "role": "primary", "displayName": "Verde Brillo",  "canonical": "oklch(81% 0.224 147)", "tonalRamp": ["#05290e", "#0b5b1f", "#118d31", "#18bf42", "#2ae559", "#5ceb80", "#92f2aa", "#c9f8d5"] },
+      "verde-light":   { "role": "primary", "displayName": "Verde Claro",   "canonical": "oklch(86% 0.226 145)", "tonalRamp": ["#022c08", "#056111", "#08961b", "#0bcb24", "#1bf338", "#51f666", "#8bf999", "#c5fccc"] },
+      "proceso":     { "role": "secondary", "displayName": "Azul Proceso",   "canonical": "oklch(70% 0.14 250)", "tonalRamp": ["#0b1d33", "#12305a", "#1a4485", "#2559ab", "#3a7ad4", "#5aa2ff", "#93c2ff", "#c6ddff"] },
+      "pendiente":   { "role": "secondary", "displayName": "Ámbar Pendiente","canonical": "oklch(79% 0.12 78)",  "tonalRamp": ["#2c1e04", "#4d3406", "#7a530c", "#a87012", "#d0931d", "#f0b13c", "#f8cf7d", "#fbe6b8"] },
+      "entregado":   { "role": "secondary", "displayName": "Verde Entregado","canonical": "oklch(77% 0.218 148)", "tonalRamp": ["#042a11", "#095d27", "#0e913c", "#12c451", "#24eb6a", "#57ef8d", "#8ff5b3", "#c7fad9"] },
+      "leido":       { "role": "secondary", "displayName": "Violeta Leído",  "canonical": "oklch(72% 0.13 295)", "tonalRamp": ["#1a1430", "#2a2050", "#413178", "#573fa0", "#785bc4", "#a78bfa", "#c9b8fd", "#e5dcff"] },
+      "fallido":     { "role": "secondary", "displayName": "Rojo Fallido",   "canonical": "oklch(64% 0.17 20)",  "tonalRamp": ["#2c0d10", "#4b1519", "#782128", "#a02c36", "#cb4049", "#f0646f", "#f79aa1", "#fbc7cb"] },
+      "cancelado":   { "role": "secondary", "displayName": "Gris Cancelado", "canonical": "oklch(66% 0.012 250)", "tonalRamp": ["#14181e", "#252b33", "#3d444e", "#565d69", "#727a88", "#8a97a7", "#b3bdc9", "#d6dde5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Sello de módulo", "purpose": "Títulos de módulo, cabeceras de pantalla." },
+      "body":    { "displayName": "Body / Registro",           "purpose": "Texto corriente y descripciones." },
+      "label":   { "displayName": "Label / Anotación",         "purpose": "KPI, cabeceras de tabla y títulos de panel en MAYÚSCULA." },
+      "mono":    { "displayName": "Mono / Datos técnicos",     "purpose": "IDs Meta, teléfonos, códigos de error, fechas estampadas y teclas." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-expo-seal", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Microinteracción de sellado de estado (~180 ms). Única animación del mundo." },
+      { "name": "ease-state",     "value": "ease",                          "purpose": "Transiciones de color de estado en botones y filas (~150 ms)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Wordmark",
+      "kind": "custom",
+      "description": "Logotipo FastWS: marca raster verde + nombre en dos tonos ('Fast' en papel, 'WS' en verde #35e662). El nombre completo viaja como texto para lectores de pantalla; la marca es decorativa.",
+      "html": "<a class=\"ds-wordmark\" href=\"/\"><img class=\"ds-wordmark-mark\" src=\"/assets/logo.png\" alt=\"\" aria-hidden=\"true\"><span class=\"ds-wordmark-name\" aria-hidden=\"true\"><span class=\"ds-wordmark-fast\">Fast</span><span class=\"ds-wordmark-ws\">WS</span></span><span class=\"sr-only\">FastWS</span></a>",
+      "css": ".ds-wordmark { display:inline-flex; align-items:center; gap:10px; text-decoration:none; } .ds-wordmark-mark { height:24px; width:auto; flex:none; } .ds-wordmark-name { font-family:inherit; font-size:14px; font-weight:700; letter-spacing:-.02em; line-height:1.1; } .ds-wordmark-fast { color:var(--color-ink-100); } .ds-wordmark-ws { color:var(--color-brand-400); } .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción primaria del despacho (Nueva campaña, Pausar). Verde FastWS, texto carbón.",
+      "html": "<button class=\"ds-btn-primary\">Nueva campaña</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-family:inherit; font-size:13px; font-weight:600; line-height:1; border-radius:6px; border:1px solid transparent; background:var(--color-brand-500); color:var(--color-base-950); cursor:pointer; transition:background .15s ease; } .ds-btn-primary:hover { background:var(--color-brand-400); } .ds-btn-primary:active { background:var(--color-brand-600); } .ds-btn-primary:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción de apoyo sobre carbón alzado con borde de regla.",
+      "html": "<button class=\"ds-btn-secondary\">Importar clientes</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-family:inherit; font-size:13px; font-weight:600; line-height:1; border-radius:6px; border:1px solid var(--color-rule); background:var(--color-base-800); color:var(--color-ink-100); cursor:pointer; transition:background .15s ease; } .ds-btn-secondary:hover { background:var(--color-base-750); } .ds-btn-secondary:active { background:var(--color-base-700); } .ds-btn-secondary:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Acción terciaria (Cancelar) que solo revela superficie al pasar el cursor.",
+      "html": "<button class=\"ds-btn-ghost\">Cancelar</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-family:inherit; font-size:13px; font-weight:600; line-height:1; border-radius:6px; border:1px solid transparent; background:transparent; color:var(--color-ink-300); cursor:pointer; transition:background .15s ease, color .15s ease; } .ds-btn-ghost:hover { background:var(--color-base-800); color:var(--color-ink-100); } .ds-btn-ghost:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+    },
+    {
+      "name": "Status Stamp",
+      "kind": "chip",
+      "refersTo": "stamp",
+      "description": "Sello de estado de mensaje: icono + etiqueta + argolla interna. El color nunca es la única señal.",
+      "html": "<span class=\"ds-stamp\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Entregado</span>",
+      "css": ".ds-stamp { display:inline-flex; align-items:center; gap:.32rem; font-family:inherit; font-size:.6875rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; line-height:1; white-space:nowrap; padding:.3rem .5rem; border-radius:4px; color:var(--color-entregado); background:color-mix(in oklab, var(--color-entregado) 11%, transparent); border:1px solid color-mix(in oklab, var(--color-entregado) 30%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, currentColor 14%, transparent); } .ds-stamp svg { width:.7rem; height:.7rem; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Superficie de registro canónica (planilla) con borde de regla y esquinas de 10px.",
+      "html": "<section class=\"ds-panel\"><header class=\"ds-panel-head\"><h2 class=\"ds-panel-title\">Últimos mensajes</h2></header><div class=\"ds-panel-body\">Contenido del registro</div></section>",
+      "css": ".ds-panel { background:var(--color-base-850); border:1px solid var(--color-rule); border-radius:10px; color:var(--color-ink-100); overflow:hidden; } .ds-panel-head { padding:14px 20px; border-bottom:1px solid var(--color-rule-soft); } .ds-panel-title { margin:0; font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--color-ink-500); } .ds-panel-body { padding:20px; font-size:.8125rem; }"
+    },
+    {
+      "name": "Key Hint",
+      "kind": "custom",
+      "refersTo": "kbd",
+      "description": "Tecla de acceso directo (Alt + número) con relieve mecánico; monoespaciada.",
+      "html": "<kbd class=\"ds-kbd\">Alt</kbd>",
+      "css": ".ds-kbd { font-family:var(--font-mono); font-size:.6875rem; line-height:1; color:var(--color-ink-500); border:1px solid var(--color-rule); border-bottom-width:2px; border-radius:4px; padding:.18rem .3rem; background:var(--color-base-850); }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "description": "Campo de planilla: carbón alzado, borde de regla, foco con borde brand y anillo de color-mix. Variante mono para datos técnicos.",
+      "html": "<input class=\"ds-input\" type=\"email\" placeholder=\"operador@empresa.co\">",
+      "css": ".ds-input { height:40px; width:100%; font-family:inherit; font-size:.8125rem; color:var(--color-ink-100); background:var(--color-base-800); border:1px solid var(--color-rule); border-radius:6px; padding:0 12px; outline:none; transition:border-color .15s ease; } .ds-input::placeholder { color:var(--color-ink-600); } .ds-input:focus { border-color:color-mix(in oklab, var(--color-brand-500) 60%, transparent); } .ds-input:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; } .ds-input[aria-invalid='true'] { border-color:color-mix(in oklab, var(--color-fallido) 50%, transparent); } .ds-input.ds-input-mono { font-family:var(--font-mono); }"
+    },
+    {
+      "name": "Form Field",
+      "kind": "form",
+      "description": "Etiqueta MAYÚSCULA + campo + nota de ayuda; el error se anuncia en texto legible bajo el campo.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"correo\">Correo del operador</label><input id=\"correo\" class=\"ds-input\" type=\"email\"><p class=\"ds-field-hint\">El correo con el que fue dado de alta.</p></div>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; } .ds-field-label { font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--color-ink-500); } .ds-field-hint { margin:0; font-size:.75rem; color:var(--color-ink-600); } .ds-field[data-invalid='true'] .ds-field-hint { color:var(--color-fallido); }"
+    },
+    {
+      "name": "Nav Item (active)",
+      "kind": "nav",
+      "refersTo": "panel",
+      "description": "Ítem del rail lateral; el activo se marca con doble-ring brand sobre verde al 10 %.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\"><span>Planilla general</span><kbd class=\"ds-kbd\">1</kbd></a>",
+      "css": ".ds-nav-item { display:flex; align-items:center; justify-content:space-between; gap:8px; height:36px; padding:0 12px; border-radius:6px; font-family:inherit; font-size:13px; font-weight:600; text-decoration:none; color:var(--color-ink-100); background:color-mix(in oklab, var(--color-brand-500) 10%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--color-brand-500) 28%, transparent), 0 0 0 1px color-mix(in oklab, var(--color-brand-500) 12%, transparent); transition:background .15s ease; } .ds-nav-item:hover { background:color-mix(in oklab, var(--color-brand-500) 16%, transparent); } .ds-nav-item:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+    },
+    {
+      "name": "Dispatch Bar",
+      "kind": "custom",
+      "description": "Componente firma: barra segmentada por estado de envío que descompone la planilla de una campaña.",
+      "html": "<div class=\"ds-dispatch\" role=\"img\" aria-label=\"Progreso por estado\"><span class=\"ds-seg\" style=\"width:18%;background:var(--color-proceso)\"></span><span class=\"ds-seg\" style=\"width:41%;background:var(--color-entregado)\"></span><span class=\"ds-seg\" style=\"width:23%;background:var(--color-leido)\"></span><span class=\"ds-seg\" style=\"width:6%;background:var(--color-fallido)\"></span><span class=\"ds-seg\" style=\"width:12%;background:var(--color-base-600)\"></span></div>",
+      "css": ".ds-dispatch { display:flex; height:12px; width:100%; overflow:hidden; border-radius:2px; background:var(--color-base-700); } .ds-dispatch .ds-seg { height:100%; display:block; }"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Tarjeta condensada de indicador: label MAYÚSCULA + cifra display tabular + nota de detalle.",
+      "html": "<div class=\"ds-kpi\"><p class=\"ds-kpi-label\">Entregados</p><p class=\"ds-kpi-value\">1.248</p><p class=\"ds-kpi-detail\">94,2 % de entrega</p></div>",
+      "css": ".ds-kpi { display:flex; flex-direction:column; gap:8px; background:var(--color-base-850); border:1px solid var(--color-rule); border-radius:10px; padding:12px 16px; transition:border-color .15s ease; } .ds-kpi:hover { border-color:var(--color-rule); } .ds-kpi-label { margin:0; font-size:.6875rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--color-ink-500); } .ds-kpi-value { margin:0; font-size:1.375rem; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:var(--color-ink-100); } .ds-kpi-detail { margin:0; font-size:.75rem; font-variant-numeric:tabular-nums; color:var(--color-brand-400); }"
+    },
+    {
+      "name": "Account Menu",
+      "kind": "custom",
+      "description": "Identidad del turno en el topbar y su menú: cabecera TURNO ACTIVO (nombre, rol, correo en mono), dispositivo en mono y una sola acción, Cerrar sesión. Superficie flotante un tono por encima del panel, sin sombra (Flat-By-Tone). El cierre va en tratamiento neutro: no es la acción primaria, así que no se viste de verde (One Verb Rule).",
+      "html": "<div class=\"ds-account\"><button class=\"ds-account-trigger\" aria-haspopup=\"menu\" aria-expanded=\"true\"><span class=\"ds-account-avatar\" aria-hidden=\"true\">A</span><span class=\"ds-account-id\"><span class=\"ds-account-name\">Administrador</span><span class=\"ds-account-role\">Operativo</span></span></button><div class=\"ds-menu\" role=\"menu\" aria-label=\"Cuenta del usuario\"><div class=\"ds-menu-head\"><p class=\"ds-menu-label\">Turno activo</p><p class=\"ds-menu-name\">Administrador</p><p class=\"ds-menu-role\">Operativo</p><p class=\"ds-menu-mail\">admin@fastws.local</p></div><p class=\"ds-menu-device\">PC-01 · FW-ONYP · Windows</p><div class=\"ds-menu-actions\"><button class=\"ds-menu-item\" role=\"menuitem\" tabindex=\"-1\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9\"/></svg>Cerrar sesión</button></div></div></div>",
+      "css": ".ds-account { position:relative; } .ds-account-trigger { display:inline-flex; align-items:center; gap:10px; padding:4px 6px; border:0; border-radius:6px; background:transparent; font-family:inherit; cursor:pointer; } .ds-account-trigger:hover { background:var(--color-base-800); } .ds-account-trigger:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; } .ds-account-avatar { display:grid; place-items:center; width:28px; height:28px; border-radius:999px; background:var(--color-brand-500); color:var(--color-base-950); font-size:.75rem; font-weight:700; } .ds-account-id { display:flex; flex-direction:column; text-align:left; line-height:1.2; } .ds-account-name { font-size:.8125rem; font-weight:600; color:var(--color-ink-100); } .ds-account-role { font-size:.75rem; color:var(--color-ink-500); } .ds-menu { position:absolute; right:0; top:calc(100% + 8px); z-index:50; width:288px; background:var(--color-base-800); border:1px solid var(--color-rule); border-radius:10px; } .ds-menu-head { padding:12px 16px; border-bottom:1px solid var(--color-rule-soft); } .ds-menu-label { margin:0; font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--color-ink-600); } .ds-menu-name { margin:6px 0 0; font-size:.8125rem; font-weight:600; color:var(--color-ink-100); } .ds-menu-role { margin:0; font-size:.75rem; color:var(--color-ink-500); } .ds-menu-mail { margin:8px 0 0; font-family:var(--font-mono); font-size:.75rem; word-break:break-all; color:var(--color-ink-300); } .ds-menu-device { margin:0; padding:10px 16px; border-bottom:1px solid var(--color-rule-soft); font-family:var(--font-mono); font-size:.75rem; color:var(--color-ink-400); } .ds-menu-actions { padding:6px; } .ds-menu-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border:0; border-radius:6px; background:transparent; font-family:inherit; font-size:.8125rem; font-weight:600; text-align:left; color:var(--color-ink-200); cursor:pointer; } .ds-menu-item:hover { background:var(--color-base-750); color:var(--color-ink-100); } .ds-menu-item svg { width:16px; height:16px; flex:none; color:var(--color-ink-500); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La planilla de despacho",
+    "overview": "La interfaz trata el WhatsApp comercial como una oficina de despacho nocturna. Rechaza el dark-SaaS neutro y genérico: cada mensaje es una línea de planilla, cada estado es un sello oficial fechado, y el monitor es la mesa del despachador encendida en la madrugada. La cercanía la pone un solo acento verde — el del logotipo, #14d659 — reservado exclusivamente para la acción primaria. Todo lo demás es registro, anotación y comprobante.\n\nLa información vive sobre superficies de carbón profundo que se apilan por tono, no por sombra: el plano es más oscuro, el panel sobre el plano un escalón más claro, la elevación llega por la rejilla de líneas, los bordes y las reglas divisorias. Ni un solo desplazamiento de profundidad por blur o sombra ambiental: la honestidad de la planilla es plana. Los dígitos importantes usan cifras tabulares y las identidades técnicas (IDs de Meta, teléfonos, fechas estampadas) usan monoespaciada, como los anotadores marcados a mano en un manifiesto.",
+    "keyCharacteristics": [
+      "Carbón profundo de fondo, planos apilados por tono (sin sombras ni blur).",
+      "Un solo acento: verde FastWS en ≤10 % de la pantalla, solo acción primaria (todo verde del sistema sale del logotipo).",
+      "Sellos de estado — icono + etiqueta + argolla interna — donde el color nunca es la única señal.",
+      "Letras de formulario en Inter Tight (headers tensos, tracking alto), monoespaciada para IDs y cifras.",
+      "Reglas divisorias y bordes de 1px como única textura de datos; microinteracción de \"sellado\" a ~180 ms con easing expo, nunca decorativa."
+    ],
+    "rules": [
+      { "name": "The One Verb Rule", "body": "El verde FastWS es un verbo: actúa (crear, enviar, ir a). Si una superficie no dispara la acción primaria del despacho, no se viste de verde. Única excepción: la \"WS\" del logotipo (verde #35e662), que es marca, no interfaz.", "section": "colors" },
+      { "name": "The Color-Is-Never-Alone Rule", "body": "Ningún estado se transmite solo por color: cada sello lleva icono + etiqueta + argolla interna, y los errores siempre traen su mensaje legible.", "section": "colors" },
+      { "name": "The Tabular Ledger Rule", "body": "Cualquier columna de cifras usa font-variant-numeric: tabular-nums; las cifras deben alinearse como columnas de un libro contable, no danzar al cambiar.", "section": "typography" },
+      { "name": "The 12px Floor Rule", "body": "El texto funcional no baja de 12px (0.75rem); solo los sellos estampados y las teclas de atajo pueden compactarse a 11px. Texto funcional por debajo de 11px es fallo de legibilidad, no estilo.", "section": "typography" },
+      { "name": "The Flat-By-Tone Rule", "body": "Elevación = tono más claro, nunca sombra. Un elemento sobre otro se marca con carbón alzado y una regla divisoria, no con un drop shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do pintar con verde FastWS únicamente la acción primaria; sobre fondos carbón, el verde es un verbo.",
+      "Do estampar estado con icono + etiqueta + argolla: si el detector de color falla, la etiqueta sigue contando la historia.",
+      "Do usar tabular-nums en toda cifra columna y 0.75rem como mínimo funcional (sellos/teclas 11px como excepción).",
+      "Do indicar la fila activa con el doble-ring brand sobre el verde al 10 %.",
+      "Do acompañar cada fallo con su mensaje legible (código Meta en mono + explicación en texto).",
+      "Do contraste AA (≥4.5:1) para todo texto funcional sobre carbón; verificar con el detector en cada lote."
+    ],
+    "donts": [
+      "Don't usar sombras ni blur para elevar superficies: elevar es subir un tono de carbón y marcar una regla.",
+      "Don't usar el verde FastWS en marcas pasivas, iconos decorativos o textos de estado: solo acción primaria.",
+      "Don't transmitir estado solo por color; el color del sello nunca viaja sin icono y etiqueta.",
+      "Don't animar ancho/alto/padding/margen para transiciones de estado; usar transform y opacity, o el sellado expo de ~180 ms.",
+      "Don't bajar texto funcional de 12px ni inventar claims comerciales con los datos simulados.",
+      "Don't vestir de verde el cierre de sesión ni ninguna acción secundaria del menú de cuenta: el verde sigue siendo un verbo."
+    ]
+  }
+}

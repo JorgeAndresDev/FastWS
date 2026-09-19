@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
+    SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Superficies — planos de la oficina de despacho */
+  --color-base-950: #0a0d11;
+  --color-base-900: #0f131a;
+  --color-base-850: #141a22;
+  --color-base-800: #1a222c;
+  --color-base-750: #202a36;
+  --color-base-700: #273342;
+  --color-base-600: #334054;
+
+  /* Tinta de los registros */
+  --color-ink-100: #eef2f6;
+  --color-ink-200: #d7dfe8;
+  --color-ink-300: #aebbc9;
+  --color-ink-400: #8a98a8;
+  --color-ink-500: #7d8a9a;
+  --color-ink-600: #778594;
+
+  /* Reglas de planilla */
+  --color-rule: #2a3542;
+  --color-rule-soft: #232c37;
+
+  /* Acento verde — derivado del degradado del logo (#14d659 → #56f66b) */
+  --color-brand-300: #56f66b;
+  --color-brand-400: #35e662;
+  --color-brand-500: #14d659;
+  --color-brand-600: #10a845;
+  --color-brand-700: #0d8738;
+
+  /* Vocabulario de sellos */
+  --color-proceso: #5aa2ff;
+  --color-pendiente: #f0b13c;
+  --color-entregado: #14d659;
+  --color-leido: #a78bfa;
+  --color-fallido: #f0646f;
+  --color-cancelado: #8a97a7;
+
+  --radius-panel: 0.625rem;
+  --radius-stamp: 0.25rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-base-950);
+    background-image: radial-gradient(
+        120% 60% at 50% -10%,
+        color-mix(in oklab, var(--color-base-800) 55%, transparent),
+        transparent 65%
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--color-base-900) 40%, transparent),
+        transparent 220px
+      );
+    background-attachment: fixed;
+    color: var(--color-ink-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-brand-500) 35%, transparent);
+    color: #ffffff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-base-700);
+    border-radius: 8px;
+    border: 2px solid var(--color-base-950);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-base-600) transparent;
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    caret-color: var(--color-brand-500);
+  }
+
+  :focus-visible {
+    outline: 2px solid
+      color-mix(in oklab, var(--color-brand-500) 72%, transparent);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Planilla — superficie de registro del despacho */
+  .panel {
+    background-color: var(--color-base-850);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-panel);
+  }
+
+  /* Sello de estado — icono + etiqueta + argolla interna; el color no es la única señal */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-stamp);
+    border: 1px solid transparent;
+  }
+  .stamp svg {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+  .stamp--proceso,
+  .stamp--pendiente,
+  .stamp--entregado,
+  .stamp--leido,
+  .stamp--fallido,
+  .stamp--cancelado {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 14%, transparent);
+  }
+  .stamp--proceso {
+    color: var(--color-proceso);
+    background: color-mix(in oklab, var(--color-proceso) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-proceso) 30%, transparent);
+  }
+  .stamp--pendiente {
+    color: var(--color-pendiente);
+    background: color-mix(in oklab, var(--color-pendiente) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-pendiente) 30%, transparent);
+  }
+  .stamp--entregado {
+    color: var(--color-entregado);
+    background: color-mix(in oklab, var(--color-entregado) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-entregado) 30%, transparent);
+  }
+  .stamp--leido {
+    color: var(--color-leido);
+    background: color-mix(in oklab, var(--color-leido) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-leido) 30%, transparent);
+  }
+  .stamp--fallido {
+    color: var(--color-fallido);
+    background: color-mix(in oklab, var(--color-fallido) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-fallido) 30%, transparent);
+  }
+  .stamp--cancelado {
+    color: var(--color-cancelado);
+    background: color-mix(in oklab, var(--color-cancelado) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-cancelado) 30%, transparent);
+  }
+  .stamp--fecha {
+    color: var(--color-ink-300);
+    background: var(--color-base-800);
+    border-color: var(--color-rule);
+  }
+
+  /* Tecla (acceso directo por teclado) */
+  .kbd {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1;
+    color: var(--color-ink-500);
+    border: 1px solid var(--color-rule);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.18rem 0.3rem;
+  }
+}

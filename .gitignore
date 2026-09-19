@@ -1,0 +1,24 @@
+# Node
+node_modules
+dist
+
+# Env y secretos
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+
+# Editor / SO
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Tauri (se habilitará en la integración backend)
+src-tauri/target
+
+# Build artifacts de TypeScript
+*.tsbuildinfo
