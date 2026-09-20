@@ -16,9 +16,16 @@ export function ModulePage({ icon: Icon, title, description, segment }: ModulePa
       <header className="mb-6">
         <div className="flex items-center gap-3 text-ink-400">
           <Icon className="size-4" aria-hidden />
-          <time className="text-xs font-semibold uppercase tracking-[0.14em]">
-            Registro · {formatDateStamp()}
-          </time>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em]">
+            Registro ·{" "}
+            <time
+              dateTime={new Date().toISOString()}
+              suppressHydrationWarning
+              className="text-ink-400"
+            >
+              {formatDateStamp()}
+            </time>
+          </p>
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink-100">{title}</h1>
         <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink-400">{description}</p>

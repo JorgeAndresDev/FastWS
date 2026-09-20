@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 const inputBase =
-  "h-10 w-full rounded-md border bg-base-800 px-3 text-[0.8125rem] text-ink-100 outline-none transition-colors placeholder:text-ink-600 focus:border-brand-500/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color-mix(in_oklab,var(--color-brand-500)_72%,transparent)] disabled:cursor-not-allowed disabled:opacity-45"
+  "h-10 w-full rounded-md border bg-base-800 px-3 text-[0.8125rem] text-ink-100 outline-none transition-colors placeholder:text-ink-500 focus:border-brand-500/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color-mix(in_oklab,var(--color-brand-500)_72%,transparent)] disabled:cursor-not-allowed disabled:opacity-45"
 
 export interface InputProps extends ComponentPropsWithoutRef<"input"> {
   mono?: boolean

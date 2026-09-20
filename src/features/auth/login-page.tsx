@@ -97,8 +97,10 @@ export function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="operador@empresa.co"
-            invalid={Boolean(fieldErrors.email)}
-            aria-describedby={fieldErrors.email ? "usuario-error" : "usuario-hint"}
+            invalid={Boolean(fieldErrors.email || error)}
+            aria-describedby={
+              fieldErrors.email ? "usuario-error" : error ? "login-error" : "usuario-hint"
+            }
             disabled={pending}
             required
           />
@@ -139,7 +141,7 @@ export function LoginPage() {
               type="checkbox"
               checked={remember}
               onChange={(event) => setRemember(event.target.checked)}
-              className="size-4 accent-brand-500"
+              className="size-4 accent-ink-100"
             />
             Recordar sesión en este equipo
           </label>
@@ -151,12 +153,12 @@ export function LoginPage() {
           </Link>
         </div>
 
-          {error && (
-            <p
-              id="login-error"
-              role="alert"
-              className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
-            >
+        {error && (
+          <p
+            id="login-error"
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
+          >
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {error}
           </p>

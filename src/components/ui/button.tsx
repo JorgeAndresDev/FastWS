@@ -34,13 +34,14 @@ const sizes: Record<Size, string> = {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
-    { className, variant = "secondary", size = "md", loading, icon, children, ...props },
+    { className, variant = "secondary", size = "md", loading, disabled, icon, children, ...props },
     ref
   ) {
     return (
       <button
         ref={ref}
         className={cn(base, variants[variant], sizes[size], className)}
+        disabled={disabled || loading}
         aria-busy={loading || undefined}
         {...props}
       >

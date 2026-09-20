@@ -141,6 +141,7 @@ export function RecoverPage() {
               aria-describedby={fieldErrors.correo ? "correo-error" : undefined}
               disabled={pending}
               required
+              autoFocus
             />
           </FormField>
 
@@ -168,7 +169,7 @@ export function RecoverPage() {
         footer={back}
       >
         <form onSubmit={handleReset} className="flex flex-col gap-5" noValidate>
-          <p className="stamp stamp--entregado">
+          <p role="status" className="stamp stamp--entregado">
             <MailCheck aria-hidden />
             Instrucciones enviadas a {email}
           </p>
@@ -192,6 +193,7 @@ export function RecoverPage() {
               aria-describedby={fieldErrors.codigo ? "codigo-error" : "codigo-hint"}
               disabled={pending}
               required
+              autoFocus
             />
           </FormField>
 
@@ -257,11 +259,16 @@ export function RecoverPage() {
       footer={back}
     >
       <div className="flex flex-col gap-5">
-        <p className="stamp stamp--entregado">
+        <p role="status" className="stamp stamp--entregado">
           <Check aria-hidden />
           Contraseña actualizada
         </p>
-        <Button variant="primary" className="w-full" onClick={() => navigate("/login")}>
+        <Button
+          variant="primary"
+          className="w-full"
+          onClick={() => navigate("/login")}
+          autoFocus
+        >
           Volver a iniciar sesión
         </Button>
       </div>

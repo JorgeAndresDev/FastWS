@@ -45,8 +45,7 @@ export function AccountMenu() {
       return
     }
     if (event.key === "Tab" && open) {
-      setOpen(false)
-      setConfirming(false)
+      close()
       return
     }
     if (!open || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return
@@ -58,7 +57,12 @@ export function AccountMenu() {
     if (items.length === 0) return
     const current = items.indexOf(document.activeElement as HTMLElement)
     const step = event.key === "ArrowDown" ? 1 : -1
-    const next = (current + step + items.length) % items.length
+    const next =
+      current === -1
+        ? event.key === "ArrowDown"
+          ? 0
+          : items.length - 1
+        : (current + step + items.length) % items.length
     items[next]?.focus()
   }
 
@@ -119,10 +123,7 @@ export function AccountMenu() {
 
       {open && (
         <div
-          id={menuId}
           ref={menuRef}
-          role="menu"
-          aria-label="Cuenta del usuario"
           className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-72 rounded-panel border border-rule bg-base-800"
         >
           {confirming ? (
@@ -134,7 +135,7 @@ export function AccountMenu() {
                 La planilla quedará sellada a su nombre. Podrá abrirla de nuevo con sus
                 credenciales.
               </p>
-              <div className="space-y-1">
+              <div id={menuId} role="menu" aria-label="Cerrar turno" className="space-y-1">
                 <button
                   type="button"
                   role="menuitem"
@@ -172,7 +173,7 @@ export function AccountMenu() {
                 {device.id} · {device.code} · {device.platform}
               </p>
 
-              <div className="p-1.5">
+              <div id={menuId} role="menu" aria-label="Cuenta del usuario" className="p-1.5">
                 <button
                   type="button"
                   role="menuitem"

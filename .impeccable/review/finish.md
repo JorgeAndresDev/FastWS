@@ -251,3 +251,59 @@ Verificación CDP: **17/17 PASS** — error de usuario con `role="alert"` visibl
 - El puntaje no se re-calculó; la subida se medirá al re-correr `/impeccable critique` (29 → 32 la última vez).
 
 ## disposition: ship
+
+---
+
+# Ronda de crítica #3 — backlog cerrado (1 P1 + 7 P2) y verificación por CDP + 6 rasters
+
+Harness note: mismo revisor degradado inline (sin subagentes). El backlog sale del critique dual-agent re-corrido (A 32/40 · B 30/40, 0 P0 + 1 P1 + 7 P2; trend 29 → 32 → A32/B30). Verificación por interacción CDP (58 comprobaciones en r3 + r3b) + detector + muestreo de píxeles de verde/ámbar. Sin entrada de imagen: rasters validados programáticamente. El puntaje no se re-calculó por el agente; la subida se mide contra el 32/40 anterior.
+
+Inputs faltantes: no hay comp aprobado nuevo; la ronda ataca los hallazgos del critique #3 contra el OWN-WORLD.
+
+## disposition: fix
+
+### persistence
+Pasa. `PRODUCT.md` intacto. `DESIGN.md` actualizado en la misma pasada: DispatchBar con `size` (12px md / 6px sm) y placeholder normalizado a `ink-500` (#7d8a9a). Sidecar en espejo (`generatedAt`, avatar del menú neutro a `base-700`, placeholder `ink-500`, DispatchBar con alturas por `size`), JSON validado. Crítica #3 persistida en `.impeccable/critique/2026-09-20T21-31-27Z__src.md` y trend actualizado (29 → 32 → A32/B30).
+
+### fidelity
+Matriz (contra OWN-WORLD y los hallazgos del critique #3):
+- Error global de login liga los campos: **match** — email y contraseña se marcan `aria-invalid` + `aria-describedby` a `login-error` cuando existe error de credenciales (antes solo la contraseña).
+- Verde fuera de los pasivos de edición: **match** — caret `ink-100`, `::selection` 18% de ink-100, checkbox "Recordar sesión" `accent-ink-100`; el muestreo cae 1366 → 377 px exactos de verde en el shell (wordmark, nav activa, pill y estado quedan).
+- Placeholder sobre el piso: **match** — `ink-500` (#7d8a9a) 5.29:1 sobre `base-800` (antes `ink-600` 3.97:1).
+- Foco por fase en recuperación: **match** — `autoFocus` en `correo`/`codigo` según fase y en "Volver a iniciar sesión"; sellos de éxito con `role="status"`.
+- Menú ARIA: **match** — `role="menu"` solo sobre los items (header/dispositivo fuera), `aria-controls` al `id` del menú, Tab clausura y restaura el foco al trigger.
+- `<time>` con `dateTime` y registro en una línea: **match** — `suppressHydrationWarning` incluido.
+- Skip-link y guard de Alt+n: **match** — `#contenido` enfocable tras navegación SPA; Alt+n ignora campos editables.
+- Stamps de recover con rol de estado: **match** — "Instrucciones enviadas" y "Contraseña actualizada" con `role="status"`.
+- CTAs "próximamente" con nombre explícito: **match** — `aria-label="… (próximamente)"` en ambos.
+- DispatchBar con escala propia: **match** — prop `size` (md 12px / sm 6px). El segmento PENDIENTE de las filas sigue en `base-600` (desviación conocida vs "cada segmento al color del sello", documentada).
+
+### ceiling
+- El verde es ahora realmente escaso fuera del verbo: solo wordmark "WS" (marca), anillo de nav activa, vocabulario de estado (sellos/argolla/pill) y el CTA primario. Los estados pasivos de edición son neutros.
+- No se inventaron dispositivos: el checkbox usa `accent-ink-100`, los cambio de foco reusan `autoFocus`, el estado se anuncia con el `role="status"` ya empleado por el pill de conexión.
+
+### material_fixes
+1. **Error global de login solo marcaba la contraseña** (P1) → ambos campos con `invalid={Boolean(fieldErrors.<campo> || error)}` + describedby que incluye `login-error`.
+2. **Verde filtrado a estados pasivos de edición** (P2) → caret y selección neutros, checkbox con `accent-ink-100`.
+3. **Placeholder por debajo del piso** (P2) → `ink-600` → `ink-500` (#7d8a9a, 5.29:1).
+4. **Foco perdido entre fases del wizard de recuperación** (P2) → `autoFocus` por fase + sellos con `role="status"`.
+5. **`role="menu"` envolviendo header y lista de dispositivos** (P2) → rol solo sobre los items; Tab clausura y restaura foco; `aria-controls` al contenedor del menú.
+6. **`<time>` sin `dateTime` y registro en dos líneas** (P2) → `dateTime` + `suppressHydrationWarning`; "Registro · " a su propio `<p>`.
+7. **Sin skip-link ni guard en Alt+n** (P2) → `#contenido` + foco SPA; atajos ignoran editables.
+8. **DispatchBar sin escala** (P2) → prop `size`.
+
+### keep
+Mantener el verde fuera de los pasivos de edición, la neutralidad del checkbox/caret/selección, el error global ligando todos los campos, y la escala explícita del DispatchBar. No reintroducir `::selection`/caret en verde ni quitar el `aria-describedby` global.
+
+## verdict pass
+
+Verificación CDP r3 + r3b: **58 comprobaciones PASS** — placeholder `#7d8a9a`, checkbox `accent-ink-100`, caret/selección neutros, menú con 1 menuitem / 0 no-menuitem focusables, ArrowUp → "Cerrar sesión", Escape cierra y restaura el trigger, vista de confirmación con 2 items, "Permanecer" conserva la sesión, `dateTime` en módulos, foco inicial en `correo` (recuperar), error de credenciales marcando ambos campos con describedby `login-error` + alert, skip-link con foco en `#contenido` tras navegación, CTA "Ir a campañas (próximamente)". `npm run build` exit 0; detector `[]` en `src public`. Verde del shell 1366 → 377 px exactos muestreados (el resto es marcas intencionales); mobile sigue verde solo como texto de estado (×211 px con tolerancia, antialias).
+- P1 + P2 1–7: **resueltos**, cada uno verificado por interacción, muestreo o DOM.
+- Regresiones: ninguna; los 6 rasters re-capturados (15:20) y con procedencia actualizada.
+
+### remaining
+- El segmento PENDIENTE de las filas del DispatchBar sigue en gris `base-600` mientras el doc describe "cada segmento al color del sello" (ámbar). Decisión de este pase: no cambiarlo; se re-evalúa si UI-7 lo pide.
+- "Nueva campaña" y "Ir a campañas" siguen marcados "Próximamente" hasta UI-7 (decisión sostenida desde la ronda de pulido).
+- El foco del `autoFocus` y el `role="status"` de recover no se verificaron con lector de pantalla real (sin `axe`/NVDA en el entorno).
+
+## disposition: ship

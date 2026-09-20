@@ -1,5 +1,5 @@
-import { useEffect } from "react"
-import { Outlet, useNavigate } from "react-router-dom"
+import { useEffect, useRef } from "react"
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
 
 import { shortcutMap } from "./nav"
 import { Sidebar } from "./sidebar"
@@ -7,10 +7,18 @@ import { Topbar } from "./topbar"
 
 export function AppLayout() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    mainRef.current?.focus({ preventScroll: true })
+  }, [pathname])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return
       const path = shortcutMap.get(event.key)
       if (!path) return
       event.preventDefault()
@@ -22,10 +30,21 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-base-950">
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-base-800 focus:px-4 focus:py-2 focus:text-xs focus:font-semibold focus:text-ink-100"
+      >
+        Saltar al contenido
+      </a>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 overflow-y-auto">
+        <main
+          id="contenido"
+          ref={mainRef}
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto focus:outline-none"
+        >
           <Outlet />
         </main>
       </div>

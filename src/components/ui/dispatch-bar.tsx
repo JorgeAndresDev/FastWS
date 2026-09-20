@@ -11,6 +11,7 @@ interface DispatchBarProps {
   segments: DispatchSegment[]
   total: number
   className?: string
+  size?: "md" | "sm"
 }
 
 const segmentColor: Record<MessageStatus, string> = {
@@ -31,7 +32,7 @@ const statusLabel: Record<MessageStatus, string> = {
   CANCELADO: "cancelados",
 }
 
-export function DispatchBar({ segments, total, className }: DispatchBarProps) {
+export function DispatchBar({ segments, total, className, size = "md" }: DispatchBarProps) {
   const shown = segments.filter((s) => s.count > 0)
   const empty = shown.length === 0
   const label = empty
@@ -42,7 +43,11 @@ export function DispatchBar({ segments, total, className }: DispatchBarProps) {
     <div
       role="img"
       aria-label={label}
-      className={cn("flex h-3 w-full overflow-hidden rounded-sm", className)}
+      className={cn(
+        "flex w-full overflow-hidden rounded-sm",
+        size === "sm" ? "h-1.5" : "h-3",
+        className
+      )}
     >
       {empty ? (
         <div className="h-full w-full bg-base-700" />

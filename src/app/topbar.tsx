@@ -56,6 +56,7 @@ export function Topbar() {
             variant="secondary"
             icon={<Plus className="size-4" aria-hidden />}
             onClick={() => navigate("/app/campanas")}
+            aria-label="Nueva campaña (próximamente)"
           >
             Nueva campaña
           </Button>

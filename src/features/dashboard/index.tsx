@@ -184,7 +184,8 @@ function RecentCampaigns() {
                     { status: "PENDIENTE", count: c.pendiente },
                   ]}
                   total={c.total}
-                  className="mt-1.5 h-1.5"
+                  size="sm"
+                  className="mt-1.5"
                 />
               </div>
               <div className="text-right">
@@ -332,6 +333,7 @@ export function DashboardPage() {
             variant="secondary"
             icon={<ExternalLink className="size-4" aria-hidden />}
             onClick={() => navigate("/app/campanas")}
+            aria-label="Ir a campañas (próximamente)"
           >
             Ir a campañas
           </Button>

@@ -19,7 +19,7 @@ export interface TurnStep {
 
 const stepTone: Record<TurnStep["tone"], string> = {
   hecho: "border-entregado/30 bg-entregado/10 text-entregado",
-  activo: "border-brand-500/40 bg-brand-500/10 text-brand-400",
+  activo: "border-proceso/40 bg-proceso/10 text-proceso",
   pendiente: "border-rule bg-base-800 text-ink-500",
 }
 
@@ -102,14 +102,14 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
             {device.id}
           </span>
           {online ? (
-            <span className="stamp stamp--entregado">
+            <span role="status" className="stamp stamp--entregado">
               <Wifi aria-hidden />
-              Conectado
+              Listo para despacho
             </span>
           ) : (
-            <span className="stamp stamp--fallido">
+            <span role="status" className="stamp stamp--pendiente">
               <WifiOff aria-hidden />
-              Sin conexión
+              Modo local · envíos en pausa
             </span>
           )}
         </div>

@@ -71,7 +71,7 @@
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--color-brand-500) 35%, transparent);
+    background: color-mix(in oklab, var(--color-ink-100) 18%, transparent);
     color: var(--color-ink-100);
   }
 
@@ -96,7 +96,7 @@
   textarea,
   select,
   [contenteditable="true"] {
-    caret-color: var(--color-brand-500);
+    caret-color: var(--color-ink-100);
   }
 
   :focus-visible {
