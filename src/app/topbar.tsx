@@ -1,41 +1,28 @@
-import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, Wifi, WifiOff } from "lucide-react"
+import { Clock3, Plus, Wifi, WifiOff } from "lucide-react"
 
 import { Button } from "@/components/ui"
+import { useOnline } from "@/features/auth"
 import { cn } from "@/lib/utils"
 
 import { AccountMenu } from "./account-menu"
 import { formatDateStamp } from "./date-stamp"
 
 function ConnectionPill() {
-  const [online, setOnline] = useState(() => navigator.onLine)
-
-  useEffect(() => {
-    const on = () => setOnline(true)
-    const off = () => setOnline(false)
-    window.addEventListener("online", on)
-    window.addEventListener("offline", off)
-    return () => {
-      window.removeEventListener("online", on)
-      window.removeEventListener("offline", off)
-    }
-  }, [])
-
+  const online = useOnline()
   const Icon = online ? Wifi : WifiOff
   return (
     <span
       role="status"
-      aria-label={online ? "Conectado" : "Sin conexión"}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold",
         online
           ? "border-entregado/30 bg-entregado/10 text-entregado"
-          : "border-fallido/30 bg-fallido/10 text-fallido"
+          : "border-pendiente/30 bg-pendiente/10 text-pendiente"
       )}
     >
       <Icon className="size-3.5" aria-hidden />
-      {online ? "Conectado" : "Sin conexión"}
+      {online ? "Listo para despacho" : "Modo local · envíos en pausa"}
     </span>
   )
 }
@@ -64,13 +51,19 @@ export function Topbar() {
         <span className="h-5 w-px bg-rule-soft" aria-hidden />
         <AccountMenu />
 
-        <Button
-          variant="primary"
-          icon={<Plus className="size-4" aria-hidden />}
-          onClick={() => navigate("/app/campanas")}
-        >
-          Nueva campaña
-        </Button>
+        <span className="inline-flex items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<Plus className="size-4" aria-hidden />}
+            onClick={() => navigate("/app/campanas")}
+          >
+            Nueva campaña
+          </Button>
+          <span className="stamp stamp--pendiente">
+            <Clock3 aria-hidden />
+            Próximamente
+          </span>
+        </span>
       </div>
     </header>
   )

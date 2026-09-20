@@ -156,3 +156,98 @@ Suite E2E por CDP: **15/15 PASS** — shell montado con sesión, disparador cerr
 - La prueba de teclado cubre foco y teclas; no hubo lector de pantalla real (sin `axe`/NVDA en el entorno).
 
 ## disposition: ship
+
+---
+
+# Ronda de pulido — backlog de critique (higiene previa a UI-3)
+
+Harness note: mismo revisor degradado inline (sin subagentes). El backlog sale del critique dual-agent del shell+auth (29/40, 2 P0 + 3 P1 + 1 P2). Verificación por interacción CDP (12 comprobaciones) + detector + muestreo de píxeles de verde. Sin entrada de imagen: los rasters se validaron programáticamente.
+
+Inputs faltantes: no hay comp aprobado; la ronda sigue el OWN-WORLD y el veredicto del critique, no un diseño nuevo.
+
+## disposition: fix
+
+### persistence
+Pasa. `PRODUCT.md` intacto. `DESIGN.md` actualizado en la misma pasada: topbar con "Nueva campaña" secundaria + chip "Próximamente", confirmación "Cerrar turno" en el menú de cuenta, `remember=false` por defecto, y `DispatchBar` con nombre accesible por conteos. Sidecar en espejo (DispatchBar + Account Menu), JSON validado.
+
+### fidelity
+Matriz (contra OWN-WORLD y los hallazgos del critique):
+- El verde queda solo para la acción primaria: **match** — avatar a `base-700`, progreso a `ink-100`, detalles de KPI a `muted`; el muestreo de píxeles cae 3105 → 1329 en el shell (el resto es wordmark, anillo activo y vocabulario de estado legítimo).
+- "Nueva campaña" no promete una acción inexistente: **match** — secundaria + chip "Próximamente"; el verbo verde ya no muere en un stub.
+- Controles inertes: **match** — "Pausar"/"Cancelar" eliminados del panel de campaña activa (sin cola de envío todavía).
+- Piso de 12px: **match** — etiquetas de KPI y cabeceras de tabla a `0.75rem`; hints a `ink-500`.
+- Cierre de turno: **match** — "Cerrar sesión" abre "Cerrar turno / Permanecer en el turno"; `remember=false` por defecto.
+- DispatchBar accesible: **match** — `aria-label` construido de los conteos por estado.
+- Minors: **match** — `scope="col"` en `<th>`, `datetime` en el sello de auth, `Kbd`→`<kbd>`, dispositivo de una sola fuente, `ConnectionPill` reusa `useOnline` sin `aria-label` duplicado, toggle de contraseña con `aria-controls`, error de login asociado al campo, copy "caseta" corregido.
+
+### ceiling
+- El verde ahora es escaso de verdad; el único verde restante fuera del verbo es el wordmark "WS" (marca) y el vocabulario de estado (sellos/argolla), ambos con icono + etiqueta.
+- No se inventaron dispositivos nuevos: el chip "Próximamente" reusa el sello neutro (`stamp--fecha`); la confirmación reusa el patrón de menú existente.
+
+### material_fixes
+1. La **One Verb Rule se violaba en pasivos** (avatar `bg-brand-500`, progreso `text-brand-400`, detalles de KPI `tone:"brand"`) → neutralizados; el verde vuelve al verbo.
+2. **El CTA primario apuntaba a un stub** → "Nueva campaña" y "Ir a campañas" degradados a secundario + "Próximamente"; no hay acción falsa.
+3. **"Pausar"/"Cancelar" inertes** en la campaña activa → eliminados (sin cola real no hay pausa honesta).
+4. **Violación del piso de 12px** en etiquetas KPI/cabeceras (`text-[0.6875rem]`) y hints `ink-600` → `0.75rem` e `ink-500`.
+5. **Sesión por defecto persistente y logout sin confirmación** → `remember=false`; confirmación "Cerrar turno" antes de sellar la salida.
+6. **`DispatchBar` solo-color** → `aria-label` desde los conteos.
+7. Minors de a11y/copy: `scope` en `<th>`, `datetime` en el sello de auth, `<kbd>` semántico, dispositivo de una sola fuente, `ConnectionPill` sin duplicación, toggle con `aria-controls`, error asociado al campo, "caseta"→"turno".
+
+### keep
+Mantener la escasez del verde y el "Próximamente" explícito hasta que exista la superficie de campañas (UI-7). No reintroducir controles inertes ni etiquetas por debajo de 12px. No cambiar la confirmación de cierre sin decidir antes el ritual de "sellar turno" completo.
+
+## verdict pass
+
+Verificación CDP: **12/12 PASS** — avatar no verde, "Próximamente" presente, "Nueva campaña" sin `bg-brand-500`, DispatchBar con conteos en `aria-label`, 5 `<th scope="col">`, detalle de KPI `ink-500`, sin "Pausar/Cancelar", confirmación "Cerrar turno / Permanecer", "Permanecer" conserva la sesión, "Cerrar turno" limpia sesión y aterriza en `/login`, `remember` desmarcado por defecto. `npm run build` exit 0; detector `[]` en `src public` y en `/login`, `/recuperar`, `/app` (vía sonda same-origin temporal, retirada). Verde del shell 3105 → 1329 px muestreados.
+- Fix 1–7: **resueltos**, cada uno verificado por código, detector o interacción.
+- Regresiones: ninguna detectada; los 6 rasters re-capturados y con procedencia actualizada.
+
+### remaining
+- "Nueva campaña" sigue navegando al stub "Módulo en construcción"; es la decisión acordada ("marcado como próximamente") hasta UI-7.
+- Pendientes del critique no atacados aquí (decisión de alcance): atajo de teclado para "Nueva campaña", folios de planilla (pregunta provocadora, no bug), sello de `BORRADOR`, desborde de IDs Meta y credenciales demo en el pie (intencional para demo).
+- El puntaje del critique (29/40) no se re-calculó; la mejora se medirá al re-correr `/impeccable critique`.
+
+## disposition: ship
+
+---
+
+# Ronda de crítica #2 — los 3 P1 (validación por campo, pill de conexión, "Próximamente" no-disabled)
+
+Harness note: mismo revisor degradado inline. El backlog sale del critique dual-agent re-corrido (32/40, 0 P0 + 3 P1 + 2 P2; trend 29 → 32). Verificación por interacción CDP (17 comprobaciones) + detector + muestreo de píxeles ámbar/verde. Sin entrada de imagen: rasters validados programáticamente.
+
+Inputs faltantes: no hay comp aprobado nuevo; los 3 P1 se atacan contra el OWN-WORLD y el veredicto del critique.
+
+## disposition: fix
+
+### persistence
+Pasa. `PRODUCT.md` intacto. `DESIGN.md` y sidecar actualizados en la misma pasada: Field con `role="alert"` + ids (`-hint`/`-error`) + `aria-describedby` + `noValidate`, pill "Listo para despacho / Modo local · envíos en pausa" (verde/ámbar, nunca rojo), sellos "Próximamente" ámbar `.stamp--pendiente` + `Clock3`, verde re-declarado solo para el verbo ("Sellar turno"). JSON validado.
+
+### fidelity
+Matriz (contra OWN-WORLD y los hallazgos del critique #2):
+- Validación por campo que no duerme al noValidate: **match** — `FormField` emite `id="<campo>-hint|error"`, el error viaja con `role="alert"` y `aria-describedby` apunta a hint o error (XOR); `login` y `recuperar` validan por fase con `fieldErrors`, sin hide/validate nativos.
+- Offline sin alarmismo: **match** — el modo local es una pausa, no un error: pill ámbar "Modo local · envíos en pausa" (`role="status"`), online verde "Listo para despacho"; el rojo queda fuera de la conexión.
+- CTA "próximamente" que no parece deshabilitado: **match** — los sellos pasan de neutro gris a ámbar `.stamp--pendiente` con `Clock3`; un secundario con color de espera no se lee como deshabilitado.
+
+### ceiling
+- El verde sigue escaso: la única adición de verde en el shell (~+37 px) es el punto del pill online, vocabulario de estado legítimo.
+- El ámbar "Próximamente" reusa el sello PENDIENTE ya existente; no se inventaron dispositivos.
+
+### material_fixes
+1. **`noValidate` sin contraparte por campo** → `FormField` con hint/error idados + `role="alert"` + `aria-describedby`; `validateLogin`/errores por fase en `login` y `recuperar`; los checks nativos se apagan.
+2. **Offline binario verde/rojo** → pill de dos estados: "Listo para despacho" (verde) / "Modo local · envíos en pausa" (ámbar); el modo local nunca es rojo.
+3. **CTA gris leído como deshabilitado** → sellos "Próximamente" en el topbar y el dashboard pasan a `.stamp--pendiente` (ámbar) con `Clock3`; el día que exista la superficie, el sello se vuelve verde.
+
+### keep
+Mantener el ámbar de "Próximamente" hasta UI-7, la regla de que el modo local no se pinta de rojo, y el patrón `FormField` (ids + `role="alert"`) como canon de formularios.
+
+## verdict pass
+
+Verificación CDP: **17/17 PASS** — error de usuario con `role="alert"` visible y `aria-describedby` correcto, hint reemplazado por error, submit sin campos requeridos bloqueado con mensajes por campo, pill "Listo para despacho" en línea, chip "Próximamente" ámbar en topbar y dashboard, `aria-invalid` en campos inválidos. `npm run build` exit 0; detector `[]` en `src public` y en `/login`, `/recuperar`, `/app` (sonda same-origin temporal, retirada). Ámbar `#f0b13c` ≈188 px muestreados en `ui0-desktop` y `ui0-cuenta-desktop`; verde del shell 1329 → ≈1366.
+- P1 1–3: **resueltos**, cada uno verificado por interacción o muestreo.
+- Regresiones: ninguna; los 6 rasters re-capturados (14:27) y con procedencia actualizada.
+
+### remaining
+- P2 del critique #2 sin atacar: el badge del paso "2" en `auth-shell` y `Button` con `loading` que no pone `disabled` (`aria-busy` sí) — doble submit posible.
+- El puntaje no se re-calculó; la subida se medirá al re-correr `/impeccable critique` (29 → 32 la última vez).
+
+## disposition: ship

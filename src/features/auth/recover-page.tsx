@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Check, MailCheck, TriangleAlert } from "lucide-react"
+import { ArrowLeft, Check, MailCheck } from "lucide-react"
 
 import { Button, FormField, Input } from "@/components/ui"
 
@@ -9,7 +9,16 @@ import { AuthShell, type TurnStep } from "./auth-shell"
 import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 type Phase = "solicitar" | "definir" | "listo"
+
+type FieldErrors = {
+  correo?: string
+  codigo?: string
+  nueva?: string
+  confirmar?: string
+}
 
 export function RecoverPage() {
   const { requestRecovery, resetPassword } = useAuth()
@@ -22,7 +31,7 @@ export function RecoverPage() {
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   const deviceStep: TurnStep = {
     index: 1,
@@ -52,13 +61,21 @@ export function RecoverPage() {
 
   async function handleRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
+    const value = email.trim()
+    const errors: FieldErrors = {}
+    if (!value) errors.correo = "Escriba el correo del operador."
+    else if (!EMAIL_RE.test(value)) errors.correo = "Escriba un correo válido."
+    setFieldErrors(errors)
+    if (errors.correo) return
     setPending(true)
     try {
       await requestRecovery(email)
       setPhase("definir")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible enviar las instrucciones.")
+      setFieldErrors({
+        correo:
+          err instanceof Error ? err.message : "No fue posible enviar las instrucciones.",
+      })
     } finally {
       setPending(false)
     }
@@ -66,17 +83,24 @@ export function RecoverPage() {
 
   async function handleReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
-    if (password !== confirm) {
-      setError("Las contraseñas no coinciden.")
-      return
-    }
+    const errors: FieldErrors = {}
+    if (!code.trim()) errors.codigo = "Escriba el código de verificación."
+    if (!password) errors.nueva = "Escriba la contraseña nueva."
+    else if (password.length < 8)
+      errors.nueva = "La contraseña debe tener al menos 8 caracteres."
+    if (!confirm) errors.confirmar = "Confirme la contraseña nueva."
+    else if (password && confirm !== password) errors.confirmar = "Las contraseñas no coinciden."
+    setFieldErrors(errors)
+    if (errors.codigo || errors.nueva || errors.confirmar) return
     setPending(true)
     try {
       await resetPassword(email, code, password)
       setPhase("listo")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No fue posible actualizar la contraseña.")
+      setFieldErrors({
+        codigo:
+          err instanceof Error ? err.message : "No fue posible actualizar la contraseña.",
+      })
     } finally {
       setPending(false)
     }
@@ -98,11 +122,11 @@ export function RecoverPage() {
         steps={steps}
         device={device}
         title="Recuperar la clave del turno"
-        intro="Indique el correo del operador. Le enviaremos las instrucciones para recordar la clave de la caseta."
+        intro="Indique el correo del operador. Le enviaremos las instrucciones para recuperar la clave y abrir de nuevo su turno."
         footer={back}
       >
         <form onSubmit={handleRequest} className="flex flex-col gap-5" noValidate>
-          <FormField label="Correo del operador" htmlFor="correo">
+          <FormField label="Correo del operador" htmlFor="correo" error={fieldErrors.correo}>
             <Input
               id="correo"
               name="correo"
@@ -113,20 +137,12 @@ export function RecoverPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder={DEMO_CREDENTIALS.email}
+              invalid={Boolean(fieldErrors.correo)}
+              aria-describedby={fieldErrors.correo ? "correo-error" : undefined}
               disabled={pending}
               required
             />
           </FormField>
-
-          {error && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
-            >
-              <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              {error}
-            </p>
-          )}
 
           <Button
             type="submit"
@@ -161,6 +177,7 @@ export function RecoverPage() {
             label="Código de verificación"
             htmlFor="codigo"
             hint="Revise el correo. En la demostración el código es 000000."
+            error={fieldErrors.codigo}
           >
             <Input
               id="codigo"
@@ -171,12 +188,19 @@ export function RecoverPage() {
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="000000"
+              invalid={Boolean(fieldErrors.codigo)}
+              aria-describedby={fieldErrors.codigo ? "codigo-error" : "codigo-hint"}
               disabled={pending}
               required
             />
           </FormField>
 
-          <FormField label="Nueva contraseña" htmlFor="nueva" hint="Mínimo 8 caracteres.">
+          <FormField
+            label="Nueva contraseña"
+            htmlFor="nueva"
+            hint="Mínimo 8 caracteres."
+            error={fieldErrors.nueva}
+          >
             <Input
               id="nueva"
               name="nueva"
@@ -184,12 +208,18 @@ export function RecoverPage() {
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              invalid={Boolean(fieldErrors.nueva)}
+              aria-describedby={fieldErrors.nueva ? "nueva-error" : "nueva-hint"}
               disabled={pending}
               required
             />
           </FormField>
 
-          <FormField label="Confirmar contraseña" htmlFor="confirmar">
+          <FormField
+            label="Confirmar contraseña"
+            htmlFor="confirmar"
+            error={fieldErrors.confirmar}
+          >
             <Input
               id="confirmar"
               name="confirmar"
@@ -197,21 +227,12 @@ export function RecoverPage() {
               autoComplete="new-password"
               value={confirm}
               onChange={(event) => setConfirm(event.target.value)}
-              invalid={Boolean(error)}
+              invalid={Boolean(fieldErrors.confirmar)}
+              aria-describedby={fieldErrors.confirmar ? "confirmar-error" : undefined}
               disabled={pending}
               required
             />
           </FormField>
-
-          {error && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
-            >
-              <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              {error}
-            </p>
-          )}
 
           <Button
             type="submit"

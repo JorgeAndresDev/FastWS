@@ -42,11 +42,20 @@ typography:
     fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
     fontSize: "0.75rem"
     fontWeight: 400
-rounded:
-  panel: "10px"
-  stamp: "4px"
-  control: "6px"
-  minimal: "2px"
+  stamp:
+    fontSize: "0.6875rem"
+    fontWeight: 700
+    textTransform: "uppercase"
+  kpi:
+    fontSize: "1.375rem"
+    fontWeight: 700
+    letterSpacing: "-0.02em"
+  rounded:
+    panel: "10px"
+    stamp: "4px"
+    control: "6px"
+    minimal: "2px"
+    shape: "8px"
 spacing:
   xs: "8px"
   sm: "12px"
@@ -101,7 +110,7 @@ La información vive sobre superficies de carbón profundo que se apilan por ton
 Tinta sobre carbón: la paleta es una escala de blancos sucios (paper) sobre grises-carbón casi negros (base). El verde FastWS es el único acento; los sellos de estado amplían la paleta en azul, ámbar, violeta y rojo, siempre como etiqueta funcionando con icono y patrón, nunca como color por color.
 
 ### Primary
-- **Verde FastWS** (`#14d659`): el verde del logotipo, único acento del sistema — acción primaria (botón "Nueva campaña", "Sellar turno"), enlaces accionables que disparan despacho y anillos de foco. Su rareza es el punto: aparece contado y en los mismos sitios.
+- **Verde FastWS** (`#14d659`): el verde del logotipo, único acento del sistema — acción primaria (botón "Sellar turno" de la bitácora de entrada), enlaces accionables que disparan despacho y anillos de foco. Su rareza es el punto: aparece contado y en los mismos sitios.
 - **Brillo** (`#35e662`) para hover y texto verde sobre carbón; **claro** (`#56f66b`, el otro extremo del degradado del logo) para lectura sobre el verde en contextos de foco; **hondo** (`#10a845`) / **noche** (`#0d8738`) para active y estados profundos. Todos son pasos del mismo verde: no existe un segundo verde en el sistema.
 
 ### Secondary (sellos de estado — vocabulario sello)
@@ -145,6 +154,8 @@ Tinta sobre carbón: la paleta es una escala de blancos sucios (paper) sobre gri
 - **Title** (700, 0.875–0.8125rem, 1.3): nombres de fila (cliente, campaña) y de action.
 - **Body** (400, 0.8125rem, 1.5): párrafos descriptivos; máx ~65ch en textos largos.
 - **Label** (700, 0.75rem, letter-spacing 0.14em, MAYÚSCULAS): etiquetas de KPI, cabeceras de tabla, títulos de panel, "Registro de operación". El piso funcional es 0.75rem (12px); los sellos y teclas pueden bajar al piso de 0.6875rem (11px).
+- **KPI display** (700, 1.375rem, tabular): la cifra grande de las tarjetas KPI.
+- **Stamp/Key** (700, 0.6875rem, tracking 0.1em, MAYÚSCULAS): sellos de estado estampados y teclas de atajo. Única excepción bajo el piso de 12px.
 - **Mono** (400, 0.75rem): IDs Metas, teléfonos, fechas estampadas, códigos de error, teclas de acceso.
 - **Digits tabulares** en todas las cifras invariables (KPIs, porcentajes, contadores).
 
@@ -200,6 +211,7 @@ Lenguaje de formas de formulario y sello, contenido:
 ### Chips
 - **Sello de estado (`.stamp`):** inline-flex, icono 0.7rem + etiqueta MAYÚSCULA 11px (tracking 0.1em, weight 700), esquinas 4px, relleno 4.8×8px. Cada estado: texto a color, `background` del mismo color al 11 %, borde al 30 %, argolla interna al 14 %. El mapeo es de vocabulario (proceso/pendiente/entregado/leido/fallido/cancelado).
 - **Sello fecha (`.stamp--fecha`):** papel tenue sobre fondo sólido `#1a222c`, borde regla. Sello "MIÉ 16 SEP 2026" del topbar y chips de segmento de módulos en construcción.
+- **Sello pendiente (`.stamp--pendiente`, ámbar):** esta también es la "Próximamente" de las acciones futuras ("Nueva campaña", "Ir a campañas"), con icono `Clock3` — un CTA secundario que no parece deshabilitado; el ámbar anuncia espera, y el sello pasa a verde el día que la superficie existe.
 
 ### Cards / Containers
 - **Panel (`.panel`):** esquinas 10px, fondo `#141a22`, borde regla 1px, cabecera con título-label MAYÚSCULA 12px y borde inferior de regla suave. Contenedor canónico de toda superficie de registro.
@@ -208,16 +220,16 @@ Lenguaje de formas de formulario y sello, contenido:
 ### Inputs
 - **Campo de planilla:** alto 40px (md) / 32px (sm), esquinas 6px, fondo carbón alzado `#1a222c`, borde regla 1px, texto papel 13px, placeholder papel pálido. Foco: borde brand al 60 % y anillo de color-mix del verde al 72 % (outline 2px, offset 2px). Inválido: borde rojo fallido al 50 % (`focus` al 70 %), con `aria-invalid`.
 - **Entrada mono:** los campos técnicos (usuario/correo, código de verificación, teléfono, código Meta) se escriben en JetBrains Mono, como la celda mecanografiada de la planilla.
-- **Field (etiqueta + campo + nota):** etiqueta MAYÚSCULA 12px (`label`) sobre el campo, nota de ayuda 12px en papel pálido bajo él; el error se anuncia en texto legible junto al campo, nunca solo con color.
+- **Field (etiqueta + campo + nota):** etiqueta MAYÚSCULA 12px (`label`) sobre el campo, nota de ayuda 12px en papel pálido bajo él; el error se anuncia en texto legible junto al campo (`role="alert"`), nunca solo con color. Hint y error viajan con `id` propio (`<campo>-hint` / `<campo>-error`) y se enlazan por `aria-describedby`; la validación por campo reemplaza los checks nativos (`noValidate`).
 
 ### Navigation
 - **Rail lateral (256px):** fondo `#0f131a`, grupos con labels de sección (12px, MAYÚSCULA, tracking 0.16em) y enlaces de 36px. Ítem activo: fondo verde al 10 % + **doble-ring** brand (anillo interno `inset 0 0 0 1px brand-500/28%` + anillo externo `0 0 0 1px brand-500/12%`) — encontrabilidad de la planilla actual. Ítem inactivo: texto papel tenue, hover carbón alzado.
 - **Atajos:** cada ítem trae su tecla (1–16) como Kbd mono a la derecha; `Alt+n` navega. Patrón teletexto.
-- **Topbar (64px):** sello de fecha a la izquierda ("Registro de operación · MIÉ 16 SEP 2026"), pill de conexión (● Conectado / ○ Sin conexión, verde/rojo del vocabulario), identidad de usuario (avatar + nombre + rol) y botón primario "Nueva campaña" a la derecha.
-- **Menú de cuenta (topbar):** la identidad del operador se despliega en un menú anclado a la derecha (`w-72`), una sola acción. Superficie un tono por encima del panel (carbón alzado `base-800` + borde de regla, sin sombra: Flat-By-Tone). Cabecera "TURNO ACTIVO" con nombre, rol y correo en mono; línea de dispositivo en mono (`PC-01 · FW-XXXX · Windows`); al pie, **Cerrar sesión** en tratamiento neutro — nunca verde, porque no es la acción primaria (One Verb Rule). Teclado: `↓`/`↑` recorren los ítems, `Escape` cierra y devuelve el foco al disparador, `Tab` abandona el menú. Cerrar sesión limpia la sesión (local y de sesión) y devuelve a la bitácora de entrada; el reingreso abre la planilla.
+- **Topbar (64px):** sello de fecha a la izquierda ("Registro de operación · MIÉ 16 SEP 2026"), pill de conexión (● Listo para despacho / ● Modo local · envíos en pausa — verde/ámbar del vocabulario; nunca rojo, porque el modo local no es un error), identidad de usuario (avatar carbón + nombre + rol) y "Nueva campaña" a la derecha en tratamiento secundario con sello ámbar "Próximamente" — no es verde porque la superficie aún no existe; el verde queda solo para acciones que cumplen hoy.
+- **Menú de cuenta (topbar):** la identidad del operador se despliega en un menú anclado a la derecha (`w-72`), una sola acción. Superficie un tono por encima del panel (carbón alzado `base-800` + borde de regla, sin sombra: Flat-By-Tone). Cabecera "TURNO ACTIVO" con nombre, rol y correo en mono; línea de dispositivo en mono (`PC-01 · FW-XXXX · Windows`); al pie, **Cerrar sesión** en tratamiento neutro — nunca verde, porque no es la acción primaria (One Verb Rule). Cerrar sesión abre una confirmación "Cerrar turno" (rojo) / "Permanecer en el turno" antes de sellar la salida. Teclado: `↓`/`↑` recorren los ítems, `Escape` cierra y devuelve el foco al disparador, `Tab` abandona el menú. Cerrar el turno limpia la sesión (local y de sesión) y devuelve a la bitácora de entrada; el reingreso abre la planilla. "Recordar sesión" queda desmarcado por defecto (equipo compartido).
 
 ### Signature Component: Cinta de Despacho (DispatchBar)
-Barra horizontal segmentada (3px de alto, esquinas 2px, esquinas internas 0) que descompone el total de una campaña por estado (PROCESO/ENTREGADO/LEÍDO/FALLIDO/PENDIENTE), cada segmento al color del sello. Es la planilla misma: una lectura inmediata de qué fracción del despacho sigue en curso. Aparece en la campaña activa y en cada fila de "Últimas campañas". Sin animación de ancho (perf), la señal de movimiento se reserva al sellado del estado.
+Barra horizontal segmentada (3px de alto, esquinas 2px, esquinas internas 0) que descompone el total de una campaña por estado (PROCESO/ENTREGADO/LEÍDO/FALLIDO/PENDIENTE), cada segmento al color del sello. Es la planilla misma: una lectura inmediata de qué fracción del despacho sigue en curso. Aparece en la campaña activa y en cada fila de "Últimas campañas". Sin animación de ancho (perf), la señal de movimiento se reserva al sellado del estado. El nombre accesible se construye desde los conteos ("675 entregados, 1305 leídos…"), nunca solo del color.
 
 ## Do's and Don'ts
 

@@ -47,7 +47,13 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
         <div>
           <Wordmark descriptor="Planilla de despacho" />
 
-          <time className="stamp stamp--fecha mt-8 inline-flex">{formatDateStamp()}</time>
+          <time
+            className="stamp stamp--fecha mt-8 inline-flex"
+            dateTime={new Date().toISOString()}
+            suppressHydrationWarning
+          >
+            {formatDateStamp()}
+          </time>
 
           <p className="mt-6 text-lg font-bold tracking-tight text-ink-100">Bitácora de turno</p>
           <p className="mt-1 max-w-xs text-[0.8125rem] leading-relaxed text-ink-400">

@@ -1,12 +1,12 @@
 import type { CampaignStatus, DashboardStats, OutboundMessage } from "@/types"
 import { useNavigate } from "react-router-dom"
-import { ExternalLink } from "lucide-react"
+import { Clock3, ExternalLink } from "lucide-react"
 
 import { Button, DispatchBar, Kbd, Panel, StatusStamp } from "@/components/ui"
 import { campaigns, recentMessages, stats } from "@/lib/mock/data"
 import { cn, formatNumber, formatPercent } from "@/lib/utils"
 
-const label = "text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-ink-500"
+const label = "text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500"
 
 function KpiCard({
   labelText,
@@ -16,8 +16,8 @@ function KpiCard({
 }: {
   labelText: string
   value: string
-  detail?: { text: string; tone?: "muted" | "danger" | "brand" }
-  detailTone?: "muted" | "danger" | "brand"
+  detail?: { text: string; tone?: "muted" | "danger" }
+  detailTone?: "muted" | "danger"
 }) {
   const detailText = detail?.text
   const tone = detail?.tone ?? detailTone
@@ -32,7 +32,6 @@ function KpiCard({
           className={cn(
             "text-xs tabular-nums",
             tone === "danger" && "text-fallido",
-            tone === "brand" && "text-brand-400",
             tone === "muted" && "text-ink-500"
           )}
         >
@@ -133,13 +132,13 @@ function ActiveCampaignPanel() {
           </div>
           <div className="flex items-baseline gap-6 tabular-nums">
             <div>
-              <p className="text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-ink-500">
+              <p className="text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500">
                 Progreso
               </p>
-              <p className="text-xl font-bold text-brand-400">{progress} %</p>
+              <p className="text-xl font-bold text-ink-100">{progress} %</p>
             </div>
             <div className="hidden text-right sm:block">
-              <p className="text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-ink-500">
+              <p className="text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500">
                 Planilla
               </p>
               <p className="text-sm font-semibold text-ink-100">
@@ -152,20 +151,12 @@ function ActiveCampaignPanel() {
 
         <DispatchBar segments={segments} total={active.total} className="mt-5" />
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            {segments
-              .filter((s) => s.count > 0)
-              .map((s) => (
-                <StatusStamp key={s.status} status={s.status} />
-              ))}
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm">Pausar</Button>
-            <Button variant="ghost" size="sm">
-              Cancelar
-            </Button>
-          </div>
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          {segments
+            .filter((s) => s.count > 0)
+            .map((s) => (
+              <StatusStamp key={s.status} status={s.status} />
+            ))}
         </div>
       </div>
     </Panel>
@@ -242,13 +233,13 @@ function KpiStrip({ stats }: { stats: DashboardStats }) {
       <KpiCard
         labelText="Campañas"
         value={formatNumber(stats.campaignsTotal)}
-        detail={{ text: `${stats.campaignsActive} activa`, tone: "brand" }}
+        detail={{ text: `${stats.campaignsActive} activa` }}
       />
       <KpiCard labelText="Enviados" value={formatNumber(stats.sent)} detail={{ text: "últimos 30 días" }} />
       <KpiCard
         labelText="Entregados"
         value={formatNumber(stats.delivered)}
-        detail={{ text: `${formatPercent(stats.deliveryRate)} de entrega`, tone: "brand" }}
+        detail={{ text: `${formatPercent(stats.deliveryRate)} de entrega` }}
       />
       <KpiCard
         labelText="Leídos"
@@ -263,7 +254,7 @@ function KpiStrip({ stats }: { stats: DashboardStats }) {
       <KpiCard
         labelText="Respondidos"
         value={formatNumber(stats.responded)}
-        detail={{ text: `${formatPercent(stats.responseRate)} de respuesta`, tone: "brand" }}
+        detail={{ text: `${formatPercent(stats.responseRate)} de respuesta` }}
       />
     </div>
   )
@@ -300,8 +291,9 @@ export function DashboardPage() {
                     {["Hora", "Cliente", "Teléfono", "Código Meta", "Sello"].map((h) => (
                       <th
                         key={h}
+                        scope="col"
                         className={cn(
-                          "px-4 py-2 text-left text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-ink-500",
+                          "px-4 py-2 text-left text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500",
                           h === "Sello" && "text-right"
                         )}
                       >
@@ -335,13 +327,19 @@ export function DashboardPage() {
             Selecciona destinatarios, una plantilla aprobada y arma el despacho.
           </p>
         </div>
-        <Button
-          variant="primary"
-          icon={<ExternalLink className="size-4" aria-hidden />}
-          onClick={() => navigate("/app/campanas")}
-        >
-          Ir a campañas
-        </Button>
+        <span className="inline-flex items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<ExternalLink className="size-4" aria-hidden />}
+            onClick={() => navigate("/app/campanas")}
+          >
+            Ir a campañas
+          </Button>
+          <span className="stamp stamp--pendiente">
+            <Clock3 aria-hidden />
+            Próximamente
+          </span>
+        </span>
       </div>
     </div>
   )

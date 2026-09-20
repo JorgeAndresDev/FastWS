@@ -45,9 +45,17 @@ export function FormField({ label, htmlFor, hint, error, className, children }: 
       </label>
       {children}
       {error ? (
-        <p className="text-xs text-fallido">{error}</p>
+        <p
+          id={htmlFor ? `${htmlFor}-error` : undefined}
+          role="alert"
+          className="text-xs text-fallido"
+        >
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-xs text-ink-600">{hint}</p>
+        <p id={htmlFor ? `${htmlFor}-hint` : undefined} className="text-xs text-ink-500">
+          {hint}
+        </p>
       ) : null}
     </div>
   )

@@ -9,6 +9,17 @@ import { AuthShell, type TurnStep } from "./auth-shell"
 import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validateLogin(email: string, password: string) {
+  const errors: { email?: string; password?: string } = {}
+  const value = email.trim()
+  if (!value) errors.email = "Escriba su usuario."
+  else if (!EMAIL_RE.test(value)) errors.email = "El usuario debe ser un correo válido."
+  if (!password) errors.password = "Escriba su contraseña."
+  return errors
+}
+
 export function LoginPage() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
@@ -17,10 +28,11 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [remember, setRemember] = useState(true)
+  const [remember, setRemember] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
 
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/app"
 
@@ -39,6 +51,9 @@ export function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const errors = validateLogin(email, password)
+    setFieldErrors(errors)
+    if (errors.email || errors.password) return
     setError(null)
     setPending(true)
     try {
@@ -66,7 +81,12 @@ export function LoginPage() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-        <FormField label="Usuario" htmlFor="usuario" hint="El correo con el que fue dado de alta.">
+        <FormField
+          label="Usuario"
+          htmlFor="usuario"
+          hint="El correo con el que fue dado de alta."
+          error={fieldErrors.email}
+        >
           <Input
             id="usuario"
             name="usuario"
@@ -77,12 +97,14 @@ export function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="operador@empresa.co"
+            invalid={Boolean(fieldErrors.email)}
+            aria-describedby={fieldErrors.email ? "usuario-error" : "usuario-hint"}
             disabled={pending}
             required
           />
         </FormField>
 
-        <FormField label="Contraseña" htmlFor="clave">
+        <FormField label="Contraseña" htmlFor="clave" error={fieldErrors.password}>
           <div className="relative">
             <Input
               id="clave"
@@ -91,7 +113,10 @@ export function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              invalid={Boolean(error)}
+              invalid={Boolean(fieldErrors.password || error)}
+              aria-describedby={
+                fieldErrors.password ? "clave-error" : error ? "login-error" : undefined
+              }
               className="pr-20"
               disabled={pending}
               required
@@ -101,6 +126,7 @@ export function LoginPage() {
               onClick={() => setShowPassword((value) => !value)}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-semibold text-ink-500 transition-colors hover:text-ink-200"
               aria-pressed={showPassword}
+              aria-controls="clave"
             >
               {showPassword ? "Ocultar" : "Mostrar"}
             </button>
@@ -125,11 +151,12 @@ export function LoginPage() {
           </Link>
         </div>
 
-        {error && (
-          <p
-            role="alert"
-            className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
-          >
+          {error && (
+            <p
+              id="login-error"
+              role="alert"
+              className="flex items-start gap-2 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2 text-xs leading-relaxed text-fallido"
+            >
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {error}
           </p>

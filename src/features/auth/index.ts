@@ -1,5 +1,6 @@
 export { AuthProvider, DEMO_CREDENTIALS, useAuth } from "./auth-provider"
 export { getDeviceIdentity } from "./device"
+export { useOnline } from "./use-online"
 export { LoginPage } from "./login-page"
 export { RecoverPage } from "./recover-page"
 export { RequireAuth } from "./require-auth"

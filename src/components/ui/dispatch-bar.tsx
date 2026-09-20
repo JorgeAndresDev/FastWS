@@ -10,7 +10,6 @@ export interface DispatchSegment {
 interface DispatchBarProps {
   segments: DispatchSegment[]
   total: number
-  progress?: number
   className?: string
 }
 
@@ -23,15 +22,26 @@ const segmentColor: Record<MessageStatus, string> = {
   CANCELADO: "bg-cancelado",
 }
 
+const statusLabel: Record<MessageStatus, string> = {
+  PROCESO: "en proceso",
+  PENDIENTE: "pendientes",
+  ENTREGADO: "entregados",
+  LEIDO: "leídos",
+  FALLIDO: "fallidos",
+  CANCELADO: "cancelados",
+}
+
 export function DispatchBar({ segments, total, className }: DispatchBarProps) {
-  const width = (count: number) => (total > 0 ? (count / total) * 100 : 0)
   const shown = segments.filter((s) => s.count > 0)
   const empty = shown.length === 0
+  const label = empty
+    ? "Sin envíos registrados"
+    : shown.map((s) => `${s.count} ${statusLabel[s.status]}`).join(", ")
 
   return (
     <div
       role="img"
-      aria-label="Progreso de la campaña por estado de envío"
+      aria-label={label}
       className={cn("flex h-3 w-full overflow-hidden rounded-sm", className)}
     >
       {empty ? (
@@ -42,7 +52,7 @@ export function DispatchBar({ segments, total, className }: DispatchBarProps) {
             key={s.status}
             data-status={s.status.toLowerCase()}
             className={cn("h-full", segmentColor[s.status])}
-            style={{ width: `${width(s.count)}%` }}
+            style={{ width: `${total > 0 ? (s.count / total) * 100 : 0}%` }}
           />
         ))
       )}

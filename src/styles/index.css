@@ -72,7 +72,7 @@
 
   ::selection {
     background: color-mix(in oklab, var(--color-brand-500) 35%, transparent);
-    color: #ffffff;
+    color: var(--color-ink-100);
   }
 
   ::-webkit-scrollbar {
