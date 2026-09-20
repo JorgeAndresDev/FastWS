@@ -22,3 +22,11 @@ export function formatDateStamp(date = new Date()) {
   const weekday = DAYS[date.getDay()]
   return `${weekday} ${day} ${month} ${year}`
 }
+
+export function formatDateShort(iso: string) {
+  const date = new Date(iso)
+  const day = String(date.getDate()).padStart(2, "0")
+  const month = MONTHS[date.getMonth()]
+  const year = date.getFullYear()
+  return `${day} ${month} ${year}`
+}

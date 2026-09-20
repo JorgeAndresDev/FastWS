@@ -1,10 +1,13 @@
-import type { CampaignStatus, DashboardStats, OutboundMessage } from "@/types"
+import type { DashboardStats, OutboundMessage } from "@/types"
 import { useNavigate } from "react-router-dom"
-import { Clock3, ExternalLink } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
 import { Button, DispatchBar, Kbd, Panel, StatusStamp } from "@/components/ui"
 import { campaigns, recentMessages, stats } from "@/lib/mock/data"
 import { cn, formatNumber, formatPercent } from "@/lib/utils"
+
+import { campaignSegments } from "@/features/campaigns/campaign-segments"
+import { CampaignChip } from "@/features/campaigns/campaign-status"
 
 const label = "text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500"
 
@@ -39,38 +42,6 @@ function KpiCard({
         </p>
       )}
     </div>
-  )
-}
-
-const campaignTone: Record<CampaignStatus, string> = {
-  BORRADOR: "stamp--fecha",
-  PROGRAMADA: "stamp--pendiente",
-  EN_PROCESO: "stamp--proceso",
-  PAUSADA: "stamp--cancelado",
-  FINALIZADA: "stamp--entregado",
-  CANCELADA: "stamp--cancelado",
-  CON_ERROR: "stamp--fallido",
-}
-
-const campaignLabel: Record<CampaignStatus, string> = {
-  BORRADOR: "Borrador",
-  PROGRAMADA: "Programada",
-  EN_PROCESO: "En curso",
-  PAUSADA: "Pausada",
-  FINALIZADA: "Finalizada",
-  CANCELADA: "Cancelada",
-  CON_ERROR: "Con error",
-}
-
-function CampaignChip({ status }: { status: CampaignStatus }) {
-  return (
-    <span className={cn("stamp", campaignTone[status])}>
-      <span
-        className="size-1.5 rounded-full bg-current"
-        aria-hidden
-      />
-      {campaignLabel[status]}
-    </span>
   )
 }
 
@@ -110,13 +81,7 @@ function ActiveCampaignPanel() {
   const processed = active.total - active.pendiente
   const progress = Math.round((processed / active.total) * 100)
 
-  const segments = [
-    { status: "PROCESO" as const, count: active.procesando },
-    { status: "ENTREGADO" as const, count: active.entregado },
-    { status: "LEIDO" as const, count: active.leido },
-    { status: "FALLIDO" as const, count: active.fallido },
-    { status: "PENDIENTE" as const, count: active.pendiente },
-  ]
+  const segments = campaignSegments(active)
 
   return (
     <Panel
@@ -176,13 +141,7 @@ function RecentCampaigns() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[0.8125rem] font-semibold text-ink-100">{c.name}</p>
                 <DispatchBar
-                  segments={[
-                    { status: "PROCESO", count: c.procesando },
-                    { status: "ENTREGADO", count: c.entregado },
-                    { status: "LEIDO", count: c.leido },
-                    { status: "FALLIDO", count: c.fallido },
-                    { status: "PENDIENTE", count: c.pendiente },
-                  ]}
+                  segments={campaignSegments(c)}
                   total={c.total}
                   size="sm"
                   className="mt-1.5"
@@ -328,20 +287,13 @@ export function DashboardPage() {
             Selecciona destinatarios, una plantilla aprobada y arma el despacho.
           </p>
         </div>
-        <span className="inline-flex items-center gap-2">
-          <Button
-            variant="secondary"
-            icon={<ExternalLink className="size-4" aria-hidden />}
-            onClick={() => navigate("/app/campanas")}
-            aria-label="Ir a campañas (próximamente)"
-          >
-            Ir a campañas
-          </Button>
-          <span className="stamp stamp--pendiente">
-            <Clock3 aria-hidden />
-            Próximamente
-          </span>
-        </span>
+        <Button
+          variant="primary"
+          icon={<ExternalLink className="size-4" aria-hidden />}
+          onClick={() => navigate("/app/campanas")}
+        >
+          Ir a campañas
+        </Button>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { Clock3, Plus, Wifi, WifiOff } from "lucide-react"
+import { Plus, Wifi, WifiOff } from "lucide-react"
 
 import { Button } from "@/components/ui"
 import { useOnline } from "@/features/auth"
@@ -56,14 +56,9 @@ export function Topbar() {
             variant="secondary"
             icon={<Plus className="size-4" aria-hidden />}
             onClick={() => navigate("/app/campanas")}
-            aria-label="Nueva campaña (próximamente)"
           >
             Nueva campaña
           </Button>
-          <span className="stamp stamp--pendiente">
-            <Clock3 aria-hidden />
-            Próximamente
-          </span>
         </span>
       </div>
     </header>

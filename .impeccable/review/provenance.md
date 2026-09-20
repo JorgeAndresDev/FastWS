@@ -10,6 +10,8 @@ Every shipping raster in this folder, with how it was produced. Provenance trave
 | `ui0-desktop.png` | 1440×900 | 191797 | 2026-09-20 15:20 | `http://localhost:5173/app` (Vite dev server) | Edge headless + CDP: `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot` |
 | `ui0-cuenta-desktop.png` | 1440×900 | 200448 | 2026-09-20 15:20 | `http://localhost:5173/app`, menú de cuenta abierto | Edge headless + CDP (clic en el disparador, espera de `[role="menu"]`, luego `Page.captureScreenshot`) |
 | `ui0-mobile.png` | 390×844 | 79471 | 2026-09-20 15:20 | `http://localhost:5173/app` (Vite dev server) | Edge headless + CDP: `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot` |
+| `campanas-desktop.png` | 1440×900 | 151377 | 2026-09-20 16:05 | `http://localhost:5173/app/campanas` (Vite dev server), sesión sembrada en `localStorage` (`fastws.session`, rol Operativo) vía CDP `Runtime.evaluate` | Edge headless + CDP: `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot` |
+| `campanas-mobile.png` | 390×844 | 72015 | 2026-09-20 16:05 | `http://localhost:5173/app/campanas` (Vite dev server), sesión sembrada en `localStorage` (`fastws.session`, rol Operativo) vía CDP `Runtime.evaluate` | Edge headless + CDP: `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot` |
 
 - `desktop.png` / `mobile.png` / `recover-desktop.png` are the **UI-1 (autenticación)** shipping rasters reviewed by `.impeccable/review/finish.md`.
 - `ui0-desktop.png` / `ui0-mobile.png` are the **UI-0 (app shell)** rasters reviewed by `.impeccable/review/finish-ui0.md`; `ui0-cuenta-desktop.png` is the **menú de cuenta / cierre de sesión** surface (same `finish.md` round, «Cerrar sesión»).
