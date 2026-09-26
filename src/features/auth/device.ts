@@ -4,6 +4,7 @@ export interface DeviceIdentity {
   id: string
   code: string
   platform: string
+  nombre?: string
 }
 
 function detectPlatform() {
@@ -39,5 +40,16 @@ export function getDeviceIdentity(): DeviceIdentity {
     /* storage unavailable */
   }
 
+  return device
+}
+
+export function setDeviceName(nombre: string): DeviceIdentity {
+  const device = getDeviceIdentity()
+  device.nombre = nombre.trim() || undefined
+  try {
+    localStorage.setItem(DEVICE_KEY, JSON.stringify(device))
+  } catch {
+    /* storage unavailable */
+  }
   return device
 }

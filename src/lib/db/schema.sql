@@ -25,19 +25,24 @@ CREATE TABLE IF NOT EXISTS devices (
 );
 
 CREATE TABLE IF NOT EXISTS clients (
-  id            TEXT PRIMARY KEY,
-  name          TEXT NOT NULL,
-  phone         TEXT NOT NULL,
-  document      TEXT,
-  company       TEXT,
-  city          TEXT,
-  zone          TEXT,
-  client_type   TEXT,
-  status        TEXT NOT NULL DEFAULT 'active',
-  meta_phone    TEXT,
-  is_valid      INTEGER NOT NULL DEFAULT 0,
-  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  id             TEXT PRIMARY KEY,
+  code           TEXT NOT NULL UNIQUE,
+  name           TEXT NOT NULL,
+  phone          TEXT NOT NULL,
+  phones         TEXT,
+  client_type    TEXT NOT NULL CHECK (client_type IN ('NORMAL', 'CASHLESS')),
+  company        TEXT,
+  city           TEXT,
+  zone           TEXT,
+  status         TEXT NOT NULL DEFAULT 'active',
+  is_valid       INTEGER NOT NULL DEFAULT 0,
+  hora_inicial   TEXT,
+  hora_final     TEXT,
+  order_state    TEXT CHECK (order_state IN ('PENDIENTE', 'CANCELADO')),
+  cancel_reason  TEXT,
+  en_ruta        INTEGER,
+  created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 CREATE TABLE IF NOT EXISTS segments (
@@ -154,6 +159,9 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
+-- Las credenciales de Meta (access token de la WhatsApp Business API) se almacenan de forma
+-- segura y nunca en código fuente ni en el repositorio; su persistencia llega con el backend
+-- (Tauri + SQLite/Turso). En la fase de interfaz el token vive solo en la sesión en memoria.
 CREATE TABLE IF NOT EXISTS settings (
   key      TEXT PRIMARY KEY,
   value    TEXT,

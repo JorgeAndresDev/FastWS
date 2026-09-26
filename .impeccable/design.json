@@ -20,20 +20,29 @@
       "entregado":   { "role": "secondary", "displayName": "Verde Entregado","canonical": "oklch(77% 0.218 148)", "tonalRamp": ["#042a11", "#095d27", "#0e913c", "#12c451", "#24eb6a", "#57ef8d", "#8ff5b3", "#c7fad9"] },
       "leido":       { "role": "secondary", "displayName": "Violeta Leído",  "canonical": "oklch(72% 0.13 295)", "tonalRamp": ["#1a1430", "#2a2050", "#413178", "#573fa0", "#785bc4", "#a78bfa", "#c9b8fd", "#e5dcff"] },
       "fallido":     { "role": "secondary", "displayName": "Rojo Fallido",   "canonical": "oklch(64% 0.17 20)",  "tonalRamp": ["#2c0d10", "#4b1519", "#782128", "#a02c36", "#cb4049", "#f0646f", "#f79aa1", "#fbc7cb"] },
-      "cancelado":   { "role": "secondary", "displayName": "Gris Cancelado", "canonical": "oklch(66% 0.012 250)", "tonalRamp": ["#14181e", "#252b33", "#3d444e", "#565d69", "#727a88", "#8a97a7", "#b3bdc9", "#d6dde5"] }
+      "cancelado":   { "role": "secondary", "displayName": "Gris Cancelado", "canonical": "oklch(66% 0.012 250)", "tonalRamp": ["#14181e", "#252b33", "#3d444e", "#565d69", "#727a88", "#8a97a7", "#b3bdc9", "#d6dde5"] },
+      "teal":       { "role": "secondary", "displayName": "Creativo Teal",     "canonical": "oklch(77% 0.15 183)", "tonalRamp": ["#04201c", "#0a3d36", "#0f5c52", "#147a6d", "#2dd4bf", "#4ce3d0", "#7fecdf", "#b3f5ed"] },
+      "sky":        { "role": "secondary", "displayName": "Creativo Sky",      "canonical": "oklch(78% 0.14 220)", "tonalRamp": ["#041e30", "#093a5c", "#0f5788", "#1574b5", "#38bdf8", "#5fcbfa", "#93dcfc", "#c2edfd"] },
+      "indigo":     { "role": "secondary", "displayName": "Creativo Indigo",   "canonical": "oklch(73% 0.15 270)", "tonalRamp": ["#141433", "#252553", "#373778", "#4a4a9c", "#818cf8", "#9ca6fa", "#bcc3fc", "#dce0fd"] },
+      "fuchsia":    { "role": "secondary", "displayName": "Creativo Fuchsia",  "canonical": "oklch(72% 0.19 330)", "tonalRamp": ["#2a0b33", "#4b1257", "#701d7f", "#952aa8", "#e879f9", "#ee96fc", "#f5bafd", "#fbdcfe"] },
+      "cyan":       { "role": "secondary", "displayName": "Creativo Cian",     "canonical": "oklch(80% 0.12 200)", "tonalRamp": ["#032028", "#083f4d", "#0d5f72", "#127f98", "#22d3ee", "#4ddef4", "#85eaf9", "#c0f5fd"] },
+      "lime":       { "role": "secondary", "displayName": "Creativo Lima",     "canonical": "oklch(82% 0.17 120)", "tonalRamp": ["#16200a", "#2c3f12", "#44611a", "#5d8323", "#a3e635", "#b7ef52", "#cdf47f", "#e4faaf"] },
+      "pink":       { "role": "secondary", "displayName": "Creativo Rosa",     "canonical": "oklch(75% 0.15 354)", "tonalRamp": ["#2a0d1a", "#4a1530", "#6f1e48", "#942860", "#f472b6", "#f78fc7", "#fab5d9", "#fddceb"] },
+      "amber":      { "role": "secondary", "displayName": "Creativo Ámbar",    "canonical": "oklch(80% 0.14 77)",  "tonalRamp": ["#231c08", "#403312", "#5e4c19", "#7d6520", "#fbbf24", "#fccd4c", "#fddd7f", "#feecb4"] }
     },
     "typographyMeta": {
       "display": { "displayName": "Display / Sello de módulo", "purpose": "Títulos de módulo, cabeceras de pantalla." },
       "body":    { "displayName": "Body / Registro",           "purpose": "Texto corriente y descripciones." },
       "label":   { "displayName": "Label / Anotación",         "purpose": "KPI, cabeceras de tabla y títulos de panel en MAYÚSCULA." },
-      "kpi":     { "displayName": "KPI / Cifra",               "purpose": "Cifra display de las tarjetas KPI (1.375rem, tabular)." },
-      "stamp":   { "displayName": "Stamp / Sello",             "purpose": "Sellos de estado y teclas de atajo (0.6875rem, excepción del piso)." },
+      "kpi":     { "displayName": "KPI / Cifra",               "purpose": "Cifra display de las tarjetas KPI (1.375rem, tabular, leading-none); una regla rule/80 de 1px la tacha del label cuando es total de planilla." },
+      "stamp":   { "displayName": "Stamp / Badge",            "purpose": "Badges de estado en gramática Bamboo: texto regular 13px 600 (sin MAYÚSCULAS); píldora sólida en héroes, dot en tablas." },
       "mono":    { "displayName": "Mono / Datos técnicos",     "purpose": "IDs Meta, teléfonos, códigos de error, fechas estampadas y teclas." }
     },
     "shadows": [],
     "motion": [
-      { "name": "ease-expo-seal", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Microinteracción de sellado de estado (~180 ms). Única animación del mundo." },
-      { "name": "ease-state",     "value": "ease",                          "purpose": "Transiciones de color de estado en botones y filas (~150 ms)." }
+      { "name": "ease-expo-seal", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Microinteracción de sellado de estado (~180 ms). El anillo de avance de la campaña activa la usa a 400 ms sobre stroke-dashoffset." },
+      { "name": "ease-state",     "value": "ease",                          "purpose": "Transiciones de color de estado en botones y filas (~150 ms)." },
+      { "name": "chart-swap",     "value": "opacity fade 220ms ease-out",   "purpose": "Continuidad al cambiar el rango de la tendencia (solo opacidad, sin desplazamiento)." }
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" },
@@ -75,12 +84,20 @@
       "css": ".ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-family:inherit; font-size:13px; font-weight:600; line-height:1; border-radius:6px; border:1px solid transparent; background:transparent; color:var(--color-ink-300); cursor:pointer; transition:background .15s ease, color .15s ease; } .ds-btn-ghost:hover { background:var(--color-base-800); color:var(--color-ink-100); } .ds-btn-ghost:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
     },
     {
-      "name": "Status Stamp",
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Acción destructiva (Desconectar, cancelar despacho, eliminar plantilla). Fondo rojo fallido sólido con texto carbón — sin tinte translúcido.",
+      "html": "<button class=\"ds-btn-danger\">Desconectar</button>",
+      "css": ".ds-btn-danger { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-family:inherit; font-size:13px; font-weight:600; line-height:1; border-radius:6px; border:1px solid transparent; background:var(--color-fallido); color:var(--color-base-950); cursor:pointer; transition:background .15s ease; } .ds-btn-danger:hover { background:var(--color-fallido-400); } .ds-btn-danger:active { background:color-mix(in oklab, var(--color-fallido) 85%, var(--color-base-950)); } .ds-btn-danger:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+    },
+    {
+      "name": "Status Badge",
       "kind": "chip",
       "refersTo": "stamp",
-      "description": "Sello de estado de mensaje: icono + etiqueta + argolla interna. El color nunca es la única señal.",
-      "html": "<span class=\"ds-stamp\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Entregado</span>",
-      "css": ".ds-stamp { display:inline-flex; align-items:center; gap:.32rem; font-family:inherit; font-size:.6875rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; line-height:1; white-space:nowrap; padding:.3rem .5rem; border-radius:4px; color:var(--color-entregado); background:color-mix(in oklab, var(--color-entregado) 11%, transparent); border:1px solid color-mix(in oklab, var(--color-entregado) 30%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, currentColor 14%, transparent); } .ds-stamp svg { width:.7rem; height:.7rem; }"
+      "description": "Badge de estado en gramática Bamboo (Tec de Monterrey). Variante container (héroes): píldora de fondo sólido del color con texto carbón e icono 12px. Variante dot (tablas): sin fondo, icono a color y etiqueta papel tenue; el icono hace de balín y el texto viaja neutro — el color nunca es la única señal.",
+      "html": "<span class=\"ds-stamp ds-stamp-container\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Entregado</span><span class=\"ds-stamp\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Entregado</span>",
+      "css": ".ds-stamp { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; font-family:inherit; font-size:.8125rem; font-weight:600; line-height:1; white-space:nowrap; min-height:1.25rem; text-transform:none; letter-spacing:normal; color:var(--color-ink-300); } .ds-stamp svg { width:.875rem; height:.875rem; color:var(--color-entregado); } .ds-stamp-container { min-height:1.5rem; padding:0 .75rem; border-radius:9999px; background:var(--color-entregado); color:var(--color-base-950); } .ds-stamp-container svg { width:.75rem; height:.75rem; color:inherit; }"
     },
     {
       "name": "Panel",
@@ -94,7 +111,7 @@
       "name": "Key Hint",
       "kind": "custom",
       "refersTo": "kbd",
-      "description": "Tecla de acceso directo (Alt + número) con relieve mecánico; monoespaciada.",
+      "description": "Tecla de atajo (primitiva del sistema, excepción al piso de 12px) con relieve mecánico; monoespaciada.",
       "html": "<kbd class=\"ds-kbd\">Alt</kbd>",
       "css": ".ds-kbd { font-family:var(--font-mono); font-size:.6875rem; line-height:1; color:var(--color-ink-500); border:1px solid var(--color-rule); border-bottom-width:2px; border-radius:4px; padding:.18rem .3rem; background:var(--color-base-850); }"
     },
@@ -116,9 +133,9 @@
       "name": "Nav Item (active)",
       "kind": "nav",
       "refersTo": "panel",
-      "description": "Ítem del rail lateral; el activo se marca con doble-ring brand sobre verde al 10 %.",
-      "html": "<a class=\"ds-nav-item\" href=\"#\"><span>Planilla general</span><kbd class=\"ds-kbd\">1</kbd></a>",
-      "css": ".ds-nav-item { display:flex; align-items:center; justify-content:space-between; gap:8px; height:36px; padding:0 12px; border-radius:6px; font-family:inherit; font-size:13px; font-weight:600; text-decoration:none; color:var(--color-ink-100); background:color-mix(in oklab, var(--color-brand-500) 10%, transparent); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--color-brand-500) 28%, transparent), 0 0 0 1px color-mix(in oklab, var(--color-brand-500) 12%, transparent); transition:background .15s ease; } .ds-nav-item:hover { background:color-mix(in oklab, var(--color-brand-500) 16%, transparent); } .ds-nav-item:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
+      "description": "Ítem del rail lateral con icono 16px (ink-400) + etiqueta; el activo es carbón alzado sólido (base-750), nunca tinte del color.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z\"/></svg><span>Planilla general</span></a>",
+      "css": ".ds-nav-item { display:flex; align-items:center; gap:10px; height:36px; padding:0 12px; border-radius:6px; font-family:inherit; font-size:13px; font-weight:600; text-decoration:none; color:var(--color-ink-300); transition:background .15s ease, color .15s ease; } .ds-nav-item svg { width:16px; height:16px; flex:none; color:var(--color-ink-400); } .ds-nav-item:hover { background:var(--color-base-800); color:var(--color-ink-100); } .ds-nav-item.ds-active { background:var(--color-base-750); color:var(--color-ink-100); } .ds-nav-item:focus-visible { outline:2px solid color-mix(in oklab, var(--color-brand-500) 72%, transparent); outline-offset:2px; }"
     },
     {
       "name": "Dispatch Bar",
@@ -149,21 +166,21 @@
     "keyCharacteristics": [
       "Carbón profundo de fondo, planos apilados por tono (sin sombras ni blur).",
       "Un solo acento: verde FastWS en ≤10 % de la pantalla, solo acción primaria (todo verde del sistema sale del logotipo).",
-      "Sellos de estado — icono + etiqueta + argolla interna — donde el color nunca es la única señal.",
+      "Sellos de estado en gramática Bamboo — icono + etiqueta + píldora sólida en héroes, dot sin fondo en tablas — donde el color nunca es la única señal.",
       "Letras de formulario en Inter Tight (headers tensos, tracking alto), monoespaciada para IDs y cifras.",
       "Reglas divisorias y bordes de 1px como única textura de datos; microinteracción de \"sellado\" a ~180 ms con easing expo, nunca decorativa."
     ],
     "rules": [
       { "name": "The One Verb Rule", "body": "El verde FastWS es un verbo: actúa (crear, enviar, ir a). Si una superficie no dispara la acción primaria del despacho, no se viste de verde. Única excepción: la \"WS\" del logotipo (verde #35e662), que es marca, no interfaz.", "section": "colors" },
-      { "name": "The Color-Is-Never-Alone Rule", "body": "Ningún estado se transmite solo por color: cada sello lleva icono + etiqueta + argolla interna, y los errores siempre traen su mensaje legible.", "section": "colors" },
+      { "name": "The Color-Is-Never-Alone Rule", "body": "Ningún estado se transmite solo por color: cada sello lleva icono + etiqueta, y los errores siempre traen su mensaje legible.", "section": "colors" },
       { "name": "The Tabular Ledger Rule", "body": "Cualquier columna de cifras usa font-variant-numeric: tabular-nums; las cifras deben alinearse como columnas de un libro contable, no danzar al cambiar.", "section": "typography" },
-      { "name": "The 12px Floor Rule", "body": "El texto funcional no baja de 12px (0.75rem); solo los sellos estampados y las teclas de atajo pueden compactarse a 11px. Texto funcional por debajo de 11px es fallo de legibilidad, no estilo.", "section": "typography" },
+      { "name": "The 12px Floor Rule", "body": "El texto funcional no baja de 12px (0.75rem); solo las teclas de atajo pueden compactarse a 11px. Texto funcional por debajo de 11px es fallo de legibilidad, no estilo.", "section": "typography" },
       { "name": "The Flat-By-Tone Rule", "body": "Elevación = tono más claro, nunca sombra. Un elemento sobre otro se marca con carbón alzado y una regla divisoria, no con un drop shadow.", "section": "elevation" }
     ],
     "dos": [
       "Do pintar con verde FastWS únicamente la acción primaria; sobre fondos carbón, el verde es un verbo.",
-      "Do estampar estado con icono + etiqueta + argolla: si el detector de color falla, la etiqueta sigue contando la historia.",
-      "Do usar tabular-nums en toda cifra columna y 0.75rem como mínimo funcional (sellos/teclas 11px como excepción).",
+      "Do estampar estado con icono + etiqueta: si el detector de color falla, la etiqueta sigue contando la historia.",
+      "Do usar tabular-nums en toda cifra columna y 0.75rem como mínimo funcional (teclas 11px como excepción).",
       "Do indicar la fila activa con el doble-ring brand sobre el verde al 10 %.",
       "Do acompañar cada fallo con su mensaje legible (código Meta en mono + explicación en texto).",
       "Do contraste AA (≥4.5:1) para todo texto funcional sobre carbón; verificar con el detector en cada lote."

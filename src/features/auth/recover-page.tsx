@@ -28,6 +28,7 @@ export function RecoverPage() {
   const [phase, setPhase] = useState<Phase>("solicitar")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null)
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [pending, setPending] = useState(false)
@@ -69,7 +70,8 @@ export function RecoverPage() {
     if (errors.correo) return
     setPending(true)
     try {
-      await requestRecovery(email)
+      const codigo = await requestRecovery(email)
+      setRecoveryCode(codigo)
       setPhase("definir")
     } catch (err) {
       setFieldErrors({
@@ -169,15 +171,31 @@ export function RecoverPage() {
         footer={back}
       >
         <form onSubmit={handleReset} className="flex flex-col gap-5" noValidate>
-          <p role="status" className="stamp stamp--entregado">
+          <p role="status" className="stamp stamp--entregado stamp--container">
             <MailCheck aria-hidden />
             Instrucciones enviadas a {email}
           </p>
 
+          {recoveryCode && (
+            <div
+              role="note"
+              className="rounded-md border border-rule-soft bg-base-800/60 px-3 py-2.5 text-xs leading-relaxed text-ink-400"
+            >
+              <p className="font-semibold text-ink-300">
+                Bandeja simulada · {DEMO_CREDENTIALS.email}
+              </p>
+              <p className="mt-1.5">
+                Tu código de verificación es{" "}
+                <span className="font-mono font-semibold text-ink-100">{recoveryCode}</span>. En el
+                flujo real llegaría al correo del operador y expiraría en pocos minutos.
+              </p>
+            </div>
+          )}
+
           <FormField
             label="Código de verificación"
             htmlFor="codigo"
-            hint="Revise el correo. En la demostración el código es 000000."
+            hint="Revise el correo o la bandeja simulada de arriba para este intento."
             error={fieldErrors.codigo}
           >
             <Input
@@ -188,7 +206,7 @@ export function RecoverPage() {
               mono
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              placeholder="000000"
+              placeholder={recoveryCode ?? "000000"}
               invalid={Boolean(fieldErrors.codigo)}
               aria-describedby={fieldErrors.codigo ? "codigo-error" : "codigo-hint"}
               disabled={pending}
@@ -259,7 +277,7 @@ export function RecoverPage() {
       footer={back}
     >
       <div className="flex flex-col gap-5">
-        <p role="status" className="stamp stamp--entregado">
+        <p role="status" className="stamp stamp--entregado stamp--container">
           <Check aria-hidden />
           Contraseña actualizada
         </p>

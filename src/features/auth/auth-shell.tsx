@@ -18,8 +18,8 @@ export interface TurnStep {
 }
 
 const stepTone: Record<TurnStep["tone"], string> = {
-  hecho: "border-entregado/30 bg-entregado/10 text-entregado",
-  activo: "border-proceso/40 bg-proceso/10 text-proceso",
+  hecho: "border-entregado/60 bg-base-900/70 text-entregado",
+  activo: "border-proceso/60 bg-base-900/70 text-proceso",
   pendiente: "border-rule bg-base-800 text-ink-500",
 }
 
@@ -48,7 +48,7 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
           <Wordmark descriptor="Planilla de despacho" />
 
           <time
-            className="stamp stamp--fecha mt-8 inline-flex"
+            className="stamp stamp--fecha stamp--container mt-8 inline-flex"
             dateTime={new Date().toISOString()}
             suppressHydrationWarning
           >
@@ -72,7 +72,7 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
                 )}
                 <span
                   className={cn(
-                    "relative mt-0.5 grid size-6 shrink-0 place-items-center rounded-md border font-mono text-[0.6875rem]",
+                    "relative mt-0.5 grid size-6 shrink-0 place-items-center rounded-md border font-mono text-[0.75rem]",
                     stepTone[step.tone]
                   )}
                 >
@@ -86,7 +86,7 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
                     </p>
                   )}
                   {step.stamp && (
-                    <span className={cn("stamp mt-1.5", stepStampTone[step.stamp.tone])}>
+                    <span className={cn("stamp stamp--container mt-1.5", stepStampTone[step.stamp.tone])}>
                       {step.stamp.label}
                     </span>
                   )}
@@ -97,17 +97,17 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
         </div>
 
         <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-rule-soft pt-4">
-          <span className="stamp stamp--proceso">
+          <span className="stamp stamp--proceso stamp--container">
             <ShieldCheck aria-hidden />
             {device.id}
           </span>
           {online ? (
-            <span role="status" className="stamp stamp--entregado">
+            <span role="status" className="stamp stamp--entregado stamp--container">
               <Wifi aria-hidden />
               Listo para despacho
             </span>
           ) : (
-            <span role="status" className="stamp stamp--pendiente">
+            <span role="status" className="stamp stamp--pendiente stamp--container">
               <WifiOff aria-hidden />
               Modo local · envíos en pausa
             </span>

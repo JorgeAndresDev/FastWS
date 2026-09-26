@@ -141,7 +141,7 @@ export function AccountMenu() {
                   role="menuitem"
                   tabIndex={-1}
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[0.8125rem] font-semibold text-fallido transition-colors hover:bg-fallido/10"
+                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[0.8125rem] font-semibold text-fallido transition-colors hover:bg-base-750"
                 >
                   <LogOut className="size-4 shrink-0 text-fallido" aria-hidden />
                   Cerrar turno
@@ -161,7 +161,7 @@ export function AccountMenu() {
           ) : (
             <>
               <div className="border-b border-rule-soft px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-600">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-500">
                   Turno activo
                 </p>
                 <p className="mt-1.5 text-[0.8125rem] font-semibold text-ink-100">{user.name}</p>

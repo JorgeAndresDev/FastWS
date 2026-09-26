@@ -1,32 +1,16 @@
 import { useEffect, useRef } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 
-import { shortcutMap } from "./nav"
 import { Sidebar } from "./sidebar"
 import { Topbar } from "./topbar"
 
 export function AppLayout() {
-  const navigate = useNavigate()
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
   }, [pathname])
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!event.altKey) return
-      const target = event.target as HTMLElement | null
-      if (target?.closest("input, textarea, select, [contenteditable='true']")) return
-      const path = shortcutMap.get(event.key)
-      if (!path) return
-      event.preventDefault()
-      navigate(path)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [navigate])
 
   return (
     <div className="flex h-screen overflow-hidden bg-base-950">

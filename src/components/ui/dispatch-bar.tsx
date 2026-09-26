@@ -16,7 +16,7 @@ interface DispatchBarProps {
 
 const segmentColor: Record<MessageStatus, string> = {
   PROCESO: "bg-proceso",
-  PENDIENTE: "bg-base-600",
+  PENDIENTE: "bg-pendiente",
   ENTREGADO: "bg-entregado",
   LEIDO: "bg-leido",
   FALLIDO: "bg-fallido",

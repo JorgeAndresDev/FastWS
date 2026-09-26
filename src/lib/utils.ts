@@ -1,9 +1,11 @@
+import { getAppLocale } from "./app-config"
+
 export function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ")
 }
 
 export function formatNumber(value: number) {
-  return new Intl.NumberFormat("es-CO").format(value)
+  return new Intl.NumberFormat(getAppLocale()).format(value)
 }
 
 export function formatPercent(value: number) {

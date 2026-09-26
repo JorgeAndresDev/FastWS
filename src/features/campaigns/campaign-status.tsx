@@ -1,5 +1,15 @@
 import type { CampaignStatus } from "@/types"
 
+import {
+  Activity,
+  Ban,
+  CalendarClock,
+  CheckCircle2,
+  FileEdit,
+  Pause,
+  TriangleAlert,
+} from "lucide-react"
+
 import { cn } from "@/lib/utils"
 
 export const campaignTone: Record<CampaignStatus, string> = {
@@ -22,10 +32,27 @@ export const campaignLabel: Record<CampaignStatus, string> = {
   CON_ERROR: "Con error",
 }
 
-export function CampaignChip({ status }: { status: CampaignStatus }) {
+const campaignIcon: Record<CampaignStatus, typeof Activity> = {
+  BORRADOR: FileEdit,
+  PROGRAMADA: CalendarClock,
+  EN_PROCESO: Activity,
+  PAUSADA: Pause,
+  FINALIZADA: CheckCircle2,
+  CANCELADA: Ban,
+  CON_ERROR: TriangleAlert,
+}
+
+export function CampaignChip({
+  status,
+  className,
+}: {
+  status: CampaignStatus
+  className?: string
+}) {
+  const Icon = campaignIcon[status]
   return (
-    <span className={cn("stamp", campaignTone[status])}>
-      <span className="size-1.5 rounded-full bg-current" aria-hidden />
+    <span className={cn("stamp", campaignTone[status], className)}>
+      <Icon aria-hidden />
       {campaignLabel[status]}
     </span>
   )

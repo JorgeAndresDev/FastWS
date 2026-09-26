@@ -1,7 +1,6 @@
 import { useMemo } from "react"
 import { NavLink } from "react-router-dom"
 
-import { Kbd } from "@/components/ui"
 import { getDeviceIdentity } from "@/features/auth"
 import { cn } from "@/lib/utils"
 
@@ -12,7 +11,7 @@ export function Sidebar() {
   const device = useMemo(() => getDeviceIdentity(), [])
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-rule-soft bg-base-900">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-rule-soft bg-base-900 print:hidden">
       <div className="border-b border-rule-soft px-5 py-4">
         <Wordmark descriptor="Planilla general" />
       </div>
@@ -33,17 +32,16 @@ export function Sidebar() {
                       cn(
                         "group relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-[0.8125rem] transition-colors",
                         isActive
-                          ? "bg-brand-500/10 text-ink-100 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-brand-500)_28%,transparent),0_0_0_1px_color-mix(in_oklab,var(--color-brand-500)_12%,transparent)]"
+                          ? "bg-base-750 text-ink-100"
                           : "text-ink-300 hover:bg-base-800 hover:text-ink-100"
                       )
                     }
                   >
                     <item.icon
-                      className="size-4 shrink-0 text-ink-500 group-hover:text-ink-300"
+                      className="size-4 shrink-0 text-ink-400 group-hover:text-ink-300"
                       aria-hidden
                     />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.shortcut && <Kbd>{item.shortcut}</Kbd>}
                   </NavLink>
                 </li>
               ))}

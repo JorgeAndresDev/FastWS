@@ -40,15 +40,28 @@
   --color-entregado: #14d659;
   --color-leido: #a78bfa;
   --color-fallido: #f0646f;
+  --color-fallido-400: #f79aa1;
+  --color-fallido-600: #cb4049;
   --color-cancelado: #8a97a7;
 
   --radius-panel: 0.625rem;
-  --radius-stamp: 0.25rem;
+  --radius-stamp: 9999px;
 }
 
 @layer base {
   html {
     color-scheme: dark;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   body {
@@ -121,78 +134,117 @@
     border-radius: var(--radius-panel);
   }
 
-  /* Sello de estado — icono + etiqueta + argolla interna; el color no es la única señal */
+  /* Badge de estado — gramática Bamboo: píldora de fondo sólido en los héroes y dot sin
+     fondo en tablas; el icono es el balín de color, el texto viaja neutro */
   .stamp {
     display: inline-flex;
     align-items: center;
-    gap: 0.32rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    justify-content: center;
+    gap: 0.4rem;
+    width: fit-content;
+    min-height: 1.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
-    padding: 0.3rem 0.5rem;
-    border-radius: var(--radius-stamp);
-    border: 1px solid transparent;
+    color: var(--color-ink-300);
   }
-  .stamp svg {
-    width: 0.7rem;
-    height: 0.7rem;
-  }
-  .stamp--proceso,
-  .stamp--pendiente,
-  .stamp--entregado,
-  .stamp--leido,
-  .stamp--fallido,
-  .stamp--cancelado {
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 14%, transparent);
+  .stamp > svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: var(--stamp-fill, currentColor);
   }
   .stamp--proceso {
-    color: var(--color-proceso);
-    background: color-mix(in oklab, var(--color-proceso) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-proceso) 30%, transparent);
+    --stamp-fill: var(--color-proceso);
   }
   .stamp--pendiente {
-    color: var(--color-pendiente);
-    background: color-mix(in oklab, var(--color-pendiente) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-pendiente) 30%, transparent);
+    --stamp-fill: var(--color-pendiente);
   }
   .stamp--entregado {
-    color: var(--color-entregado);
-    background: color-mix(in oklab, var(--color-entregado) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-entregado) 30%, transparent);
+    --stamp-fill: var(--color-entregado);
   }
   .stamp--leido {
-    color: var(--color-leido);
-    background: color-mix(in oklab, var(--color-leido) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-leido) 30%, transparent);
+    --stamp-fill: var(--color-leido);
   }
   .stamp--fallido {
-    color: var(--color-fallido);
-    background: color-mix(in oklab, var(--color-fallido) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-fallido) 30%, transparent);
+    --stamp-fill: var(--color-fallido);
   }
   .stamp--cancelado {
-    color: var(--color-cancelado);
-    background: color-mix(in oklab, var(--color-cancelado) 11%, transparent);
-    border-color: color-mix(in oklab, var(--color-cancelado) 30%, transparent);
+    --stamp-fill: var(--color-cancelado);
   }
   .stamp--fecha {
-    color: var(--color-ink-300);
+    --stamp-fill: var(--color-ink-400);
+  }
+  /* Colores creativos de categoría (no-estado) */
+  .stamp--teal {
+    --stamp-fill: #2dd4bf;
+  }
+  .stamp--sky {
+    --stamp-fill: #38bdf8;
+  }
+  .stamp--indigo {
+    --stamp-fill: #818cf8;
+  }
+  .stamp--fuchsia {
+    --stamp-fill: #e879f9;
+  }
+  .stamp--cyan {
+    --stamp-fill: #22d3ee;
+  }
+  .stamp--emerald {
+    --stamp-fill: #34d399;
+  }
+  .stamp--lime {
+    --stamp-fill: #a3e635;
+  }
+  .stamp--pink {
+    --stamp-fill: #f472b6;
+  }
+  .stamp--amber {
+    --stamp-fill: #fbbf24;
+  }
+  /* Píldora sólida — solo héroes: fondo de color, texto carbón */
+  .stamp--container {
+    min-height: 1.5rem;
+    padding: 0 0.75rem;
+    border-radius: var(--radius-stamp);
+    background: var(--stamp-fill, var(--color-base-800));
+    color: var(--color-base-950);
+  }
+  .stamp--container > svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  .stamp--fecha.stamp--container {
     background: var(--color-base-800);
-    border-color: var(--color-rule);
+    color: var(--color-ink-300);
+  }
+  .stamp--fecha.stamp--container > svg {
+    color: var(--color-ink-400);
   }
 
   /* Tecla (acceso directo por teclado) */
   .kbd {
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: 0.6875rem; /* impeccable-disable-line design-system-font-size -- única excepción al piso 12px: teclas de atajo (DESIGN.md) */
     line-height: 1;
     color: var(--color-ink-500);
     border: 1px solid var(--color-rule);
     border-bottom-width: 2px;
     border-radius: 4px;
     padding: 0.18rem 0.3rem;
+  }
+
+  /* Continuidad en el swap de rango de la tendencia — solo opacidad, sin desplazamiento */
+  .chart-swap {
+    animation: chart-in 0.22s ease-out;
+  }
+  @keyframes chart-in {
+    from {
+      opacity: 0.4;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }

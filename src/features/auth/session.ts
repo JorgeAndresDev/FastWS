@@ -34,6 +34,18 @@ export function writeSession(user: SessionUser, remember: boolean) {
   }
 }
 
+export type SessionKind = "recordada" | "temporal" | null
+
+export function sessionKind(): SessionKind {
+  try {
+    if (localStorage.getItem(SESSION_KEY)) return "recordada"
+    if (sessionStorage.getItem(SESSION_KEY)) return "temporal"
+  } catch {
+    /* storage unavailable */
+  }
+  return null
+}
+
 export function clearSession() {
   try {
     localStorage.removeItem(SESSION_KEY)

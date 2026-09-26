@@ -22,3 +22,12 @@ src-tauri/target
 
 # Build artifacts de TypeScript
 *.tsbuildinfo
+
+# Evidencia de revisión visual y simulacro (capturas, PNG, JSON de probes)
+.impeccable/
+
+# Tooling del agente
+.agents/
+.claude/
+agent/
+skills-lock.json

@@ -15,50 +15,148 @@ export type CampaignStatus =
   | "CANCELADA"
   | "CON_ERROR"
 
+export type ClientKind = "NORMAL" | "CASHLESS"
+
+export type OrderState = "PENDIENTE" | "CANCELADO"
+
 export interface Client {
   id: string
+  code: string
   name: string
   phone: string
-  document: string
+  phones: string[]
   company: string
   city: string
   zone: string
-  clientType: string
+  clientType: ClientKind
   status: "activo" | "inactivo"
   valid: boolean
+  horaInicial?: string
+  horaFinal?: string
+  orderState?: OrderState
+  cancelReason?: string
+  enRuta?: boolean
   createdAt: string
 }
 
-export interface Segment {
-  id: string
-  name: string
-  description: string
-  members: number
+export type TemplateCategory = "MARKETING" | "UTILITY" | "AUTHENTICATION"
+
+export type TemplateStatus =
+  | "APPROVED"
+  | "PENDING"
+  | "REJECTED"
+  | "IN_APPEAL"
+  | "PAUSED"
+  | "DISABLED"
+  | "UNKNOWN"
+
+export type TemplateQuality = "GREEN" | "YELLOW" | "RED"
+
+export interface WaTemplateButton {
+  type: string
+  text?: string
+  url?: string
+  phone_number?: string
+}
+
+export interface WaTemplateComponent {
+  type: string
+  format?: string
+  text?: string
+  example?: {
+    body_text?: string[][]
+    header_text?: string[]
+  }
+  buttons?: WaTemplateButton[]
 }
 
 export interface WaTemplate {
   id: string
-  metaName: string
+  name: string
   language: string
   category: string
-  status: "APROBADA" | "PENDIENTE" | "RECHAZADA"
-  body: string
-  variables: Array<{ index: number; label: string }>
+  status: TemplateStatus
+  qualityScore: TemplateQuality | null
+  rejectedReason?: string
+  updatedAt: number | null
+  components: WaTemplateComponent[]
+}
+
+export type ClientFieldKey =
+  | "name"
+  | "code"
+  | "company"
+  | "city"
+  | "zone"
+  | "clientType"
+  | "horaInicial"
+  | "horaFinal"
+  | "orderState"
+  | "cancelReason"
+  | "enRuta"
+
+export interface CampaignVariableMapping {
+  index: number
+  fuente: "campo" | "libre"
+  campo?: ClientFieldKey
+  texto?: string
+}
+
+export interface CampaignFilter {
+  clientType?: ClientKind
+  city?: string
+  zone?: string
+  orderState?: OrderState
+  enRuta?: boolean
+}
+
+export type CampaignActivityType =
+  | "creada"
+  | "iniciada"
+  | "pausada"
+  | "reanudada"
+  | "cancelada"
+  | "finalizada"
+  | "con_error"
+
+export interface CampaignActivity {
+  tipo: CampaignActivityType
+  at: string
+}
+
+export interface CampaignDispatchInfo {
+  usuario: string
+  dispositivo: string
+  at: string
+}
+
+export interface CampaignRecipient {
+  clientId: string
+  code: string
+  name: string
+  phone: string
+  params: string[]
+  status: MessageStatus
+  metaId?: string
+  errorCode?: string
+  errorMessage?: string
+  sentAt?: string
 }
 
 export interface Campaign {
   id: string
   name: string
   description: string
-  template: string
+  template: { name: string; language: string }
+  mapping: CampaignVariableMapping[]
+  filter: CampaignFilter
   status: CampaignStatus
-  total: number
-  pendiente: number
-  procesando: number
-  entregado: number
-  leido: number
-  fallido: number
+  recipients: CampaignRecipient[]
+  createdAt: string
   startedAt?: string
+  endedAt?: string
+  dispatchedBy?: CampaignDispatchInfo
+  activity: CampaignActivity[]
 }
 
 export interface OutboundMessage {
@@ -73,23 +171,71 @@ export interface OutboundMessage {
   sentAt: string
 }
 
-export interface Conversation {
+export type ConvoStatus = "respondida" | "pendiente" | "con_error"
+
+export type ConvoOrigin = "campaña" | "respuesta" | "demo"
+
+export interface ConversationMessage {
   id: string
-  client: string
   phone: string
-  lastMessage: string
   direction: "entrante" | "saliente"
-  status: "respondida" | "pendiente" | "con_error"
-  lastAt: string
+  text: string
+  status: MessageStatus
+  metaId?: string
+  errorCode?: string
+  errorMessage?: string
+  sentAt?: string
+  viaTemplate?: boolean
 }
 
-export interface AuditEntry {
+export interface ConversationThread {
   id: string
-  user: string
-  device: string
-  action: string
-  entity: string
-  date: string
+  phone: string
+  clientId?: string
+  lastMessage: string
+  lastAt: string
+  status: ConvoStatus
+  origin: ConvoOrigin
+  messages: ConversationMessage[]
+}
+
+export type HistoryEventType =
+  | "campana"
+  | "mensaje"
+  | "respuesta"
+  | "ejemplo"
+  | "error"
+
+export interface HistoryEvent {
+  id: string
+  at: string
+  tipo: HistoryEventType
+  titulo: string
+  detalle: string
+  codigoError?: string
+  wamid?: string
+}
+
+export type AuditCategory =
+  | "turno"
+  | "campana"
+  | "plantilla"
+  | "clientes"
+  | "error"
+  | "conexion"
+  | "importacion"
+  | "configuracion"
+
+export interface AuditRecord {
+  id: string
+  at: string
+  categoria: AuditCategory
+  titulo: string
+  detalle: string
+  usuario?: string
+  dispositivo?: string
+  entidad?: string
+  codigoError?: string
 }
 
 export interface DashboardStats {

@@ -24,7 +24,7 @@ const variants: Record<Variant, string> = {
     "border border-rule bg-base-800 text-ink-100 hover:bg-base-750 active:bg-base-700",
   ghost: "text-ink-300 hover:bg-base-800 hover:text-ink-100",
   danger:
-    "border border-fallido/30 bg-fallido/15 text-fallido hover:bg-fallido/25",
+    "bg-fallido text-base-950 hover:bg-fallido-400 active:bg-[color-mix(in_oklab,var(--color-fallido)_85%,var(--color-base-950))]",
 }
 
 const sizes: Record<Size, string> = {
@@ -45,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading || undefined}
         {...props}
       >
-        {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : icon}
+        {loading ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : icon}
         {children}
       </button>
     )

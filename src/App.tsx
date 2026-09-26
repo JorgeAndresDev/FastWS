@@ -1,29 +1,48 @@
+import { lazy, Suspense } from "react"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
+import { Toaster } from "sileo"
 
 import { AppLayout } from "@/app/layout"
-import { AuditPage } from "@/features/admin"
-import { DevicesPage } from "@/features/admin"
+import { Loader2 } from "lucide-react"
 import { AuthProvider, LoginPage, RecoverPage, RequireAuth } from "@/features/auth"
-import { CampaignsPage } from "@/features/campaigns"
-import { ClientsPage } from "@/features/clients"
-import { ConnectionPage } from "@/features/connection"
-import { ConversationsPage } from "@/features/conversations"
-import { DashboardPage } from "@/features/dashboard"
-import { HistoryPage } from "@/features/history"
-import { ImportPage } from "@/features/import"
-import { MessagesPage } from "@/features/messages"
-import { QueuePage } from "@/features/queue"
-import { ReportsPage } from "@/features/reports"
-import { SegmentsPage } from "@/features/segments"
-import { SettingsPage } from "@/features/settings"
-import { SyncPage } from "@/features/sync"
-import { TemplatesPage } from "@/features/templates"
+import { CampaignsProvider } from "@/features/campaigns/campaigns-store"
+import { ClientsProvider } from "@/features/clients/clients-store"
+import { ConexionProvider } from "@/features/connection/conexion-store"
+import { ConversationsProvider } from "@/features/conversations/conversations-store"
+
+const AuditPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AuditPage })))
+const DevicesPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.DevicesPage })))
+const CampaignsPage = lazy(() => import("@/features/campaigns").then((m) => ({ default: m.CampaignsPage })))
+const ClientsPage = lazy(() => import("@/features/clients").then((m) => ({ default: m.ClientsPage })))
+const ConnectionPage = lazy(() => import("@/features/connection").then((m) => ({ default: m.ConnectionPage })))
+const ConversationsPage = lazy(() => import("@/features/conversations").then((m) => ({ default: m.ConversationsPage })))
+const DashboardPage = lazy(() => import("@/features/dashboard").then((m) => ({ default: m.DashboardPage })))
+const HistoryPage = lazy(() => import("@/features/history").then((m) => ({ default: m.HistoryPage })))
+const ImportPage = lazy(() => import("@/features/import").then((m) => ({ default: m.ImportPage })))
+const MessagesPage = lazy(() => import("@/features/messages").then((m) => ({ default: m.MessagesPage })))
+const QueuePage = lazy(() => import("@/features/queue").then((m) => ({ default: m.QueuePage })))
+const ReportsPage = lazy(() => import("@/features/reports").then((m) => ({ default: m.ReportsPage })))
+const SegmentsPage = lazy(() => import("@/features/segments").then((m) => ({ default: m.SegmentsPage })))
+const SettingsPage = lazy(() => import("@/features/settings").then((m) => ({ default: m.SettingsPage })))
+const SyncPage = lazy(() => import("@/features/sync").then((m) => ({ default: m.SyncPage })))
+const TemplatesPage = lazy(() => import("@/features/templates").then((m) => ({ default: m.TemplatesPage })))
+
+const pageLoader = (
+  <div className="flex min-h-40 items-center justify-center p-8" role="status">
+    <Loader2 className="size-5 animate-spin text-ink-400" aria-hidden />
+  </div>
+)
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <ClientsProvider>
+          <ConexionProvider>
+            <CampaignsProvider>
+              <ConversationsProvider>
+                <Suspense fallback={pageLoader}>
+                <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/recuperar" element={<RecoverPage />} />
 
@@ -50,6 +69,12 @@ function App() {
             </Route>
           </Route>
         </Routes>
+                </Suspense>
+            </ConversationsProvider>
+            </CampaignsProvider>
+          </ConexionProvider>
+        </ClientsProvider>
+        <Toaster position="bottom-right" theme="dark" />
       </AuthProvider>
     </BrowserRouter>
   )
