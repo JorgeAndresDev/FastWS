@@ -5,6 +5,7 @@ import { CalendarClock, Download, Printer, Search, ShieldCheck } from "lucide-re
 import { Button, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
+import { escapeCell } from "@/lib/csv"
 import type { AuditCategory, AuditRecord } from "@/types"
 
 import { useCampaigns } from "@/features/campaigns/campaigns-store"
@@ -99,10 +100,6 @@ function csvCell(record: AuditRecord, index: number): string {
 }
 
 /** Evita la inyección de fórmulas al abrir el CSV (= + - @). */
-function escapeCell(value: string) {
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
-  return /[";\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
-}
 
 function exportCsv(records: AuditRecord[]) {
   const header = CSV_COLS.join(";")

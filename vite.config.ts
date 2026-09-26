@@ -11,4 +11,12 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  server: {
+    // Los artefactos de evidencia (simulacro y revisiones visuales) se escriben
+    // dentro del repo; sin esto, cada escritura dispara un full-reload de HMR
+    // que parte las pruebas del simulacro por la mitad.
+    watch: {
+      ignored: ["**/tools/simulacro/artifacts/**", "**/.impeccable/**", "**/dist/**"],
+    },
+  },
 })

@@ -4,6 +4,7 @@ import { sileo } from "sileo"
 
 import { Button, FormField, Input } from "@/components/ui"
 import { formatNumber } from "@/lib/utils"
+import { toWhatsAppNumber } from "@/lib/phone"
 import { graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
 
 import type {
@@ -83,11 +84,6 @@ function resolveBody(body: string, mappingArr: CampaignVariableMapping[], params
     out = out.split(`{{${entry.index}}}`).join(params[i] ?? "")
   })
   return out
-}
-
-function toWhatsAppNumber(display: string) {
-  const digits = display.replace(/\D/g, "")
-  return digits.startsWith("57") ? digits : `57${digits}`
 }
 
 interface PlannedRecipient {

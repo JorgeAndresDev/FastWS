@@ -364,7 +364,10 @@ function CampanaView({ rows }: { rows: ReportMessage[] }) {
       let acc = map.get(key)
       if (!acc) map.set(key, (acc = { enviados: 0, fallidos: 0, respuestas: 0 }))
       if (esFallido(row)) acc.fallidos++
-      else if (esAceptado(row)) row.tipo === "respuesta" ? acc.respuestas++ : acc.enviados++
+      else if (esAceptado(row)) {
+        if (row.tipo === "respuesta") acc.respuestas++
+        else acc.enviados++
+      }
       if (!acc.ultima || row.fecha > acc.ultima) acc.ultima = row.fecha
     }
     return map

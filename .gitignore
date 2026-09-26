@@ -25,6 +25,7 @@ src-tauri/target
 
 # Evidencia de revisión visual y simulacro (capturas, PNG, JSON de probes)
 .impeccable/
+tools/simulacro/artifacts/
 
 # Tooling del agente
 .agents/

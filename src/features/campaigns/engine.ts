@@ -82,7 +82,7 @@ async function tick(id: string) {
 
   runtime.busy = true
   try {
-    let budget = ratePerSecond * ((now - runtime.lastTick) / 1000) + runtime.remainder
+    const budget = ratePerSecond * ((now - runtime.lastTick) / 1000) + runtime.remainder
     runtime.lastTick = now
     const todo = Math.min(Math.floor(budget), 25)
     runtime.remainder = budget - todo

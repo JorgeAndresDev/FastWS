@@ -17,11 +17,16 @@ function shortDate(iso: string, options: Intl.DateTimeFormatOptions) {
 }
 
 export function shortDay(iso: string) {
+  // Con una fecha inválida devolvemos el valor tal cual: capitalizar un dato
+  // corrupto lo disfrazaría de fecha real.
+  if (Number.isNaN(new Date(iso).getTime())) return iso
   const formatted = shortDate(iso, { weekday: "short", day: "numeric", month: "short" })
   return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\.$/, "")
 }
 
 export function fullDay(iso: string) {
+  // Misma guarda que shortDay: un dato corrupto se devuelve tal cual.
+  if (Number.isNaN(new Date(iso).getTime())) return iso
   const formatted = shortDate(iso, {
     weekday: "long",
     day: "numeric",

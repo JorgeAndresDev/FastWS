@@ -1,6 +1,7 @@
 import type { ReportMessage } from "./report-records"
 import { esAceptado, esFallido } from "./report-records"
 import { hourMinute } from "./report-dates"
+import { neutralizeFormula } from "@/lib/csv"
 
 const tipoLabel: Record<ReportMessage["tipo"], string> = {
   mensaje: "Mensaje",
@@ -41,13 +42,9 @@ function cell(row: ReportMessage, key: string): string {
 }
 
 /**
- * Neutraliza la inyección de fórmulas: una celda que empieza por = + - @ (o tab/CR)
- * la ejecuta Excel/Sheets al abrirse. Se le antepone una comilla simple.
+ * Neutraliza la inyección de fórmulas y entrecomilla cuando el delimitador (`;`)
+ * o un salto de línea lo exigen. Vive en `lib/csv` porque Auditoría lo usa igual.
  */
-function neutralizeFormula(value: string) {
-  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
-}
-
 function escapeCell(value: string) {
   const safe = neutralizeFormula(value)
   return /[";\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe

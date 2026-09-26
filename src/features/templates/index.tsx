@@ -7,6 +7,7 @@ import { sileo } from "sileo"
 import { Button, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp, formatDateShort } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
+import { toWhatsAppNumber } from "@/lib/phone"
 
 import { createTemplate, deleteTemplate, graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
 import type { CreateTemplateInput, TemplateComponentInput } from "@/lib/wsb/api"
@@ -32,11 +33,6 @@ const CATEGORIES: TemplateCategory[] = ["MARKETING", "UTILITY", "AUTHENTICATION"
 const TEMPLATES_KEY = "fastws.plantillas"
 const inputBase =
   "h-10 w-full rounded-md border bg-base-800 px-3 text-[0.8125rem] text-ink-100 outline-none transition-colors placeholder:text-ink-500 focus:border-brand-500/60 focus-visible:outline-2 focus-visible:outline-offset-2"
-
-function toWhatsAppNumber(display: string) {
-  const digits = display.replace(/\D/g, "")
-  return digits.startsWith("57") ? digits : `57${digits}`
-}
 
 function shortWamid(wamid: string) {
   return wamid.length > 40 ? `${wamid.slice(0, 37)}…` : wamid

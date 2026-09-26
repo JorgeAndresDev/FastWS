@@ -105,7 +105,10 @@ const telefono = await leer(
   `${encodeURIComponent(phoneId)}?fields=verified_name,display_phone_number,quality_rating,status`,
   "El token lee el número de teléfono"
 )
-const waba = await leer(`${encodeURIComponent(wabaId)}?fields=name`, "El token lee la WABA")
+const waba = await leer(
+  `${encodeURIComponent(wabaId)}?fields=name,verification_status,message_template_namespace`,
+  "El token lee la WABA"
+)
 const numeros = await leer(
   `${encodeURIComponent(wabaId)}/phone_numbers?fields=id,display_phone_number,verified_name`,
   "El token lista los números de la WABA"
@@ -117,11 +120,8 @@ const plantillas = await leer(
   "El token lista las plantillas"
 )
 
-// 5: verificación de la empresa (habilita el envío masivo)
-const cuenta = await leer(
-  `${encodeURIComponent(wabaId)}/whatsapp_business_account?fields=verification_status`,
-  "El token lee la cuenta de WhatsApp Business"
-)
+// La verificación de la empresa es un campo del nodo WABA, no un sub-recurso.
+const verif = waba?.verification_status ?? null
 
 for (const r of resultados) {
   console.log(`  ${r.ok ? "OK   " : "FALLO"} ${r.etiqueta}${r.detalle ? "\n         " + r.detalle : ""}`)
@@ -158,10 +158,11 @@ if (Object.keys(porEstado).length === 0) {
   }
 }
 
-const verif = cuenta?.data?.[0]?.verification_status
-console.log(`\n  Verificación de la empresa : ${verif ?? "no informada"}`)
+console.log(`\n  Verificación de la empresa : ${verif ?? "no informada por la API"}`)
 if (verif && verif !== "verified") {
   console.log("    ⚠ Sin verificación el envío masivo queda restringido por Meta.")
+} else if (!verif) {
+  console.log("    (Meta no expone este estado con este token; se confirma en el panel de empresa.)")
 }
 
 console.log("\nConclusión\n")

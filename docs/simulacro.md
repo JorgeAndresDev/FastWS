@@ -8,7 +8,7 @@ Prueba funcional integral de **todas y cada una** de las funciones de la aplicac
 # 1. Dev server (puerto 5173, el que usan todas las pasadas CDP)
 npm run dev
 
-# 2. Fases automatizables (pasadas CDP en C:\Users\jlele\AppData\Local\Temp\opencode\simulacro\)
+# 2. Fases automatizables (pasadas CDP en tools/simulacro/)
 node pasada-0.mjs
 node pasada-1.mjs   # auth & shell
 node pasada-2.mjs   # conexión
@@ -216,4 +216,4 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 
 ## Orden recomendado de ejecución
 
-0 → 1 → 2 → 3 → 4 → 5 → 6 → 7. Las pasadas automatizadas escriben artefactos en `.impeccable\review\sim\<fase>\` (probes `.json`, DOM `.txt`, raster `.png`, dumps de oracle). Al final se vuelca `docs/simulacro-resultados.md` y se cierra una ficha por hueco confirmado en `docs/simulacro-hallazgos.md`.
+0 → 1 → 2 → 3 → 4 → 5 → 6 → 7. Las pasadas automatizadas escriben artefactos en `tools/simulacro/artifacts/`view\sim\<fase>\` (probes `.json`, DOM `.txt`, raster `.png`, dumps de oracle). Al final se vuelca `docs/simulacro-resultados.md` y se cierra una ficha por hueco confirmado en `docs/simulacro-hallazgos.md`.
