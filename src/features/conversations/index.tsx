@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { MessagesSquare, RefreshCw, Search, Sparkles, Trash2 } from "lucide-react"
+import { MessagesSquare, RefreshCw, Search, Sparkles, Trash2, X } from "lucide-react"
 
 import { Button, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
@@ -48,6 +48,7 @@ export function ConversationsPage() {
   const [filter, setFilter] = useState<"" | ConvoStatus>("")
   const [query, setQuery] = useState("")
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null)
+const [confirmarLimpiar, setConfirmarLimpiar] = useState(false)
   const [templates, setTemplates] = useState<WaTemplate[]>([])
   const [templatesError, setTemplatesError] = useState<string | null>(null)
 
@@ -174,7 +175,7 @@ export function ConversationsPage() {
                   size="sm"
                   variant="ghost"
                   icon={<Trash2 className="size-3.5" aria-hidden />}
-                  onClick={limpiarDemo}
+                  onClick={() => setConfirmarLimpiar(true)}
                 >
                   Limpiar demo
                 </Button>
@@ -256,6 +257,60 @@ export function ConversationsPage() {
           </Panel>
         )}
       </div>
+
+      {confirmarLimpiar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-base-950/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirmar-limpiar-titulo"
+          onKeyDown={(e) => e.key === "Escape" && setConfirmarLimpiar(false)}
+        >
+          <div className="panel w-full max-w-md">
+            <header className="flex items-center justify-between gap-3 border-b border-rule-soft px-5 py-3">
+              <h2
+                id="confirmar-limpiar-titulo"
+                className="text-xs font-bold uppercase tracking-[0.14em] text-ink-400"
+              >
+                Limpiar datos de ejemplo
+              </h2>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label="Cerrar"
+                icon={<X className="size-3.5" aria-hidden />}
+                onClick={() => setConfirmarLimpiar(false)}
+              />
+            </header>
+            <div className="px-5 py-5">
+              <p className="text-base font-semibold text-ink-100">
+                Se borrarán {counts.demo} {counts.demo === 1 ? "hilo" : "hilos"} de demostración
+              </p>
+              <p className="mt-4 max-w-sm leading-relaxed text-xs text-ink-500">
+                Se elimina el historial completo, incluidas las respuestas del operador dentro de
+                esos hilos. Los envíos de campañas reales no se tocan. No hay deshacer.
+              </p>
+            </div>
+            <footer className="flex justify-end gap-2 border-t border-rule-soft px-5 py-4">
+              <Button size="sm" variant="secondary" onClick={() => setConfirmarLimpiar(false)}>
+                Volver
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                icon={<Trash2 className="size-3.5" aria-hidden />}
+                onClick={() => {
+                  limpiarDemo()
+                  setConfirmarLimpiar(false)
+                }}
+                autoFocus
+              >
+                Sí, limpiar
+              </Button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

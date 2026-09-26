@@ -35,7 +35,9 @@ function campaignActivityEvent(
   activity: CampaignActivity,
   index: number
 ): HistoryEvent {
-  const esError = activity.tipo === "con_error" || activity.tipo === "cancelada"
+  // Cancelar es una decisión del operador, no una falla: solo `con_error` es error.
+  // (Auditoría ya lo trata así; aquí se alineaba el chip "Campaña" con el "Error".)
+  const esError = activity.tipo === "con_error"
   return {
     id: `${campaign.id}:act:${index}`,
     at: activity.at,
@@ -44,7 +46,9 @@ function campaignActivityEvent(
     detalle:
       activity.tipo === "con_error"
         ? `«${campaign.name}» entró en espera por error de Meta (autenticación o límite de velocidad).`
-        : `«${campaign.name}» · plantilla ${campaign.template.name} · ${campaign.recipients.length} destinatarios.`,
+        : activity.tipo === "cancelada"
+          ? `«${campaign.name}» se canceló a petición del operador: ${campaign.recipients.length} destinatarios quedaron como cancelados.`
+          : `«${campaign.name}» · plantilla ${campaign.template.name} · ${campaign.recipients.length} destinatarios.`,
   }
 }
 

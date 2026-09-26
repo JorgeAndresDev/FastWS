@@ -118,7 +118,7 @@ Ejecución: **Fecha** `2026-09-25` · **Dev server** `http://localhost:5173` · 
 | 5.11b | Filtro "Con error" | OK | deja solo el hilo FALLIDO |
 | 5.11c | Filtro "Respondidas" sin demos | OK | 0 hilos (vacío correcto) |
 | 5.13 | Sembrar demo | OK | +3 hilos demo (9) y activa "Limpiar demo" |
-| 5.14 | Limpiar demo | OK | vuelve a 6 hilos |
+| 5.14 | Limpiar demo | OK | pide confirmación con conteo de hilos, alcance y «no hay deshacer»; «Volver» no borra y «Sí, limpiar» deja 6 hilos |
 | 5.15 | Responder texto | OK | POST con body correcto (`Hola desde simulacro`) |
 | 5.15b | Mensaje PROCESO + textarea | OK | wamid recibido, sello PROCESO, textarea limpio |
 | 5.16 | Fallo terminal | OK | mensaje FALLIDO con código y sello |
@@ -147,7 +147,7 @@ Ejecución: **Fecha** `2026-09-25` · **Dev server** `http://localhost:5173` · 
 | 6.14 | Historial: pestañas | OK | 6 pestañas por tipo; "Errores" acota la lista |
 | 6.15 | Historial: búsqueda | OK | acota por título/detalle |
 | 6.16 | [S24] estado efímero | **DESC** | filtro/búsqueda/interruptor vuelven al estado inicial al recargar — correcto: no hay selección que persistir |
-| 6.17 | [N9] campaña cancelada | OK | se registra con chip `Error` (queda abierto: ¿cancelar es un error?) |
+| 6.17 | [N9] campaña cancelada | OK | se registra como campaña con su motivo; solo el mensaje cancelado cuenta como error (1 error, no 2), igual que Auditoría |
 | 6.18 | Estado vacío Historial | OK | sello "Sin registro" + ayuda |
 | 6.19 | Auditoría: tarjetas | OK | Turno/Campaña/Error/Conexión/Importación |
 | 6.20 | Auditoría: categorías | OK | 6 pestañas; "Turnos" deja solo los turnos |
