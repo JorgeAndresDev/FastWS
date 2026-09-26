@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke:meta": "node tools/smoke-meta.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter-tight": "^5.3.0",
