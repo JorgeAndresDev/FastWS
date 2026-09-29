@@ -2,8 +2,10 @@ import { useMemo, useState } from "react"
 import type { DashboardStats, OutboundMessage } from "@/types"
 import { useNavigate, Link } from "react-router-dom"
 import {
+  BarChart3,
   ExternalLink,
   HardDrive,
+  MessageSquare,
   RefreshCw,
   Send,
   Sparkles,
@@ -11,7 +13,7 @@ import {
   Wifi,
 } from "lucide-react"
 
-import { Button, DispatchBar, Panel, StatusStamp } from "@/components/ui"
+import { Button, DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { cn, formatNumber, formatPercent } from "@/lib/utils"
 
 import { campaignCounts, campaignSegments, deliveryProgress } from "@/features/campaigns/campaign-segments"
@@ -344,7 +346,10 @@ export function DashboardPage() {
           <Panel
             title="Entrega de mensajes"
             action={
-              <span className="stamp stamp--fecha stamp--container">Total {formatNumber(funnel.total)}</span>
+              <span className="stamp stamp--fecha stamp--container">
+                <BarChart3 aria-hidden />
+                Total {formatNumber(funnel.total)}
+              </span>
             }
           >
             <EntregaDonut funnel={funnel} />
@@ -418,13 +423,12 @@ export function DashboardPage() {
                   {recientes.length === 0 && (
                     <tr>
                       <td colSpan={5}>
-                        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-                          <span className="stamp stamp--fecha stamp--container">Sin mensajes</span>
-                          <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                            Los mensajes aparecen cuando una campaña ha sido despachada desde la
-                            Cola.
-                          </p>
-                        </div>
+                        <EmptyState
+                          label="Sin mensajes"
+                          icon={MessageSquare}
+                          className="py-12"
+                          note="Los mensajes aparecen cuando una campaña ha sido despachada desde la Cola."
+                        />
                       </td>
                     </tr>
                   )}

@@ -214,6 +214,10 @@
   .stamp--container > svg {
     width: 0.75rem;
     height: 0.75rem;
+    /* En la píldora el icono lleva el color del TEXTO, no el del estado: el
+       fondo ya es el color, así que pintar el icono con `--stamp-fill` lo
+       volvería invisible sobre su propia píldora. */
+    color: currentColor;
   }
   .stamp--fecha.stamp--container {
     background: var(--color-base-800);

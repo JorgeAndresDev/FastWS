@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { Eye, LayoutTemplate, Link2, Plus, RefreshCw, Search, Send, TriangleAlert, Trash2, X } from "lucide-react"
+import { Eye, KeyRound, LayoutTemplate, Link2, Megaphone, Plus, RefreshCw, Search, Send, Tags, TriangleAlert, Trash2, Wrench, X } from "lucide-react"
 import { sileo } from "sileo"
 
-import { Button, FormField, Input, Panel } from "@/components/ui"
+import { Button, EmptyState, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp, formatDateShort } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
 import { toWhatsAppNumber } from "@/lib/phone"
@@ -37,6 +38,29 @@ const inputBase =
 
 function shortWamid(wamid: string) {
   return wamid.length > 40 ? `${wamid.slice(0, 37)}…` : wamid
+}
+
+/**
+ * La categoría clasifica, no informa estado: por eso viste la paleta creativa
+ * (icono a color, texto neutro) y no el vocabulario de sellos, tal como manda
+ * DESIGN.md. Antes viajaba como sello de fecha neutro y sin icono, junto a dos
+ * chips hermanos que sí lo llevaban.
+ */
+const CATEGORY_STAMP: Record<string, { icon: LucideIcon; tone: string }> = {
+  MARKETING: { icon: Megaphone, tone: "stamp--pink" },
+  UTILITY: { icon: Wrench, tone: "stamp--cyan" },
+  AUTHENTICATION: { icon: KeyRound, tone: "stamp--indigo" },
+}
+
+function CategoryStamp({ category }: { category: string }) {
+  const config = CATEGORY_STAMP[category] ?? { icon: Tags, tone: "stamp--fecha" }
+  const Icon = config.icon
+  return (
+    <span className={cn("stamp", config.tone)}>
+      <Icon aria-hidden />
+      {categoryLabel[category as TemplateCategory] ?? category}
+    </span>
+  )
 }
 
 function TemplateRowActions({
@@ -93,13 +117,11 @@ function TemplatesTable({
   const cols = ["Plantilla", "Estado", "Categoría", "Calidad", "Actualizado", "Acciones"]
   if (templates.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-        <span className="stamp stamp--fecha stamp--container">Sin plantillas</span>
-        <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-          No hay plantillas que coincidan con el filtro. Sincroniza de nuevo o crea una nueva
-          plantilla para este número de WhatsApp Business.
-        </p>
-      </div>
+      <EmptyState
+        label="Sin plantillas"
+        icon={LayoutTemplate}
+        note="No hay plantillas que coincidan con el filtro. Sincroniza de nuevo o crea una nueva plantilla para este número de WhatsApp Business."
+      />
     )
   }
   return (
@@ -310,7 +332,7 @@ function TemplateDetail({
           <h3 className="font-mono text-sm font-bold text-ink-100">{template.name}</h3>
           <TemplateStatusChip status={template.status} />
           <QualityBadge quality={template.qualityScore} />
-          <span className="stamp stamp--fecha">{categoryLabel[template.category] ?? template.category}</span>
+          <CategoryStamp category={template.category} />
         </div>
 
         <dl className="grid gap-2 sm:grid-cols-2">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { MessageSquare } from "lucide-react"
 
-import { DispatchBar, Panel, StatusStamp } from "@/components/ui"
+import { DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 
@@ -183,12 +183,11 @@ export function MessagesPage() {
               {visible.length === 0 && (
                 <tr>
                   <td colSpan={6}>
-                    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-                      <span className="stamp stamp--fecha stamp--container">Sin mensajes</span>
-                      <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                        Los mensajes aparecen cuando una campaña ha sido despachada desde la Cola.
-                      </p>
-                    </div>
+                    <EmptyState
+                      label="Sin mensajes"
+                      icon={MessageSquare}
+                      note="Los mensajes aparecen cuando una campaña ha sido despachada desde la Cola."
+                    />
                   </td>
                 </tr>
               )}

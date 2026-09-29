@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, ArrowRight, Check, Link2, RefreshCw, Send, Trash2, Users } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Link2, ListOrdered, RefreshCw, Send, Trash2, Users } from "lucide-react"
 import { sileo } from "sileo"
 
 import { Button, FormField, Input } from "@/components/ui"
@@ -352,7 +352,10 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
       <div className="flex items-center gap-2">
-        <span className="stamp stamp--proceso stamp--container">{step === 1 ? "Paso 1 de 2" : "Paso 2 de 2"}</span>
+        <span className="stamp stamp--proceso stamp--container">
+          <ListOrdered aria-hidden />
+          {step === 1 ? "Paso 1 de 2" : "Paso 2 de 2"}
+        </span>
         <span className={label + " text-ink-500"}>
           {step === 1 ? "Plantilla y mapeo de variables" : "Segmento de destinatarios"}
         </span>
@@ -403,7 +406,10 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
                 <span className="font-mono text-sm font-bold text-ink-100">
                   {selectedTemplate.name}
                 </span>
-                <span className="stamp stamp--entregado stamp--container">Aprobada</span>
+                <span className="stamp stamp--entregado stamp--container">
+                  <CheckCircle2 aria-hidden />
+                  Aprobada
+                </span>
               </div>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-200">
                 {componentText(selectedTemplate, "BODY")}

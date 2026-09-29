@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Plus, Send, X } from "lucide-react"
 
-import { Button, DispatchBar, Panel, StatusStamp } from "@/components/ui"
+import { Button, DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { formatDateShort, formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 
@@ -165,13 +165,11 @@ export function CampaignsPage() {
                 {campaigns.length === 0 && (
                   <tr>
                     <td colSpan={6}>
-                      <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-                        <span className="stamp stamp--fecha stamp--container">Sin campañas</span>
-                        <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                          Crea tu primera campaña con una plantilla aprobada y un segmento de
-                          clientes. El despacho se inicia desde la Cola.
-                        </p>
-                      </div>
+                      <EmptyState
+                        label="Sin campañas"
+                        icon={Send}
+                        note="Crea tu primera campaña con una plantilla aprobada y un segmento de clientes. El despacho se inicia desde la Cola."
+                      />
                     </td>
                   </tr>
                 )}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import { ShieldCheck, Wifi, WifiOff } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { Activity, Check, Clock3, ShieldCheck, Wifi, WifiOff } from "lucide-react"
 
 import { formatDateStamp } from "@/app/date-stamp"
 import { Wordmark } from "@/app/wordmark"
@@ -27,6 +28,14 @@ const stepStampTone: Record<NonNullable<TurnStep["stamp"]>["tone"], string> = {
   entregado: "stamp--entregado",
   proceso: "stamp--proceso",
   pendiente: "stamp--pendiente",
+}
+
+// El sello de paso comparte el vocabulario de `StatusStamp`: Check, Activity y
+// Clock3 cuentan lo mismo que Proceso, Entregado y Pendiente en la cola.
+const stepStampIcon: Record<NonNullable<TurnStep["stamp"]>["tone"], LucideIcon> = {
+  entregado: Check,
+  proceso: Activity,
+  pendiente: Clock3,
 }
 
 interface AuthShellProps {
@@ -85,11 +94,21 @@ export function AuthShell({ steps, title, intro, device, children, footer }: Aut
                       {step.detail}
                     </p>
                   )}
-                  {step.stamp && (
-                    <span className={cn("stamp stamp--container mt-1.5", stepStampTone[step.stamp.tone])}>
-                      {step.stamp.label}
-                    </span>
-                  )}
+                  {step.stamp &&
+                    (() => {
+                      const StampIcon = stepStampIcon[step.stamp.tone]
+                      return (
+                        <span
+                          className={cn(
+                            "stamp stamp--container mt-1.5",
+                            stepStampTone[step.stamp.tone]
+                          )}
+                        >
+                          <StampIcon aria-hidden />
+                          {step.stamp.label}
+                        </span>
+                      )
+                    })()}
                 </div>
               </li>
             ))}

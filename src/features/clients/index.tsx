@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { Pencil, Plus, Search, Trash2, Users, X } from "lucide-react"
+import { Ban, Clock3, Minus, Pencil, Plus, Search, SearchX, Trash2, Users, X } from "lucide-react"
 import { sileo } from "sileo"
 
 import type { Client, OrderState } from "@/types"
 
-import { Button, FormField, Input, Panel } from "@/components/ui"
+import { Button, EmptyState, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 import { registrarAuditoria } from "@/lib/audit-log"
@@ -22,12 +22,25 @@ const rightCols = ["Código", "Teléfono", "Ventana", "Pedido", "Tipo"]
 
 function PedidoStamp({ state, reason }: { state?: OrderState; reason?: string }) {
   if (!state) {
-    return <span className="text-[0.75rem] text-ink-600">Sin pedido</span>
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <span className="stamp">
+          <Minus aria-hidden />
+          Sin pedido
+        </span>
+      </div>
+    )
   }
+  // Mismos iconos que StatusStamp: el sello de pedido y el de mensaje no pueden
+  // contar la misma historia con dos grafismos.
+  const Icon = state === "CANCELADO" ? Ban : Clock3
   const tone = state === "CANCELADO" ? "stamp--cancelado" : "stamp--pendiente"
   return (
     <div className="flex flex-col items-end gap-1">
-      <span className={cn("stamp", tone)}>{state}</span>
+      <span className={cn("stamp", tone)}>
+        <Icon aria-hidden />
+        {state}
+      </span>
       {state === "CANCELADO" && reason ? (
         <span className="max-w-[12rem] truncate text-right text-[0.75rem] text-ink-500">
           {reason}
@@ -369,16 +382,15 @@ export function ClientsPage() {
         }
       >
         {visible.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <span className="stamp stamp--fecha stamp--container">
-              {clients.length === 0 ? "Sin clientes" : "Sin coincidencias"}
-            </span>
-            <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-              {clients.length === 0
+          <EmptyState
+            label={clients.length === 0 ? "Sin clientes" : "Sin coincidencias"}
+            icon={clients.length === 0 ? Users : SearchX}
+            note={
+              clients.length === 0
                 ? "El registro está vacío. Importa una base desde Importar clientes o registra el primero con «Nuevo cliente»."
-                : "Ningún cliente coincide con la búsqueda o el filtro. Ajusta los criterios."}
-            </p>
-          </div>
+                : "Ningún cliente coincide con la búsqueda o el filtro. Ajusta los criterios."
+            }
+          />
         ) : (
           <div ref={scrollRef} className="max-h-[36rem] overflow-x-auto overflow-y-auto">
             <div role="table" className="min-w-[72rem]">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
-import { MessagesSquare, RefreshCw, Search, Sparkles, Trash2, X } from "lucide-react"
+import { MessagesSquare, MousePointerClick, RefreshCw, Search, Sparkles, Trash2, X } from "lucide-react"
 
-import { Button, Panel } from "@/components/ui"
+import { Button, EmptyState, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
 import { graphError, listTemplates } from "@/lib/wsb/api"
@@ -231,13 +231,11 @@ const [confirmarLimpiar, setConfirmarLimpiar] = useState(false)
                 })}
               </ul>
             ) : (
-              <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-                <span className="stamp stamp--fecha stamp--container">Sin hilos</span>
-                <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                  Los hilos se llenan con los envíos reales de campañas y con tus respuestas. Para
-                  ejercitar el estado “respondida”, siembra datos de ejemplo.
-                </p>
-              </div>
+              <EmptyState
+                label="Sin hilos"
+                icon={MessagesSquare}
+                note="Los hilos se llenan con los envíos reales de campañas y con tus respuestas. Para ejercitar el estado “respondida”, siembra datos de ejemplo."
+              />
             )}
           </div>
         </Panel>
@@ -248,12 +246,12 @@ const [confirmarLimpiar, setConfirmarLimpiar] = useState(false)
           </Panel>
         ) : (
           <Panel className="lg:min-h-[calc(100vh-13rem)]">
-            <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <span className="stamp stamp--fecha stamp--container">Selecciona un hilo</span>
-              <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                Abre una conversación a la izquierda para ver el hilo y responder.
-              </p>
-            </div>
+            <EmptyState
+              label="Selecciona un hilo"
+              icon={MousePointerClick}
+              className="py-20"
+              note="Abre una conversación a la izquierda para ver el hilo y responder."
+            />
           </Panel>
         )}
       </div>

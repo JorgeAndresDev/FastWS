@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import {
+  Clock3,
   Database,
   HardDrive,
   Link2,
@@ -14,7 +15,7 @@ import {
   Wifi,
 } from "lucide-react"
 
-import { Button, Panel } from "@/components/ui"
+import { Button, EmptyState, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 
@@ -38,15 +39,6 @@ const DATASET_ICON: Record<SyncDataset["id"], React.ComponentType<{ className?: 
   conversaciones: MessagesSquare,
   turnos: UserRound,
   auditoria: ShieldCheck,
-}
-
-function EmptyState({ note }: { note: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-      <span className="stamp stamp--fecha stamp--container">Sin datos</span>
-      <p className="max-w-sm text-xs leading-relaxed text-ink-500">{note}</p>
-    </div>
-  )
 }
 
 function PanelDatos({ datasets }: { datasets: SyncDataset[] }) {
@@ -202,13 +194,21 @@ function PanelEquipos() {
                   {equipo.registros === 1 ? "turno" : "turnos"} · última actividad{" "}
                   {equipo.lastActivity ?? "—"}
                 </p>
-                <span className="stamp stamp--pendiente">Sincronizado: nunca</span>
+                <span className="stamp stamp--pendiente">
+                  <Clock3 aria-hidden />
+                  Sincronizado: nunca
+                </span>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <EmptyState note="No hay turnos registrados aún. Los equipos aparecerán aquí cuando abran sesión." />
+        <EmptyState
+          label="Sin datos"
+          icon={HardDrive}
+          className="py-10"
+          note="No hay turnos registrados aún. Los equipos aparecerán aquí cuando abran sesión."
+        />
       )}
     </Panel>
   )

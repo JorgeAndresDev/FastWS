@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react"
 import { useEffect } from "react"
-import { Check, MonitorSmartphone, Send, UserRound } from "lucide-react"
+import { Activity, Check, MonitorSmartphone, RotateCcw, ScrollText, Send, UserRound } from "lucide-react"
 
-import { Button, FormField, Input, Panel } from "@/components/ui"
+import { Button, EmptyState, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { getDeviceIdentity, setDeviceName, useAuth } from "@/features/auth"
 import { sessionKind } from "@/features/auth/session"
@@ -28,9 +28,15 @@ function durar(inicio: string, fin?: string) {
 
 function OrigenChip({ origen }: { origen: SesionRegistro["origen"] }) {
   return origen === "inicio" ? (
-    <span className="stamp stamp--entregado">Inicio de turno</span>
+    <span className="stamp stamp--entregado">
+      <Check aria-hidden />
+      Inicio de turno
+    </span>
   ) : (
-    <span className="stamp stamp--fecha">Turno restaurado</span>
+    <span className="stamp stamp--fecha">
+      <RotateCcw aria-hidden />
+      Turno restaurado
+    </span>
   )
 }
 
@@ -44,15 +50,6 @@ function TipoSesionChip({ recordar }: { recordar: boolean }) {
     >
       {recordar ? "Recordada" : "Temporal"}
     </span>
-  )
-}
-
-function EmptyState({ note }: { note: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <span className="stamp stamp--fecha stamp--container">Sin registro</span>
-      <p className="max-w-sm text-xs leading-relaxed text-ink-500">{note}</p>
-    </div>
   )
 }
 
@@ -159,7 +156,11 @@ function PanelTurno() {
           </p>
         </div>
       ) : (
-        <EmptyState note="No hay un turno abierto. Inicia sesión para verlo aquí." />
+          <EmptyState
+            label="Sin turno abierto"
+            icon={UserRound}
+            note="No hay un turno abierto. Inicia sesión para verlo aquí."
+          />
       )}
     </Panel>
   )
@@ -212,7 +213,10 @@ function PanelBitacora() {
                         {formatFechita(r.fin)}
                       </span>
                     ) : (
-                      <span className="stamp stamp--proceso">Activa</span>
+                      <span className="stamp stamp--proceso">
+                        <Activity aria-hidden />
+                        Activa
+                      </span>
                     )}
                   </td>
                   <td className={cn(td, "text-right whitespace-nowrap text-xs tabular-nums text-ink-400")}>
@@ -234,7 +238,11 @@ function PanelBitacora() {
           </table>
         </div>
       ) : (
-        <EmptyState note="La bitácora empieza a registrar turnos con el próximo inicio de sesión." />
+          <EmptyState
+            label="Sin registro"
+            icon={ScrollText}
+            note="La bitácora empieza a registrar turnos con el próximo inicio de sesión."
+          />
       )}
     </Panel>
   )
@@ -280,7 +288,10 @@ function PanelPulso() {
               <Send aria-hidden />
               {formatNumber(despachos.length)} despachadas desde {device.code}
             </span>
-            <span className="stamp stamp--proceso stamp--container">{formatNumber(activas)} en proceso</span>
+            <span className="stamp stamp--proceso stamp--container">
+              <Activity aria-hidden />
+              {formatNumber(activas)} en proceso
+            </span>
           </div>
           <ul className="divide-y divide-rule-soft">
             {despachos.slice(0, 6).map((c) => (
@@ -300,7 +311,11 @@ function PanelPulso() {
           </ul>
         </>
       ) : (
-        <EmptyState note="Ninguna campaña despachada desde este equipo todavía. Cada inicio de despacho queda atribuido aquí." />
+          <EmptyState
+            label="Sin despachos"
+            icon={Send}
+            note="Ninguna campaña despachada desde este equipo todavía. Cada inicio de despacho queda atribuido aquí."
+          />
       )}
     </Panel>
   )

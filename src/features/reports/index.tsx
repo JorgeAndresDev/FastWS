@@ -2,18 +2,22 @@ import { useMemo, useState } from "react"
 import {
   BarChart3,
   CalendarClock,
+  CalendarPlus,
   Download,
   LayoutGrid,
   ListFilter,
   Printer,
+  Reply,
   Search,
+  SearchX,
   Send,
   TrendingUp,
+  TriangleAlert,
   UserRound,
   Users,
 } from "lucide-react"
 
-import { Button, DispatchBar, Panel, StatusStamp } from "@/components/ui"
+import { Button, DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 
@@ -340,7 +344,11 @@ function DiaView({ rows }: { rows: ReportMessage[] }) {
           </div>
         </div>
       ) : (
-        <EmptyState note="El registro diario aparece cuando hay envíos o respuestas en el periodo." />
+          <EmptyState
+            label="Sin registro"
+            icon={CalendarPlus}
+            note="El registro diario aparece cuando hay envíos o respuestas en el periodo."
+          />
       )}
     </Panel>
   )
@@ -441,7 +449,11 @@ function CampanaView({ rows }: { rows: ReportMessage[] }) {
           </tbody>
         </table>
         {campaigns.length === 0 && (
-          <EmptyState note="Crea y despacha campañas desde el módulo Campañas para ver su actividad aquí." />
+          <EmptyState
+            label="Sin registro"
+            icon={Send}
+            note="Crea y despacha campañas desde el módulo Campañas para ver su actividad aquí."
+          />
         )}
       </div>
     </Panel>
@@ -539,7 +551,11 @@ function EstadoView({ rows }: { rows: ReportMessage[] }) {
               {rows.length === 0 && (
                 <tr>
                   <td colSpan={7}>
-                    <EmptyState note="No hay registros que coincidan con los filtros del periodo." />
+                    <EmptyState
+            label="Sin coincidencias"
+            icon={SearchX}
+            note="No hay registros que coincidan con los filtros del periodo."
+          />
                   </td>
                 </tr>
               )}
@@ -663,7 +679,11 @@ function ClienteView({ rows }: { rows: ReportMessage[] }) {
           </tbody>
         </table>
         {byClient.length === 0 && (
-          <EmptyState note="La actividad por cliente aparece cuando hay envíos en el periodo." />
+          <EmptyState
+            label="Sin actividad"
+            icon={Users}
+            note="La actividad por cliente aparece cuando hay envíos en el periodo."
+          />
         )}
       </div>
     </Panel>
@@ -778,7 +798,11 @@ function UsuarioView({ rows, desde }: { rows: ReportMessage[]; desde?: string })
           </tbody>
         </table>
         {byUser.length === 0 && (
-          <EmptyState note="El registro por usuario aparece cuando hay campañas despachadas desde la Cola." />
+          <EmptyState
+            label="Sin registro"
+            icon={UserRound}
+            note="El registro por usuario aparece cuando hay campañas despachadas desde la Cola."
+          />
         )}
       </div>
     </Panel>
@@ -800,15 +824,6 @@ function campaignSegmentsFromCounts(counts: ReturnType<typeof statusCounts>) {
     { status: "PENDIENTE" as const, count: counts.PENDIENTE },
     { status: "CANCELADO" as const, count: counts.CANCELADO },
   ].filter((segment) => segment.count > 0)
-}
-
-function EmptyState({ note }: { note: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <span className="stamp stamp--fecha stamp--container">Sin registro</span>
-      <p className="max-w-sm text-xs leading-relaxed text-ink-500">{note}</p>
-    </div>
-  )
 }
 
 function shortId(id?: string, max = 30) {
@@ -1033,9 +1048,18 @@ export function ReportsPage() {
           <CalendarClock aria-hidden />
           {periodInfo}
         </span>
-        <span className="stamp stamp--fecha stamp--container">Enviados {formatNumber(counts.PROCESO + counts.ENTREGADO + counts.LEIDO)}</span>
-        <span className="stamp stamp--fallido stamp--container">Fallidos {formatNumber(counts.FALLIDO)}</span>
-        <span className="stamp stamp--fecha stamp--container">Respuestas</span>
+        <span className="stamp stamp--fecha stamp--container">
+          <Send aria-hidden />
+          Enviados {formatNumber(counts.PROCESO + counts.ENTREGADO + counts.LEIDO)}
+        </span>
+        <span className="stamp stamp--fallido stamp--container">
+          <TriangleAlert aria-hidden />
+          Fallidos {formatNumber(counts.FALLIDO)}
+        </span>
+        <span className="stamp stamp--fecha stamp--container">
+          <Reply aria-hidden />
+          Respuestas
+        </span>
       </div>
 
       <section className="mt-4">

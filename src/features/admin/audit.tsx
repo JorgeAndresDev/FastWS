@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { CalendarClock, Download, Printer, Search, ShieldCheck } from "lucide-react"
+import { CalendarClock, Download, ListOrdered, Printer, ScrollText, Search, Send, ShieldCheck, TriangleAlert, UserRound } from "lucide-react"
 
-import { Button, Panel } from "@/components/ui"
+import { Button, EmptyState, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 import { escapeCell } from "@/lib/csv"
@@ -444,10 +444,22 @@ export function AuditPage() {
           <CalendarClock aria-hidden />
           {periodInfo}
         </span>
-        <span className="stamp stamp--fecha stamp--container">Turnos {formatNumber(counts.turno)}</span>
-        <span className="stamp stamp--fecha stamp--container">Campañas {formatNumber(counts.campana)}</span>
-        <span className="stamp stamp--fallido stamp--container">Errores {formatNumber(counts.error)}</span>
-        <span className="stamp stamp--fecha stamp--container">Operaciones {formatNumber(operaciones)}</span>
+        <span className="stamp stamp--fecha stamp--container">
+          <UserRound aria-hidden />
+          Turnos {formatNumber(counts.turno)}
+        </span>
+        <span className="stamp stamp--fecha stamp--container">
+          <Send aria-hidden />
+          Campañas {formatNumber(counts.campana)}
+        </span>
+        <span className="stamp stamp--fallido stamp--container">
+          <TriangleAlert aria-hidden />
+          Errores {formatNumber(counts.error)}
+        </span>
+        <span className="stamp stamp--fecha stamp--container">
+          <ListOrdered aria-hidden />
+          Operaciones {formatNumber(operaciones)}
+        </span>
       </div>
 
       <Panel title="Libro de auditoría" className="mt-4">
@@ -481,14 +493,11 @@ export function AuditPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-              <span className="stamp stamp--fecha stamp--container">Sin registro</span>
-              <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                El libro reúne los turnos que se abren en este equipo, la actividad de campañas,
-                errores de Meta y las operaciones de conexión e importación. Ajusta el periodo, la
-                categoría o la búsqueda.
-              </p>
-            </div>
+            <EmptyState
+              label="Sin registro"
+              icon={ScrollText}
+              note="El libro reúne los turnos que se abren en este equipo, la actividad de campañas, errores de Meta y las operaciones de conexión e importación. Ajusta el periodo, la categoría o la búsqueda."
+            />
           )}
         </div>
       </Panel>

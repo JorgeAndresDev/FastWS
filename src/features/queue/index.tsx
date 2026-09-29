@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Ban, ListOrdered, Pause, Play, Settings, X } from "lucide-react"
+import { Ban, Inbox, ListOrdered, Pause, Play, Settings, X } from "lucide-react"
 
-import { Button, DispatchBar, Panel, StatusStamp } from "@/components/ui"
+import { Button, DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { formatDateShort, formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
 
@@ -214,13 +214,11 @@ export function QueuePage() {
               {campaigns.length === 0 && (
                 <tr>
                   <td colSpan={7}>
-                    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-                      <span className="stamp stamp--fecha stamp--container">Cola vacía</span>
-                      <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                        Crea una campaña desde el módulo Campañas para que aparezca aquí y puedas
-                        iniciar su despacho.
-                      </p>
-                    </div>
+                    <EmptyState
+                      label="Cola vacía"
+                      icon={Inbox}
+                      note="Crea una campaña desde el módulo Campañas para que aparezca aquí y puedas iniciar su despacho."
+                    />
                   </td>
                 </tr>
               )}

@@ -1,5 +1,6 @@
 export { Button } from "./button"
 export { DispatchBar } from "./dispatch-bar"
+export { EmptyState } from "./empty-state"
 export { FormField, Input } from "./input"
 export { Kbd } from "./kbd"
 export { Panel } from "./panel"

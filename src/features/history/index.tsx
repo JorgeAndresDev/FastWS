@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { Eye, EyeOff, History, Search } from "lucide-react"
+import { Eye, EyeOff, History, ScrollText, Search } from "lucide-react"
 
-import { Panel } from "@/components/ui"
+import { EmptyState, Panel } from "@/components/ui"
 import { formatDateStamp } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
 
@@ -229,13 +229,11 @@ export function HistoryPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-              <span className="stamp stamp--fecha stamp--container">Sin registro</span>
-              <p className="max-w-sm text-xs leading-relaxed text-ink-500">
-                Las actividades aparecen cuando hay campañas creadas, mensajes procesados o
-                respuestas. Ajusta los filtros o activa “Envíos exitosos”.
-              </p>
-            </div>
+            <EmptyState
+              label="Sin registro"
+              icon={ScrollText}
+              note="Las actividades aparecen cuando hay campañas creadas, mensajes procesados o respuestas. Ajusta los filtros o activa “Envíos exitosos”."
+            />
           )}
         </div>
       </Panel>

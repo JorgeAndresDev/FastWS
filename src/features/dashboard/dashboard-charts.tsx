@@ -1,5 +1,7 @@
+import { Activity, ChartNoAxesColumn } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
+import { EmptyState } from "@/components/ui"
 import { formatNumber } from "@/lib/utils"
 
 import type { DeliveryFunnel, OperacionPoint } from "./dashboard-stats"
@@ -111,13 +113,12 @@ export function EntregaDonut({ funnel }: { funnel: DeliveryFunnel }) {
           </ul>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-          <span className="stamp stamp--fecha stamp--container">Sin movimiento</span>
-          <p className="max-w-xs text-xs leading-relaxed text-ink-500">
-            Despacha una campaña para ver aquí el avance de la entrega: enviados, recibidos, en
-            tránsito y errores.
-          </p>
-        </div>
+        <EmptyState
+          label="Sin movimiento"
+          icon={ChartNoAxesColumn}
+          className="py-12"
+          note="Despacha una campaña para ver aquí el avance de la entrega: enviados, recibidos, en tránsito y errores."
+        />
       )}
     </div>
   )
@@ -135,12 +136,12 @@ export function TendenciaOperacion({ points }: { points: OperacionPoint[] }) {
 
   if (!tieneDatos) {
     return (
-      <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-        <span className="stamp stamp--fecha stamp--container">Sin actividad</span>
-        <p className="max-w-xs text-xs leading-relaxed text-ink-500">
-          La actividad diaria aparece cuando una campaña ha sido despachada desde la Cola.
-        </p>
-      </div>
+      <EmptyState
+        label="Sin actividad"
+        icon={Activity}
+        className="py-12"
+        note="La actividad diaria aparece cuando una campaña ha sido despachada desde la Cola."
+      />
     )
   }
 
