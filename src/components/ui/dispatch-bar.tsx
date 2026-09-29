@@ -14,13 +14,18 @@ interface DispatchBarProps {
   size?: "md" | "sm"
 }
 
+/**
+ * La barra usa la escala de RELLENO, no la de texto: un segmento es un área de
+ * color sin nada encima, y bajarla al paso oscuro del tema claro lo volvería
+ * barro — sobre todo el ámbar de "pendiente".
+ */
 const segmentColor: Record<MessageStatus, string> = {
-  PROCESO: "bg-proceso",
-  PENDIENTE: "bg-pendiente",
-  ENTREGADO: "bg-entregado",
-  LEIDO: "bg-leido",
-  FALLIDO: "bg-fallido",
-  CANCELADO: "bg-cancelado",
+  PROCESO: "bg-fill-proceso",
+  PENDIENTE: "bg-fill-pendiente",
+  ENTREGADO: "bg-fill-entregado",
+  LEIDO: "bg-fill-leido",
+  FALLIDO: "bg-fill-fallido",
+  CANCELADO: "bg-fill-cancelado",
 }
 
 const statusLabel: Record<MessageStatus, string> = {

@@ -44,8 +44,105 @@
   --color-fallido-600: #cb4049;
   --color-cancelado: #8a97a7;
 
+  /* Texto que se apoya sobre un color saturado (píldora de sello, botón verde).
+     Deliberadamente FUERA de la escala de superficies: se invierte en cada
+     tema y, si leyera --color-base-950, en modo claro pasaría a casi blanco
+     sobre el verde — 1.6:1, ilegible. Carbón sobre FastWS es el único par que
+     aguanta los dos mundos. */
+  --color-on-accent: #0a0d11;
+
+  /* Velo de los modales. No puede derivarse de `base-950`: al invertirse la
+     escala, en claro sería un velo casi blanco sobre contenido casi blanco y
+     el modal dejaría de separarse. Un scrim oscuro funciona en los dos. */
+  --color-scrim: rgb(10 13 17 / 0.72);
+
+  /* Colores de sello CUANDO SON RELLENO.
+     Los de arriba hacen doble trabajo: como icono o texto necesitan ser oscuros
+     para cumplir contraste en claro, pero como relleno de la barra de despacho
+     o de una serie de gráfico quieren ser vivos. En claro, `#f0b13c` como
+     texto no pasa 4.5:1, y `#9a6206` como relleno se ve barro. Estos son los
+     pasos vivos, idénticos en los dos temas: el relleno no lleva texto encima,
+     así que no tiene por qué bajarse. */
+  --color-fill-proceso: #5aa2ff;
+  --color-fill-pendiente: #f0b13c;
+  --color-fill-entregado: #14d659;
+  --color-fill-leido: #a78bfa;
+  --color-fill-fallido: #f0646f;
+  --color-fill-cancelado: #8a97a7;
+
+  /* Lavado ambiental del fondo. En oscuro es una luz de carbón; en claro tiene
+     que ser un tinte frio, porque un lavado claro sobre blanco no se ve. */
+  --wash-radial: color-mix(in oklab, var(--color-base-800) 55%, transparent);
+  --wash-linear: color-mix(in oklab, var(--color-base-900) 40%, transparent);
+  --wash-linear-size: 220px;
+
+  /* Sombras de apoyo — el unico lugar donde el sistema admite elevacion con
+     sombra, y solo porque sobre blanco "subir un tono" no existe. */
+  --elev-1: 0 1px 2px rgb(10 13 17 / 0.06);
+  --elev-2: 0 4px 14px rgb(10 13 17 / 0.08);
+
   --radius-panel: 0.625rem;
   --radius-stamp: 9999px;
+}
+
+/* ---- Modo claro -------------------------------------------------------
+   Solo se redefinen tokens. Ningun componente cambia de clase: las utilidades
+   de Tailwind compilan a var(--color-*), asi que basta con que la cascada
+   resuelva el otro valor. La especificidad de html[data-theme] gana sobre el
+   :root que emite @theme.
+
+   La escala de superficies se INVIERTE: en oscuro `base-950` es el fondo mas
+   oscuro y `ink-100` el texto mas claro; en claro `base-950` pasa a ser el
+   fondo mas claro y `ink-100` el texto mas oscuro. Por eso `--color-on-accent`
+   existe aparte y no se toca. */
+html[data-theme="claro"] {
+  color-scheme: light;
+
+  /* Superficies: de la pagina hacia lo alzado */
+  --color-base-950: #eef1f6;
+  --color-base-900: #ffffff;
+  --color-base-850: #ffffff;
+  --color-base-800: #f3f6fa;
+  --color-base-750: #e7ecf3;
+  --color-base-700: #d6dde7;
+  --color-base-600: #b7c1d0;
+
+  /* Tinta: de lo principal a lo mas tenue */
+  --color-ink-100: #0f131a;
+  --color-ink-200: #1e2733;
+  --color-ink-300: #47525f;
+  --color-ink-400: #55616f;
+  --color-ink-500: #63707e;
+  --color-ink-600: #6f7c8b;
+
+  --color-rule: #d6dde7;
+  --color-rule-soft: #e4e9f0;
+
+  /* Sellos: los del oscuro son medios y pierden contraste sobre blanco
+     (#5aa2ff da 2.4:1). Estos son los pasos oscuros de la misma familia, todos
+     por encima de 4.5:1 como icono y sobre el 3:1 que pide la regla. */
+  --color-proceso: #2f6fd0;
+  --color-pendiente: #9a6206;
+  --color-entregado: #0f8a3d;
+  --color-leido: #7048c9;
+  --color-fallido: #c22f3c;
+  --color-fallido-400: #e2717a;
+  --color-fallido-600: #a51f2b;
+  --color-cancelado: #626f7d;
+
+  /* La marca no se invierte. Lo que cambia es que el verde de TEXTO tiene que
+     bajar al paso 600/700: #14d659 sobre blanco da 1.9:1. */
+  --color-brand-500: #14d659;
+  --color-brand-600: #0d8738;
+  --color-brand-700: #0a6b2c;
+
+  --color-scrim: rgb(15 19 26 / 0.5);
+
+  --wash-radial: color-mix(in oklab, #93b4e8 26%, transparent);
+  --wash-linear: color-mix(in oklab, #c8d8ef 30%, transparent);
+
+  --elev-1: 0 1px 2px rgb(15 19 26 / 0.08);
+  --elev-2: 0 4px 14px rgb(15 19 26 / 0.1);
 }
 
 @layer base {
@@ -68,14 +165,10 @@
     background-color: var(--color-base-950);
     background-image: radial-gradient(
         120% 60% at 50% -10%,
-        color-mix(in oklab, var(--color-base-800) 55%, transparent),
+        var(--wash-radial),
         transparent 65%
       ),
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--color-base-900) 40%, transparent),
-        transparent 220px
-      );
+      linear-gradient(to bottom, var(--wash-linear), transparent var(--wash-linear-size));
     background-attachment: fixed;
     color: var(--color-ink-100);
     font-family: var(--font-sans);
@@ -132,6 +225,21 @@
     background-color: var(--color-base-850);
     border: 1px solid var(--color-rule);
     border-radius: var(--radius-panel);
+  }
+
+  /* Velo de los modales. Oscuro en los dos modos a proposito: al invertirse la
+     escala, un velo derivado de `base-950` seria casi blanco sobre contenido
+     casi blanco y el modal dejaria de separarse del fondo. */
+  .scrim {
+    background-color: var(--color-scrim);
+  }
+
+  /* En oscuro la elevación es subir de tono (Flat-By-Tone) y no lleva sombra.
+     En claro eso no funciona: la pagina es mas oscura que el panel, no al
+     reves, y sin una sombra minima la superficie se pega al fondo. La sombra
+     entra solo aqui, y solo en claro. */
+  html[data-theme="claro"] .panel {
+    box-shadow: var(--elev-1);
   }
 
   /* Badge de estado — gramática Bamboo: píldora de fondo sólido en los héroes y dot sin
@@ -209,7 +317,7 @@
     padding: 0 0.75rem;
     border-radius: var(--radius-stamp);
     background: var(--stamp-fill, var(--color-base-800));
-    color: var(--color-base-950);
+    color: var(--color-on-accent);
   }
   .stamp--container > svg {
     width: 0.75rem;

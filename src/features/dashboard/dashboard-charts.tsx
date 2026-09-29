@@ -6,13 +6,18 @@ import { formatNumber } from "@/lib/utils"
 
 import type { DeliveryFunnel, OperacionPoint } from "./dashboard-stats"
 
+/**
+ * Las series se pintan con la escala de RELLENO, igual que la barra de
+ * despacho: son áreas de color, no texto, así que no deben bajarse al paso
+ * oscuro que el tema claro necesita para los iconos de los sellos.
+ */
 const COLOR = {
-  proceso: "var(--color-proceso)",
-  entregado: "var(--color-entregado)",
-  pendiente: "var(--color-pendiente)",
-  fallido: "var(--color-fallido)",
-  leido: "var(--color-leido)",
-  cancelado: "var(--color-cancelado)",
+  proceso: "var(--color-fill-proceso)",
+  entregado: "var(--color-fill-entregado)",
+  pendiente: "var(--color-fill-pendiente)",
+  fallido: "var(--color-fill-fallido)",
+  leido: "var(--color-fill-leido)",
+  cancelado: "var(--color-fill-cancelado)",
 }
 
 interface EntregaDato {

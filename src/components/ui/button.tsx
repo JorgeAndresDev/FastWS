@@ -18,13 +18,17 @@ const base =
   "inline-flex select-none items-center justify-center gap-2 rounded-md font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color-mix(in_oklab,var(--color-brand-500)_72%,transparent)] disabled:pointer-events-none disabled:opacity-45"
 
 const variants: Record<Variant, string> = {
+  // `text-on-accent` y no `text-base-950`: el carbón sobre el verde aguanta los
+  // dos modos, mientras que `base-950` se vuelve casi blanco en claro y
+  // dejaría el botón primario en 1.6:1.
   primary:
-    "bg-brand-500 text-base-950 hover:bg-brand-400 active:bg-brand-600",
+    "bg-brand-500 text-on-accent hover:bg-brand-400 active:bg-brand-600",
   secondary:
     "border border-rule bg-base-800 text-ink-100 hover:bg-base-750 active:bg-base-700",
-  ghost: "text-ink-300 hover:bg-base-800 hover:text-ink-100",
+  ghost:
+    "text-ink-300 hover:bg-base-800 hover:text-ink-100",
   danger:
-    "bg-fallido text-base-950 hover:bg-fallido-400 active:bg-[color-mix(in_oklab,var(--color-fallido)_85%,var(--color-base-950))]",
+    "bg-fallido text-on-accent hover:bg-fallido-400 active:bg-[color-mix(in_oklab,var(--color-fallido)_85%,var(--color-on-accent))]",
 }
 
 const sizes: Record<Size, string> = {

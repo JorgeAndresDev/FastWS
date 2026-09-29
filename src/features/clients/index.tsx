@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { Ban, Clock3, Minus, Pencil, Plus, Search, SearchX, Trash2, Users, X } from "lucide-react"
+import { Ban, Clock3, Pencil, Plus, Search, SearchX, Trash2, Users, X } from "lucide-react"
 import { sileo } from "sileo"
 
 import type { Client, OrderState } from "@/types"
@@ -22,14 +22,9 @@ const rightCols = ["Código", "Teléfono", "Ventana", "Pedido", "Tipo"]
 
 function PedidoStamp({ state, reason }: { state?: OrderState; reason?: string }) {
   if (!state) {
-    return (
-      <div className="flex flex-col items-end gap-1">
-        <span className="stamp">
-          <Minus aria-hidden />
-          Sin pedido
-        </span>
-      </div>
-    )
+    // No es un estado, es una ausencia: la app la marca con raya igual que en
+    // la columna Ventana. Un sello con icono aquí solo ensancharía la celda.
+    return <span className="text-[0.75rem] text-ink-600">Sin pedido</span>
   }
   // Mismos iconos que StatusStamp: el sello de pedido y el de mensaje no pueden
   // contar la misma historia con dos grafismos.

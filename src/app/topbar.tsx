@@ -1,13 +1,37 @@
 import { useNavigate } from "react-router-dom"
-import { Link2Off, Plus, Wifi, WifiOff } from "lucide-react"
+import { Link2Off, Moon, Plus, Sun, Wifi, WifiOff } from "lucide-react"
 
 import { Button } from "@/components/ui"
 import { useOnline } from "@/features/auth"
 import { useConexion } from "@/features/connection/conexion-store"
+import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
 import { AccountMenu } from "./account-menu"
 import { formatDateStamp } from "./date-stamp"
+
+/**
+ * Conmutador de tema. Nunca verde: por la One Verb Rule el verde es el verbo de
+ * la acción primaria y cambiar la apariencia de la app no la ejecuta.
+ */
+function ThemeToggle() {
+  const { mode, toggle } = useTheme()
+  const claro = mode === "claro"
+  const Icon = claro ? Sun : Moon
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={toggle}
+      aria-pressed={claro}
+      aria-label={claro ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
+      title={claro ? "Modo oscuro" : "Modo claro"}
+      icon={<Icon className="size-4" aria-hidden />}
+    >
+      {claro ? "Oscuro" : "Claro"}
+    </Button>
+  )
+}
 
 function ConnectionPill() {
   const online = useOnline()
@@ -57,6 +81,7 @@ export function Topbar() {
 
       <div className="flex items-center gap-3">
         <ConnectionPill />
+        <ThemeToggle />
         <span className="h-5 w-px bg-rule-soft" aria-hidden />
         <AccountMenu />
 

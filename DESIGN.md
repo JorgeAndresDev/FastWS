@@ -153,6 +153,35 @@ Tinta sobre carbón: la paleta es una escala de blancos sucios (paper) sobre gri
 
 **The Color-Is-Never-Alone Rule.** Ningún estado se transmite solo por color: cada sello lleva icono + etiqueta, y los errores siempre traen su mensaje legible.
 
+## Themes
+
+La app tiene **dos temas** con un solo conmutador. El modo por defecto es **oscuro**.
+
+| | Oscuro (default) | Claro |
+|---|---|---|
+| Activación | ausencia de atributo o `data-theme="oscuro"` | `data-theme="claro"` |
+| Página | `#0a0d11` | `#eef1f6` |
+| Superficie (panel) | `#141a22` | `#ffffff` |
+| Tinta principal | `#eef2f6` | `#0f131a` |
+| Regla | `#2a3542` | `#d6dde7` |
+| `color-scheme` | `dark` | `light` |
+
+La implementación es de **tokens, no de condicionales**: `@theme` define los nombres y `html[data-theme="claro"]` redefine los mismos valores. Las utilidades de Tailwind compilan a `var(--color-*)`, así que **ningún componente cambia de clase entre modos** — cambiar el tema es cambiar 28 valores.
+
+Se invierten 15 tokens: los 7 de superficie (`base-950…600`), los 6 de tinta (`ink-100…600`) y las 2 reglas. La preferencia se guarda en `fastws.tema` por el store durable y se pinta en `paintStoredTheme()`, **antes** de montar el árbol, para que el claro no aparezca un frame tarde.
+
+El modo claro **reejecuta los ocho colores de sello** a su paso oscuro, no al family entero: `#5aa2ff` da 2.4:1 sobre blanco, así que Proceso baja a `#2f6fd0`, Pendiente a `#9a6206`, Entregado a `#0f8a3d`, Leído a `#7048c9`, Fallido a `#c22f3c` y Cancelado a `#626f7d`.
+
+### Tokens que no se invierten
+Cuatro tokens viven **fuera** de la escala de superficies, y cada uno responde a un fallo concreto del modo claro:
+
+- **`--color-on-accent`** (`#0a0d11`): texto sobre un color saturado (píldora de sello, botón verde). Si leyera `base-950`, en claro pasaría a casi blanco sobre el verde — 1.6:1. Carbón sobre FastWS es el único par que aguanta los dos mundos.
+- **`--color-scrim`**: velo de los modales. Un scrim derivado de `base-950` sería casi blanco sobre contenido casi blanco y el modal dejaría de separarse. Oscuro en los dos modos.
+- **`--color-fill-*`** (6): la escala de **relleno**. Los colores de sello hacen doble trabajo y en claro eso no cabe: como icono o texto necesitan bajarse al paso oscuro (`#f0b13c` no pasa 4.5:1 sobre blanco), pero como área de color — la Cinta de Despacho, las series de gráfico — quieren ser vivos. `#9a6206` como relleno se ve barro. Los `--color-fill-*` son los pasos vivos, idénticos en los dos temas, y son los que usan la barra y los gráficos; los sellos y su texto siguen con la escala de texto.
+- **La marca** (`brand-300…700`): no se invierte. Lo que cambia es el **paso** con el que se lee: el texto de marca en claro usa `600`/`700` (`#0d8738` = 4.6:1), porque `#14d659` sobre blanco da 1.9:1. `brand-500` sigue siendo el relleno del botón primario.
+
+Los avisos (`sileo`) siguen el **tema de la app**, no el del sistema: la app ya tiene preferencia propia y guardada, así que un `theme="system"` daría un aviso oscuro sobre una app clara si el operador eligió claro con Windows en oscuro.
+
 ## Typography
 
 **Display Font:** Inter Tight Variable (Inter Tight, ui-sans-serif, system-ui)
@@ -189,10 +218,16 @@ Sistema de escritorio Windows (ventana fluida, mínimo confortable ~1024×720). 
 
 ## Elevation & Depth
 
-Sistema **plano por tono, sin sombras de elevación**. La profundidad no se fabrica con `box-shadow` ni blur: se construye apilando superficies de carbón cada vez más claras (fondo oscuro → panels → alzados) y con bordes de regla (`1px`, `rule`/`rule-soft`). Dentro de una superficie de datos la única textura es la regla divisoria de 1px. El plano de fondo lleva un lavado radial tenue (carbón `base-800` al 55 %, anclado arriba) y un velo lineal de 220px, ambos con `color-mix` tenue y `background-attachment: fixed`: es la luz ambiental de la oficina nocturna, no una sombra ni un gradiente decorativo de contenido. La excepción a "sin `box-shadow`" son los **anillos de estado** — el doble-ring del ítem activo y el focus ring — que son indicadores de selección, no elevación.
+**Modo oscuro: sistema plano por tono, sin sombras de elevación.** La profundidad no se fabrica con `box-shadow` ni blur: se construye apilando superficies de carbón cada vez más claras (fondo oscuro → panels → alzados) y con bordes de regla (`1px`, `rule`/`rule-soft`). Dentro de una superficie de datos la única textura es la regla divisoria de 1px. El plano de fondo lleva un lavado radial tenue y un velo lineal de 220px, ambos con `color-mix` tenue y `background-attachment: fixed`: es la luz ambiental de la oficina nocturna, no una sombra ni un gradiente decorativo de contenido.
+
+**Modo claro: la elevación se invierte, y por eso admite sombra.** Al invertirse la escala, la página queda más oscura que el panel, no al revés: "subir un tono" ya no separa nada, porque un gris claro sobre un gris más claro se pega. La separación la dan tres cosas a la vez — la página más oscura que la superficie, el borde de regla, y una **sombra mínima** (`--elev-1`, `0 1px 2px rgb(15 19 26 / 0.08)`) que solo se aplica a `.panel` y **solo en claro**. Es el único lugar del sistema donde la sombra es elevación y no decoración.
+
+El lavado ambiental también cambia: en oscuro es una luz de carbón (`base-800` al 55 %); en claro tiene que ser un tinte frío (`#93b4e8` al 26 %), porque un lavado claro sobre blanco no se ve. Vive en los tokens `--wash-radial` y `--wash-linear`.
+
+En los dos temas, la excepción a "sin `box-shadow`" son los **anillos de estado** — el doble-ring del ítem activo y el focus ring — que son indicadores de selección, no elevación.
 
 ### Named Rules
-**The Flat-By-Tone Rule.** Elevación = tono más claro, nunca sombra. Un elemento sobre otro se marca con carbón alzado y una regla divisoria, no con un drop shadow.
+**The Flat-By-Tone Rule.** En oscuro, elevación = tono más claro, nunca sombra. Un elemento sobre otro se marca con carbón alzado y una regla divisoria, no con un drop shadow. En claro la regla se relaja: la sombra mínima es estructural, porque sin ella la superficie no se separa del fondo.
 
 ## Shapes
 
@@ -258,10 +293,14 @@ Barra horizontal segmentada que descompone el total de una campaña por estado, 
 - **Do** indicar la fila activa con el doble-ring brand sobre el verde al 10 %.
 - **Do** acompañar cada fallo con su mensaje legible (código Meta en mono + explicación en texto).
 - **Do** contraste AA (≥4.5:1) para todo texto funcional sobre carbón; verificar con el detector en cada lote.
+- **Do** verificar contraste en **ambos** modos antes de dar un color por bueno: un ámbar puede pasar en carbón y fallar en blanco.
+- **Do** usar `--color-fill-*` cuando el color es área, y la escala de texto cuando el color acompaña texto o icono.
 
 ### Don't:
-- **Don't** usar sombras ni blur para elevar superficies: elevar es subir un tono de carbón y marcar una regla.
+- **Don't** usar sombras ni blur para elevar superficies **en modo oscuro**: elevar es subir un tono de carbón y marcar una regla. (En claro, la sombra mínima de `.panel` es la excepción estructural y la única.)
 - **Don't** usar el verde FastWS en marcas pasivas, iconos decorativos o textos de estado: solo acción primaria.
 - **Don't** transmitir estado solo por color; el color del sello nunca viaja sin icono y etiqueta.
 - **Don't** animar ancho/alto/padding/margen para transiciones de estado; usar transform y opacity, o el sellado expo de ~180 ms.
 - **Don't** bajar texto funcional de 12px ni inventar claims comerciales con los datos simulados.
+- **Don't** poner texto de marca con `brand-500` en modo claro: da 1.9:1 sobre blanco. Bajar a `600`/`700`.
+- **Don't** escribir condicionales de tema en componentes. Si hace falta un valor distinto, es un token que falta, no un `if`.

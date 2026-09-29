@@ -258,7 +258,7 @@ const [confirmarLimpiar, setConfirmarLimpiar] = useState(false)
 
       {confirmarLimpiar && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-base-950/70 p-4"
+          className="scrim fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirmar-limpiar-titulo"

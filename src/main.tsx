@@ -5,6 +5,7 @@ import "@fontsource-variable/inter-tight"
 import "@fontsource-variable/jetbrains-mono"
 import App from "./App"
 import { hydrateStore, onStoreError } from "./lib/db"
+import { paintStoredTheme } from "./lib/theme"
 import "./styles/index.css"
 
 async function boot() {
@@ -26,6 +27,10 @@ async function boot() {
   } catch {
     // Si la base no abre, se entra igual: la app queda en memoria y avisa.
   }
+
+  // El tema se pinta después de hidratar (lee la misma base) y antes de
+  // renderizar, para que el modo claro no aparezca un frame tarde.
+  paintStoredTheme()
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

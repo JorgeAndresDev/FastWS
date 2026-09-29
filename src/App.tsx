@@ -9,6 +9,7 @@ import { CampaignsProvider } from "@/features/campaigns/campaigns-store"
 import { ClientsProvider } from "@/features/clients/clients-store"
 import { ConexionProvider } from "@/features/connection/conexion-store"
 import { ConversationsProvider } from "@/features/conversations/conversations-store"
+import { ThemeProvider, useTheme } from "@/lib/theme"
 
 const AuditPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AuditPage })))
 const DevicesPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.DevicesPage })))
@@ -33,16 +34,28 @@ const pageLoader = (
   </div>
 )
 
+/**
+ * Los avisos siguen el modo de la app, no el del sistema. `sileo` ofrece
+ * "system", pero la app ya tiene preferencia propia y guardada: si el operador
+ * eligió claro con Windows en oscuro, un toast oscuro seria el aviso
+ * "invertido" que nosodymandaron arreglar.
+ */
+function ThemedToaster() {
+  const { mode } = useTheme()
+  return <Toaster position="bottom-right" theme={mode === "claro" ? "light" : "dark"} />
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ClientsProvider>
-          <ConexionProvider>
-            <CampaignsProvider>
-              <ConversationsProvider>
-                <Suspense fallback={pageLoader}>
-                <Routes>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ClientsProvider>
+            <ConexionProvider>
+              <CampaignsProvider>
+                <ConversationsProvider>
+                  <Suspense fallback={pageLoader}>
+                  <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/recuperar" element={<RecoverPage />} />
 
@@ -69,14 +82,15 @@ function App() {
             </Route>
           </Route>
         </Routes>
-                </Suspense>
-            </ConversationsProvider>
-            </CampaignsProvider>
-          </ConexionProvider>
-        </ClientsProvider>
-        <Toaster position="bottom-right" theme="dark" />
-      </AuthProvider>
-    </BrowserRouter>
+                  </Suspense>
+                </ConversationsProvider>
+              </CampaignsProvider>
+            </ConexionProvider>
+          </ClientsProvider>
+          <ThemedToaster />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

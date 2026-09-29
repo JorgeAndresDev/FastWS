@@ -5,9 +5,9 @@ import { formatNumber } from "@/lib/utils"
 import type { DayPoint } from "./report-records"
 
 const BAR_COLORS = {
-  enviados: "var(--color-entregado)",
-  fallidos: "var(--color-fallido)",
-  respuestas: "var(--color-cancelado)",
+  enviados: "var(--color-fill-entregado)",
+  fallidos: "var(--color-fill-fallido)",
+  respuestas: "var(--color-fill-cancelado)",
 }
 
 const LABELS: Record<keyof Pick<DayPoint, "enviados" | "fallidos" | "respuestas">, string> = {
