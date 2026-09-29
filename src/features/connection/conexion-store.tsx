@@ -13,6 +13,14 @@ import { graphError, readMetaError } from "@/lib/wsb/api"
 import { registrarAuditoria } from "@/lib/audit-log"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
+import {
+  clearDurable,
+  clearEphemeral,
+  readDurable,
+  readEphemeral,
+  writeDurable,
+  writeEphemeral,
+} from "@/lib/db/session-scope"
 
 export type ConexionStatus = "sin-configurar" | "probando" | "conectada" | "error"
 
@@ -52,25 +60,31 @@ interface StoredSession {
 }
 
 function loadIds(): ConexionIds {
-  try {
-    const raw = window.localStorage.getItem(IDS_KEY)
-    if (raw) {
+  const raw = readDurable(IDS_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as Partial<ConexionIds>
       return {
         phoneNumberId: String(parsed.phoneNumberId ?? ""),
         wabaId: String(parsed.wabaId ?? ""),
       }
+    } catch {
+      /* dato corrupto */
     }
-  } catch {
-    /* almacenamiento no disponible */
   }
   return { phoneNumberId: "", wabaId: "" }
 }
 
+/**
+ * El token es un secreto: vive en el alcance efimero, que en Tauri sigue siendo
+ * el sessionStorage del webview y muere con la ventana. Los identificadores no
+ * son secretos y van a la base. Mover el token al almacen seguro del sistema es
+ * trabajo de la fase de credenciales.
+ */
 function loadSession(): StoredSession | null {
-  try {
-    const raw = window.sessionStorage.getItem(SESSION_KEY)
-    if (raw) {
+  const raw = readEphemeral(SESSION_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as Partial<StoredSession>
       if (parsed && typeof parsed.token === "string" && parsed.token.length > 0) {
         return {
@@ -80,27 +94,19 @@ function loadSession(): StoredSession | null {
           verifiedAt: String(parsed.verifiedAt ?? new Date().toISOString()),
         }
       }
+    } catch {
+      /* dato corrupto */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return null
 }
 
 function saveSession(session: StoredSession) {
-  try {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  writeEphemeral(SESSION_KEY, JSON.stringify(session))
 }
 
 function clearSession() {
-  try {
-    window.sessionStorage.removeItem(SESSION_KEY)
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  clearEphemeral(SESSION_KEY)
 }
 
 export function ConexionProvider({ children }: { children: ReactNode }) {
@@ -120,11 +126,7 @@ export function ConexionProvider({ children }: { children: ReactNode }) {
 
   const guardarIds = useCallback((nuevos: ConexionIds) => {
     setIds(nuevos)
-    try {
-      window.localStorage.setItem(IDS_KEY, JSON.stringify(nuevos))
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    writeDurable(IDS_KEY, JSON.stringify(nuevos))
   }, [])
 
   const prueba = useCallback(
@@ -237,11 +239,7 @@ export function ConexionProvider({ children }: { children: ReactNode }) {
     setVerifiedAt(undefined)
     setLastError(null)
     setIds({ phoneNumberId: "", wabaId: "" })
-    try {
-      window.localStorage.removeItem(IDS_KEY)
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    clearDurable(IDS_KEY)
     clearSession()
     const device = getDeviceIdentity()
     const sessionUser = readSession()

@@ -16,6 +16,7 @@ import type { TemplateCategory, WaTemplate } from "@/types"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { registrarAuditoria } from "@/lib/audit-log"
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
 import { useConexion } from "@/features/connection/conexion-store"
 import {
   categoryLabel,
@@ -703,24 +704,20 @@ if (!body.trim()) {
 }
 
 function loadTemplates(): WaTemplate[] {
-  try {
-    const raw = window.localStorage.getItem(TEMPLATES_KEY)
-    if (raw) {
+  const raw = readDurable(TEMPLATES_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (Array.isArray(parsed)) return parsed as WaTemplate[]
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return []
 }
 
 function saveTemplates(templates: WaTemplate[]) {
-  try {
-    window.localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates))
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  writeDurable(TEMPLATES_KEY, JSON.stringify(templates))
 }
 
 export function TemplatesPage() {

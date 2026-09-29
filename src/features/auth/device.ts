@@ -1,3 +1,5 @@
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
+
 const DEVICE_KEY = "fastws.device"
 
 export interface DeviceIdentity {
@@ -21,11 +23,13 @@ function makeCode() {
 }
 
 export function getDeviceIdentity(): DeviceIdentity {
-  try {
-    const raw = localStorage.getItem(DEVICE_KEY)
-    if (raw) return JSON.parse(raw) as DeviceIdentity
-  } catch {
-    /* storage unavailable */
+  const raw = readDurable(DEVICE_KEY)
+  if (raw) {
+    try {
+      return JSON.parse(raw) as DeviceIdentity
+    } catch {
+      /* dato corrupto: se regenera abajo */
+    }
   }
 
   const device: DeviceIdentity = {
@@ -34,11 +38,7 @@ export function getDeviceIdentity(): DeviceIdentity {
     platform: detectPlatform(),
   }
 
-  try {
-    localStorage.setItem(DEVICE_KEY, JSON.stringify(device))
-  } catch {
-    /* storage unavailable */
-  }
+  writeDurable(DEVICE_KEY, JSON.stringify(device))
 
   return device
 }
@@ -46,10 +46,6 @@ export function getDeviceIdentity(): DeviceIdentity {
 export function setDeviceName(nombre: string): DeviceIdentity {
   const device = getDeviceIdentity()
   device.nombre = nombre.trim() || undefined
-  try {
-    localStorage.setItem(DEVICE_KEY, JSON.stringify(device))
-  } catch {
-    /* storage unavailable */
-  }
+  writeDurable(DEVICE_KEY, JSON.stringify(device))
   return device
 }

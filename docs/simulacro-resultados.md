@@ -2,6 +2,12 @@
 
 Ejecución: **Fecha** `2026-09-25` · **Dev server** `http://localhost:5173` · **Build** ✅ pasó (`npm run build`) · **Fases 1-4** corregidas + **verificación completa Fases 5-7** re-ejecutada de punta a punta: **185 checks, 185 OK, 0 huecos** · **Responsable** `opencode`
 
+**Re-ejecución `2026-09-28` tras la capa de datos (Fase 1 — Tauri + SQLite):** **185 checks,
+185 OK, 0 fallos**, sin cambios en el recuento. Esta corrida es la que demuestra que el
+contrato de repositorios no rompió la interfaz: los 185 checks siguen corriendo contra
+`impl-web` (`localStorage`) mientras `impl-tauri` (SQLite) entra debajo. El simulacro no
+cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
+
 ## Resumen
 
 | Fase | Checks | OK | HUECO | Notas |

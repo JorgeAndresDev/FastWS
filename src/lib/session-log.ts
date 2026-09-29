@@ -1,3 +1,5 @@
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
+
 export type SesionOrigen = "inicio" | "restaurada"
 
 export interface SesionRegistro {
@@ -47,24 +49,20 @@ function makeId() {
 }
 
 function leer(): SesionRegistro[] {
-  try {
-    const raw = window.localStorage.getItem(SESSION_LOG_KEY)
-    if (raw) {
+  const raw = readDurable(SESSION_LOG_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (Array.isArray(parsed)) return parsed.filter(esRegistro)
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return []
 }
 
 function escribir(lista: SesionRegistro[]) {
-  try {
-    window.localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(lista.slice(0, MAX_REGISTROS)))
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  writeDurable(SESSION_LOG_KEY, JSON.stringify(lista.slice(0, MAX_REGISTROS)))
 }
 
 function mismaSesion(a: SesionRegistro, parms: RegistrarSesionParms) {

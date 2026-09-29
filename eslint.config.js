@@ -6,7 +6,18 @@ import tseslint from "typescript-eslint"
 export default tseslint.config(
   {
     // `catch {}` vacío es intencional: el simulacro ignora fallos al sondear.
-    ignores: ["dist", "node_modules", "tools/simulacro/artifacts", ".impeccable", "agent", ".agents", ".claude"],
+    // `src-tauri` y `src-tauri/target` son de Rust: `target` sobre todo es
+    // artefactos de compilación generados, no código del repo.
+    ignores: [
+      "dist",
+      "node_modules",
+      "src-tauri",
+      "tools/simulacro/artifacts",
+      ".impeccable",
+      "agent",
+      ".agents",
+      ".claude",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

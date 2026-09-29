@@ -3,6 +3,8 @@ import type { Campaign, Client, ConversationThread } from "@/types"
 import { registrarAuditoria } from "@/lib/audit-log"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
+import { getStore } from "@/lib/db"
+import { clearEphemeral, writeDurable } from "@/lib/db/session-scope"
 
 const KEYS = [
   "fastws.clientes",
@@ -99,11 +101,7 @@ export function restablecerDemo() {
   const ahora = new Date().toISOString()
 
   const set = (key: string, value: unknown) => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(value))
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    writeDurable(key, JSON.stringify(value))
   }
 
   set("fastws.clientes", clientes())
@@ -135,20 +133,12 @@ export function restablecerDemo() {
 }
 
 export function borrarDatosLocales() {
-  for (const key of KEYS) {
-    try {
-      window.localStorage.removeItem(key)
-    } catch {
-      /* almacenamiento no disponible */
-    }
-  }
-  // La sesión de conexión vive en sessionStorage: sin esto el token sobrevivía
-  // al borrado y la app se reconectaba sola (la copia promete lo contrario).
-  try {
-    window.sessionStorage.removeItem("fastws.conexion.sesion")
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  const store = getStore()
+  store.removeMany(KEYS)
+  // La sesión de conexión vive en el alcance efímero: sin esto el token
+  // sobrevivía al borrado y la app se reconectaba sola (la copia promete lo
+  // contrario).
+  clearEphemeral("fastws.conexion.sesion")
 
   registrarAuditoria({
     categoria: "configuracion",

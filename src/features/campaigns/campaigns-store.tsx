@@ -7,6 +7,7 @@ import type { Campaign, CampaignRecipient, CampaignStatus } from "@/types"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { registrarAuditoria } from "@/lib/audit-log"
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
 import { useConexion } from "@/features/connection/conexion-store"
 import {
   engineCancel,
@@ -58,9 +59,9 @@ function isCampaign(item: unknown): item is Campaign {
 }
 
 function loadCampaigns(): Campaign[] {
-  try {
-    const raw = window.localStorage.getItem(CAMPAIGNS_KEY)
-    if (raw) {
+  const raw = readDurable(CAMPAIGNS_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (Array.isArray(parsed)) {
         return parsed
@@ -70,24 +71,24 @@ function loadCampaigns(): Campaign[] {
             activity: Array.isArray(campaign.activity) ? campaign.activity : [],
           }))
       }
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return []
 }
 
 function loadVelocidad(): string {
-  try {
-    const raw = window.localStorage.getItem(VELOCIDAD_KEY)
-    if (raw) {
+  const raw = readDurable(VELOCIDAD_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (typeof parsed === "string" && (VELOCIDADES as readonly string[]).includes(parsed)) {
         return parsed
       }
+    } catch {
+      /* dato corrupto */
     }
-  } catch {
-    /* almacenamiento no disponible */
   }
   return VELOCIDAD_DEFAULT
 }
@@ -116,9 +117,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     setCampaigns(next)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      try {
-        window.localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(next))
-      } catch {
+      if (!writeDurable(CAMPAIGNS_KEY, JSON.stringify(next))) {
         const now = Date.now()
         if (now - lastPersistAlert.current > 30_000) {
           lastPersistAlert.current = now
@@ -343,11 +342,7 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   const setVelocidad = useCallback((value: string) => {
     velocidadRef.current = value
     setVelocidadState(value)
-    try {
-      window.localStorage.setItem(VELOCIDAD_KEY, JSON.stringify(value))
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    writeDurable(VELOCIDAD_KEY, JSON.stringify(value))
   }, [])
 
   const value = useMemo<CampaignsContextValue>(

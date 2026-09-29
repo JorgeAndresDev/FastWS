@@ -10,6 +10,7 @@ import type {
 } from "@/types"
 
 import { graphError, sendTemplate, sendText } from "@/lib/wsb/api"
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
 
 import { useConexion } from "@/features/connection/conexion-store"
 import { useCampaigns } from "@/features/campaigns/campaigns-store"
@@ -81,17 +82,17 @@ function isThread(item: unknown): item is ConversationThread {
 }
 
 function loadPersisted(): Persisted {
-  try {
-    const raw = window.localStorage.getItem(CONVOS_KEY)
-    if (raw) {
+  const raw = readDurable(CONVOS_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as Partial<Persisted>
       return {
         threads: Array.isArray(parsed.threads) ? parsed.threads.filter(isThread) : [],
         merged: parsed.merged && typeof parsed.merged === "object" ? parsed.merged : {},
       }
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return { threads: [], merged: {} }
 }
@@ -161,14 +162,10 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setPersisted((prev) => ({ ...prev, threads: ordered }))
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      try {
-        window.localStorage.setItem(
-          CONVOS_KEY,
-          JSON.stringify({ threads: ordered, merged: mergedRef.current })
-        )
-      } catch {
-        /* almacenamiento no disponible */
-      }
+      writeDurable(
+        CONVOS_KEY,
+        JSON.stringify({ threads: ordered, merged: mergedRef.current })
+      )
     }, 250)
   }, [])
 

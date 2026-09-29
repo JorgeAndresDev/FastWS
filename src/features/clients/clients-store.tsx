@@ -3,6 +3,8 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 
 import type { Client } from "@/types"
 
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
+
 interface ClientsContextValue {
   clients: Client[]
   addClients: (nuevos: Client[]) => { added: number; updated: number }
@@ -28,9 +30,9 @@ const CLIENTS_KEY = "fastws.clientes"
 const isSameClient = (a: Client, b: Client) => JSON.stringify(a) === JSON.stringify(b)
 
 function loadClients(): Client[] {
-  try {
-    const raw = window.localStorage.getItem(CLIENTS_KEY)
-    if (raw) {
+  const raw = readDurable(CLIENTS_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (Array.isArray(parsed)) {
         return parsed.filter(
@@ -41,9 +43,9 @@ function loadClients(): Client[] {
             typeof (item as Client).name === "string"
         )
       }
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return []
 }
@@ -56,11 +58,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   clientsRef.current = clients
 
   const persist = (next: Client[]) => {
-    try {
-      window.localStorage.setItem(CLIENTS_KEY, JSON.stringify(next))
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    writeDurable(CLIENTS_KEY, JSON.stringify(next))
   }
 
   const addClients = useCallback((nuevos: Client[]) => {

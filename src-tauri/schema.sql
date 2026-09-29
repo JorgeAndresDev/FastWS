@@ -1,7 +1,16 @@
--- FastWS — Esquema SQLite (esqueleto).
--- Referencia inicial del punto 31 de la especificación.
--- La integración real con base de datos ocurrirá en la fase de backend.
--- Las tablas compartidas (Turso) usarán el mismo esquema base.
+-- FastWS — Esquema SQLite. Fuente única de verdad: la aplica Rust al abrir
+-- la base (src-tauri/src/db.rs, include_str! de este archivo).
+--
+-- La tabla `documents` sostiene la capa 1: cada raíz de agregado se guarda como
+-- un JSON en una fila, el mismo contrato que la app ya usaba con localStorage.
+-- La capa 2 migra cada raíz a las tablas relacionales de abajo sin cambiar el
+-- contrato del repositorio, raíz por raíz.
+
+CREATE TABLE IF NOT EXISTS documents (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
@@ -159,9 +168,9 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
--- Las credenciales de Meta (access token de la WhatsApp Business API) se almacenan de forma
--- segura y nunca en código fuente ni en el repositorio; su persistencia llega con el backend
--- (Tauri + SQLite/Turso). En la fase de interfaz el token vive solo en la sesión en memoria.
+-- Las credenciales de Meta (access token de la WhatsApp Business API) NO viven
+-- aquí: el token es un secreto y va al almacén seguro del sistema, no a una
+-- tabla. Las tablas compartidas (Turso) usarán el mismo esquema base.
 CREATE TABLE IF NOT EXISTS settings (
   key      TEXT PRIMARY KEY,
   value    TEXT,

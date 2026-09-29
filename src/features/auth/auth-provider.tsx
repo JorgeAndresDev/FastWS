@@ -5,6 +5,7 @@ import { clearSession, readSession, sessionKind, writeSession, type SessionUser 
 import { getDeviceIdentity } from "./device"
 import { codigoRecuperacion, sha256 } from "@/lib/crypto"
 import { cerrarSesion, registrarSesion, tieneSesionAbierta } from "@/lib/session-log"
+import { clearDurable, readDurable, writeDurable } from "@/lib/db/session-scope"
 
 export const DEMO_CREDENTIALS = {
   email: "admin@fastws.local",
@@ -30,49 +31,41 @@ interface StoredClave {
 }
 
 function leerRecovery(): StoredRecovery | null {
-  try {
-    const raw = window.localStorage.getItem(RECOVERY_KEY)
-    if (raw) {
+  const raw = readDurable(RECOVERY_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as Partial<StoredRecovery>
       if (parsed && typeof parsed.email === "string" && typeof parsed.hash === "string") {
         return { email: parsed.email, hash: parsed.hash }
       }
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return null
 }
 
 function leerClave(): StoredClave | null {
-  try {
-    const raw = window.localStorage.getItem(CLAVE_KEY)
-    if (raw) {
+  const raw = readDurable(CLAVE_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as Partial<StoredClave>
       if (parsed && typeof parsed.email === "string" && typeof parsed.hash === "string") {
         return { email: parsed.email, hash: parsed.hash }
       }
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return null
 }
 
 function guardarClave(email: string, hash: string) {
-  try {
-    window.localStorage.setItem(CLAVE_KEY, JSON.stringify({ email, hash }))
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  writeDurable(CLAVE_KEY, JSON.stringify({ email, hash }))
 }
 
 function borrarRecovery() {
-  try {
-    window.localStorage.removeItem(RECOVERY_KEY)
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  clearDurable(RECOVERY_KEY)
 }
 
 interface AuthContextValue {
@@ -156,14 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const codigo = codigoRecuperacion()
     const hash = await sha256(codigo)
-    try {
-      window.localStorage.setItem(
-        RECOVERY_KEY,
-        JSON.stringify({ email: DEMO_CREDENTIALS.email, hash } satisfies StoredRecovery)
-      )
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    writeDurable(
+      RECOVERY_KEY,
+      JSON.stringify({ email: DEMO_CREDENTIALS.email, hash } satisfies StoredRecovery)
+    )
     return codigo
   }, [])
 

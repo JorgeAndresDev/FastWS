@@ -1,5 +1,7 @@
 import type { AuditCategory, AuditRecord } from "@/types"
 
+import { readDurable, writeDurable } from "@/lib/db/session-scope"
+
 export type OperacionCategoria = Extract<
   AuditCategory,
   "conexion" | "importacion" | "configuracion" | "campana" | "plantilla" | "clientes"
@@ -44,24 +46,20 @@ function makeId() {
 }
 
 function leer(): AuditRecord[] {
-  try {
-    const raw = window.localStorage.getItem(AUDIT_KEY)
-    if (raw) {
+  const raw = readDurable(AUDIT_KEY)
+  if (raw) {
+    try {
       const parsed = JSON.parse(raw) as unknown
       if (Array.isArray(parsed)) return parsed.filter(esRegistroAuditoria)
+    } catch {
+      /* datos corruptos */
     }
-  } catch {
-    /* almacenamiento no disponible o datos corruptos */
   }
   return []
 }
 
 function escribir(lista: AuditRecord[]) {
-  try {
-    window.localStorage.setItem(AUDIT_KEY, JSON.stringify(lista.slice(0, MAX_REGISTROS)))
-  } catch {
-    /* almacenamiento no disponible */
-  }
+  writeDurable(AUDIT_KEY, JSON.stringify(lista.slice(0, MAX_REGISTROS)))
 }
 
 export function registrarAuditoria(parms: AuditOperacionParms) {
