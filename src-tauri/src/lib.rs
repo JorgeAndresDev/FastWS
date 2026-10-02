@@ -1,4 +1,6 @@
 mod db;
+#[cfg(windows)]
+mod titlebar;
 
 use tauri::Manager;
 
@@ -16,6 +18,17 @@ pub fn run() {
       let dir = app.path().app_data_dir()?;
       let db = db::Db::open(&dir).map_err(std::io::Error::other)?;
       app.manage(db);
+
+      // La barra de título nativa de Windows en verde FastWS. Va dentro de
+      // `setup` y no en `run` porque el caption se puede restaurar al recrear la
+      // ventana, y así se vuelve a teñir en cada arranque.
+      #[cfg(windows)]
+      if let Some(window) = app.get_webview_window("main") {
+        if let Ok(hwnd) = window.hwnd() {
+          titlebar::pintar(hwnd);
+        }
+      }
+
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![

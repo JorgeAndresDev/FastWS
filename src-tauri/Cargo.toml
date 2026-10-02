@@ -24,3 +24,4 @@ log = "0.4"
 tauri = { version = "2.12.0", features = [] }
 tauri-plugin-log = "2"
 rusqlite = { version = "0.40.2", features = ["bundled"] }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Graphics_Dwm"] }
