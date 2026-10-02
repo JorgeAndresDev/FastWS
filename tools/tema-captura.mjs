@@ -62,6 +62,7 @@ async function main() {
       ["reportes", "/app/reportes"],
       ["configuracion", "/app/configuracion"],
       ["login", "/login"],
+      ["recuperar", "/recuperar"],
     ]
 
     for (const modo of ["oscuro", "claro"]) {

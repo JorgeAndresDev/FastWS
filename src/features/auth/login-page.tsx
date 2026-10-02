@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { ShieldCheck, TriangleAlert } from "lucide-react"
+import { Eye, EyeOff, ShieldCheck, TriangleAlert } from "lucide-react"
 
 import { Button, FormField, Input } from "@/components/ui"
 
@@ -73,10 +73,10 @@ export function LoginPage() {
       title="Bitácora de entrada"
       intro="Abra su turno de despacho con las credenciales del operador. La planilla queda sellada a su nombre hasta el cierre."
       footer={
-        <p className="text-xs leading-relaxed text-ink-600">
+        <p className="text-balance text-[0.75rem] leading-relaxed text-ink-500">
           Datos de demostración. Usuario{" "}
-          <span className="font-mono text-ink-400">{DEMO_CREDENTIALS.email}</span> · contraseña{" "}
-          <span className="font-mono text-ink-400">{DEMO_CREDENTIALS.password}</span>
+          <span className="font-mono text-ink-300">{DEMO_CREDENTIALS.email}</span> · contraseña{" "}
+          <span className="font-mono text-ink-300">{DEMO_CREDENTIALS.password}</span>
         </p>
       }
     >
@@ -119,35 +119,40 @@ export function LoginPage() {
               aria-describedby={
                 fieldErrors.password ? "clave-error" : error ? "login-error" : undefined
               }
-              className="pr-20"
+              className="pr-10"
               disabled={pending}
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-semibold text-ink-500 transition-colors hover:text-ink-200"
+              className="absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded text-ink-400 transition-colors hover:bg-base-750 hover:text-ink-100"
               aria-pressed={showPassword}
               aria-controls="clave"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
-              {showPassword ? "Ocultar" : "Mostrar"}
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden />
+              ) : (
+                <Eye className="size-4" aria-hidden />
+              )}
             </button>
           </div>
         </FormField>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-xs text-ink-300">
+          <label className="flex items-center gap-2 text-[0.75rem] text-ink-300">
             <input
               type="checkbox"
               checked={remember}
               onChange={(event) => setRemember(event.target.checked)}
-              className="size-4 accent-ink-100"
+              className="size-4 accent-brand-500"
             />
             Recordar sesión en este equipo
           </label>
           <Link
             to="/recuperar"
-            className="text-xs font-semibold text-ink-400 transition-colors hover:text-ink-100"
+            className="text-[0.75rem] font-semibold text-ink-300 transition-colors hover:text-ink-100"
           >
             ¿Olvidó su contraseña?
           </Link>

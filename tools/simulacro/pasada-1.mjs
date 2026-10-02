@@ -52,11 +52,19 @@ const DATE_RE = /\b(VIE|SAB|DOM|LUN|MAR|MIE|JUE)\s+\d{1,2}\s+(ENE|FEB|MAR|ABR|MA
       JSON.stringify(bad))
 
     // 1.4 reveal de clave (toggle Mostrar/Ocultar)
+    // 1.4 reveal de clave. El control se localiza por su contrato accesible
+    // (`aria-controls="clave"`), no por su texto visible: el toggle ahora es
+    // un icono Eye/EyeOff y antes era un boton de texto. El selector nuevo es
+    // mas preciso — apunta al control exacto en vez de a "cualquier boton cuyo
+    // texto sea Mostrar" — y no hace falta un check aparte: si el control no
+    // existiera, los clics serian no-op y el type no alternaria, asi que 1.4
+    // seguiria catching la regresion.
     const tipoInit = await evalJson(cdp, `document.querySelector('#clave')?.type`)
-    await act(cdp, `const t=[...document.querySelectorAll('button')].find(b=>b.innerText.trim()==='Mostrar');t?.click();return 'ok'`)
+    const REVELAR = `document.querySelector('button[aria-controls="clave"]')`
+    await act(cdp, `${REVELAR}?.click();return 'ok'`)
     await wait(300)
     const tipo1 = await evalJson(cdp, `document.querySelector('#clave')?.type`)
-    await act(cdp, `const t=[...document.querySelectorAll('button')].find(b=>b.innerText.trim()==='Ocultar');t?.click();return 'ok'`)
+    await act(cdp, `${REVELAR}?.click();return 'ok'`)
     await wait(300)
     const tipo2 = await evalJson(cdp, `document.querySelector('#clave')?.type`)
     ch("1.4 reveal de clave alterna password/text",

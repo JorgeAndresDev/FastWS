@@ -111,7 +111,7 @@ export function RecoverPage() {
   const back = (
     <Link
       to="/login"
-      className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-400 transition-colors hover:text-ink-100"
+      className="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold text-ink-200 transition-colors hover:text-ink-100"
     >
       <ArrowLeft className="size-3.5" aria-hidden />
       Volver a la bitácora de entrada
