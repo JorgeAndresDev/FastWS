@@ -71,7 +71,7 @@ Decidido durante el desarrollo (a confirmar antes de producción):
 ## Brand Commitments
 
 - Nombre del producto: FastWS.
-- Dirección visual de la interfaz: **oscura por defecto, con modo claro disponible** en un conmutador (topbar y Configuración). El oscuro sigue siendo el arranque porque es el modo para el que está calibrada la paleta de la planilla; el claro es una alternativa para quien trabaja con luz de día. El login es la excepción: es siempre claro, es la puerta de entrada y no cambia con el tema.
+- Dirección visual de la interfaz: **oscura por defecto, con modo claro disponible** en un conmutador (topbar y Configuración). El oscuro sigue siendo el arranque porque es el modo para el que está calibrada la paleta de la planilla; el claro es una alternativa para quien trabaja con luz de día. El login es la excepción: es siempre oscuro de marca (carbón + verde FastWS), es la puerta de entrada y no cambia con el tema.
 - Voz del copy: español, neutral e imperativa en etiquetas (ej. "Crear campaña", "Importar clientes"), patrones modernos de UI.
 - Sin logo ni activos de marca confirmados todavía; branding provisorio hasta aportar los reales.
 

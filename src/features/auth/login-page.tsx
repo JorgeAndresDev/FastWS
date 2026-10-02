@@ -5,7 +5,7 @@ import { Eye, EyeOff, ShieldCheck, TriangleAlert } from "lucide-react"
 
 import { Button, FormField, Input } from "@/components/ui"
 
-import { AuthShell, type TurnStep } from "./auth-shell"
+import { AuthShell } from "./auth-shell"
 import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
@@ -36,19 +36,6 @@ export function LoginPage() {
 
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/app"
 
-  const steps: TurnStep[] = [
-    {
-      index: 1,
-      label: "Dispositivo",
-      detail: `${device.platform} · ${device.code}`,
-      monoDetail: true,
-      tone: "hecho",
-      stamp: { label: "Identificado", tone: "entregado" },
-    },
-    { index: 2, label: "Credenciales", detail: "Usuario y contraseña del operador", tone: "activo" },
-    { index: 3, label: "Sellar turno", detail: "Abre la planilla de despacho", tone: "pendiente" },
-  ]
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const errors = validateLogin(email, password)
@@ -68,7 +55,6 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      steps={steps}
       device={device}
       title="Bitácora de entrada"
       intro="Abra su turno de despacho con las credenciales del operador. La planilla queda sellada a su nombre hasta el cierre."

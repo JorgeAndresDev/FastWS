@@ -5,7 +5,7 @@ import { ArrowLeft, Check, MailCheck } from "lucide-react"
 
 import { Button, FormField, Input } from "@/components/ui"
 
-import { AuthShell, type TurnStep } from "./auth-shell"
+import { AuthShell } from "./auth-shell"
 import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
@@ -33,32 +33,6 @@ export function RecoverPage() {
   const [confirm, setConfirm] = useState("")
   const [pending, setPending] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-
-  const deviceStep: TurnStep = {
-    index: 1,
-    label: "Dispositivo",
-    detail: `${device.platform} · ${device.code}`,
-    monoDetail: true,
-    tone: "hecho",
-    stamp: { label: "Identificado", tone: "entregado" },
-  }
-
-  const recoverStep: TurnStep =
-    phase === "solicitar"
-      ? { index: 2, label: "Recuperar clave", detail: "Solicite las instrucciones", tone: "activo" }
-      : { index: 2, label: "Recuperar clave", detail: "Instrucciones enviadas", tone: "hecho" }
-
-  const passwordStep: TurnStep =
-    phase === "listo"
-      ? { index: 3, label: "Nueva contraseña", detail: "Clave actualizada", tone: "hecho" }
-      : {
-          index: 3,
-          label: "Nueva contraseña",
-          detail: "Defina una clave nueva",
-          tone: phase === "definir" ? "activo" : "pendiente",
-        }
-
-  const steps: TurnStep[] = [deviceStep, recoverStep, passwordStep]
 
   async function handleRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -121,7 +95,6 @@ export function RecoverPage() {
   if (phase === "solicitar") {
     return (
       <AuthShell
-        steps={steps}
         device={device}
         title="Recuperar la clave del turno"
         intro="Indique el correo del operador. Le enviaremos las instrucciones para recuperar la clave y abrir de nuevo su turno."
@@ -164,7 +137,6 @@ export function RecoverPage() {
   if (phase === "definir") {
     return (
       <AuthShell
-        steps={steps}
         device={device}
         title="Definir la clave nueva"
         intro="Escriba el código de verificación y su nueva contraseña. La planilla registrará el cambio."
@@ -270,7 +242,6 @@ export function RecoverPage() {
 
   return (
     <AuthShell
-      steps={steps}
       device={device}
       title="Clave actualizada"
       intro="La contraseña quedó registrada en la planilla. Puede retomar la apertura del turno."
