@@ -10,7 +10,7 @@ interface WordmarkProps {
 
 const sizes = {
   md: { logo: "h-6", name: "text-sm", gap: "gap-2.5", descriptor: "text-xs" },
-  lg: { logo: "h-20", name: "text-5xl", gap: "gap-4", descriptor: "text-sm" },
+  lg: { logo: "h-24", name: "text-6xl", gap: "gap-5", descriptor: "text-base" },
 } as const
 
 export function Wordmark({ descriptor, className, size = "md" }: WordmarkProps) {

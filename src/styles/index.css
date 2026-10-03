@@ -420,9 +420,13 @@ html[data-theme="claro"] {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* `auto auto` + centrar el grupo: la marca y la tarjeta quedan juntas en el
+     centro, con el mismo aire a ambos lados. Antes la marca ocupaba todo el
+     ancho y la tarjeta se pegaba al borde derecho. */
+  grid-template-columns: auto auto;
+  justify-content: center;
   align-items: center;
-  gap: clamp(2rem, 6vw, 5rem);
+  gap: clamp(2.5rem, 7vw, 6rem);
   width: min(94vw, 1120px);
 
   /* La isla: tokens del tema oscuro, fijos a propósito. */
@@ -444,15 +448,17 @@ html[data-theme="claro"] {
   color: var(--color-ink-100);
 }
 
-/* Marca grande: logo y nombre en tamaño considerable. */
+/* Marca grande: logo y nombre en tamaño considerable, centrada en su columna
+   para que el conjunto quede simétrico. */
 .auth-brand {
   display: flex;
-  max-width: 30rem;
+  max-width: 24rem;
   flex-direction: column;
+  align-items: center;
   gap: 1.5rem;
+  text-align: center;
 }
 .auth-brand__tagline {
-  max-width: 26rem;
   font-size: 1.125rem;
   line-height: 1.5;
   color: var(--color-ink-400);
