@@ -1,8 +1,8 @@
 /**
- * Captura el login en viewport angosto para verificar el apilado (<900px).
- *   node tools\login-apilado.mjs
+ * Mide las posiciones reales de la marca y la tarjeta en el login.
+ *   node tools\login-medir.mjs
  */
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 
 import {
   BASE,
@@ -10,13 +10,12 @@ import {
   locVal,
   outDir,
   seedExpr,
-  shot,
   spawnEdge,
   wait,
   waitFor,
 } from "./simulacro/sim-base.mjs"
 
-const dir = outDir("login-apilado")
+const dir = outDir("login-medir")
 mkdirSync(dir, { recursive: true })
 
 async function main() {
@@ -39,14 +38,6 @@ async function main() {
       }
     })
 
-    // 800px de ancho: por debajo del corte de 56rem (896px), debe apilarse.
-    await cdp.send("Emulation.setDeviceMetricsOverride", {
-      width: 800,
-      height: 900,
-      deviceScaleFactor: 1,
-      mobile: false,
-    })
-
     await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: seedExpr("conectado") })
     await cdp.send("Page.navigate", { url: BASE })
     await waitFor(locVal(cdp, "location.origin"), "http://localhost:5173", 20000)
@@ -58,15 +49,25 @@ async function main() {
     await waitFor(locVal(cdp, "location.pathname"), "/login", 20000)
     await wait(1500)
 
-    const gridCols = await cdp.send("Runtime.evaluate", {
-      expression: `getComputedStyle(document.querySelector('.auth-grid')).gridTemplateColumns`,
-      returnByValue: true,
-    })
-    console.log("gridTemplateColumns a 800px:", gridCols.result.value)
+    const medir = async (sel) =>
+      (
+        await cdp.send("Runtime.evaluate", {
+          expression: `(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return JSON.stringify({x: Math.round(r.x), right: Math.round(r.right), w: Math.round(r.width), cx: Math.round(r.x + r.width/2)}); })()`,
+          returnByValue: true,
+        })
+      ).result.value
 
-    const png = await shot(cdp)
-    writeFileSync(`${dir}/login-800.png`, Buffer.from(png, "base64"))
-    console.log("captura en", dir)
+    const vw = (
+      await cdp.send("Runtime.evaluate", {
+        expression: "JSON.stringify({vw: window.innerWidth})",
+        returnByValue: true,
+      })
+    ).result.value
+
+    console.log("viewport:", vw)
+    console.log("grid:   ", await medir(".auth-grid"))
+    console.log("marca:  ", await medir(".auth-brand"))
+    console.log("tarjeta:", await medir(".auth-card"))
   } finally {
     await cdp.send("Browser.close", {}).catch(() => {})
     edge.kill()

@@ -419,11 +419,10 @@ html[data-theme="claro"] {
 .auth-grid {
   position: relative;
   z-index: 1;
-  display: grid;
-  /* `auto auto` + centrar el grupo: la marca y la tarjeta quedan juntas en el
-     centro, con el mismo aire a ambos lados. Antes la marca ocupaba todo el
-     ancho y la tarjeta se pegaba al borde derecho. */
-  grid-template-columns: auto auto;
+  /* Flexbox y no grid: con `auto auto` + `justify-content: center` las pistas
+     quedaban al inicio y el grupo se desplazaba a la izquierda. Flexbox centra
+     la marca y la tarjeta como un conjunto, con el mismo aire a ambos lados. */
+  display: flex;
   justify-content: center;
   align-items: center;
   gap: clamp(2.5rem, 7vw, 6rem);

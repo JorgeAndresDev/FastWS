@@ -268,6 +268,15 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
       parameters: input.bodyParams.map((text) => ({ type: "text", text })),
     })
   }
+  // Meta rechaza un `components: []` con "invalid parameter": si la plantilla no
+  // lleva variables ni cabecera, el campo se omite por completo.
+  const template: { name: string; language: { code: string }; components?: typeof components } = {
+    name: input.templateName,
+    language: { code: input.languageCode },
+  }
+  if (components.length > 0) {
+    template.components = components
+  }
   const json = await metaFetch<{
     contacts?: Array<{ wa_id?: string | number }>
     messages?: Array<{ id?: string | number; message_status?: string }>
@@ -277,11 +286,7 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
       messaging_product: "whatsapp",
       to: input.to,
       type: "template",
-      template: {
-        name: input.templateName,
-        language: { code: input.languageCode },
-        components,
-      },
+      template,
     },
   })
   const message = json.messages?.[0]
