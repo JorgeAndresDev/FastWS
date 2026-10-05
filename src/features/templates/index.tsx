@@ -8,7 +8,7 @@ import { sileo } from "sileo"
 import { Button, EmptyState, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp, formatDateShort } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
-import { toWhatsAppNumber } from "@/lib/phone"
+import { isMobileColombian, toWhatsAppNumber } from "@/lib/phone"
 
 import { createTemplate, deleteTemplate, graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
 import type { CreateTemplateInput, TemplateComponentInput } from "@/lib/wsb/api"
@@ -20,8 +20,11 @@ import { registrarAuditoria } from "@/lib/audit-log"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
 import { useConexion } from "@/features/connection/conexion-store"
 import {
+  buildTemplateBodyParams,
+  buildTemplateHeaderParams,
   categoryLabel,
   componentText,
+  countUnnamedPlaceholders,
   detectVariables,
   languageLabel,
   QualityBadge,
@@ -33,6 +36,7 @@ const TEMPLATES_TEMPLATE = "minmax(16rem, 1fr) 9.5rem 8.5rem 9rem 9rem 10.5rem"
 const LANGUAGES = ["es", "es_CO", "es_MX", "es_AR", "es_CL", "en", "en_US", "pt", "pt_BR", "fr"]
 const CATEGORIES: TemplateCategory[] = ["MARKETING", "UTILITY", "AUTHENTICATION"]
 const TEMPLATES_KEY = "fastws.plantillas"
+const TEST_NUMBER_KEY = "fastws.plantillas.numeroPrueba"
 const inputBase =
   "h-10 w-full rounded-md border bg-base-800 px-3 text-[0.8125rem] text-ink-100 outline-none transition-colors placeholder:text-ink-500 focus:border-brand-500/60 focus-visible:outline-2 focus-visible:outline-offset-2"
 
@@ -73,6 +77,13 @@ function TemplateRowActions({
   onTest: () => void
 }) {
   const approved = template.status === "APPROVED"
+  const unnamed = countUnnamedPlaceholders(componentText(template, "BODY"))
+  const bloqueada = !approved || unnamed > 0
+  const title = !approved
+    ? "Solo aprobadas se pueden probar"
+    : unnamed > 0
+      ? "La plantilla tiene variables sin nombre ({{}})"
+      : "Enviar al número de prueba"
   return (
     <div
       role="cell"
@@ -83,8 +94,8 @@ function TemplateRowActions({
         size="sm"
         variant="primary"
         icon={<Send className="size-3.5" aria-hidden />}
-        disabled={!approved}
-        title={approved ? "Enviar a tu número de empresa" : "Solo aprobadas se pueden probar"}
+        disabled={bloqueada}
+        title={title}
         onClick={onTest}
       >
         Probar
@@ -226,25 +237,34 @@ function TemplateDetail({
   const header = componentText(template, "HEADER")
   const footer = componentText(template, "FOOTER")
   const variables = detectVariables(body)
+  const unnamed = countUnnamedPlaceholders(body)
   const approved = template.status === "APPROVED"
+  // Un `{{}}` sin nombre no se puede rellenar: Meta aprobó la plantilla, pero
+  // ningún `parameter_name` corresponde a un hueco vacío. Se avisa en vez de
+  // enviar una petición que Meta va a rechazar.
+  const insendible = unnamed > 0
 
   const test = () => {
+    if (insendible) {
+      sileo.error({
+        title: "Esta plantilla no se puede probar",
+        description:
+          `Tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre ({{}}) en el cuerpo. ` +
+          "Recréala en el gestor de plantillas de Meta con nombres (como {{nombre}}) o con números ({{1}}).",
+      })
+      return
+    }
+    if (!isMobileColombian(to)) {
+      sileo.error({
+        title: "Falta el número de prueba",
+        description:
+          "Escribe un móvil colombiano de 10 dígitos en «Número de prueba», por ejemplo 3001234567.",
+      })
+      return
+    }
     setTesting(true)
-    const bodyComponent = template.components.find((c) => c.type === "BODY")
-    const headerComponent = template.components.find((c) => c.type === "HEADER")
-    let bodyParams: string[] | undefined
-    if (variables.length > 0) {
-      bodyParams = bodyComponent?.example?.body_text?.[0]?.slice(0, variables.length) ?? []
-      while (bodyParams.length < variables.length) {
-        bodyParams.push(`Ejemplo ${bodyParams.length + 1}`)
-      }
-    }
-    let headerParams: string[] | undefined
-    if (header) {
-      headerParams = headerComponent?.example?.header_text?.[0]
-        ? [headerComponent.example.header_text[0]]
-        : ["Cabecera de ejemplo"]
-    }
+    const bodyParams = buildTemplateBodyParams(template)
+    const headerParams = buildTemplateHeaderParams(template)
     sileo
       .promise(
         (async () =>
@@ -374,11 +394,23 @@ function TemplateDetail({
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {variables.map((variable) => (
-                <span key={variable.index} className="stamp stamp--fecha stamp--container font-mono">
-                  {`{{${variable.index}}}`}
+                <span key={variable.key} className="stamp stamp--fecha stamp--container font-mono">
+                  {`{{${variable.key}}}`}
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {unnamed > 0 && (
+          <div
+            role="alert"
+            className="flex flex-col gap-1.5 rounded-md border border-fallido/30 bg-fallido/10 px-3 py-2"
+          >
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-fallido">
+              <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              {`Tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre en el cuerpo ({{}}): Meta la aprobó, pero no hay forma de llenarlas. Recréala con nombres ({{nombre}}) o con números ({{1}}).`}
+            </p>
           </div>
         )}
 
@@ -399,8 +431,14 @@ function TemplateDetail({
             variant="primary"
             icon={<Send className="size-4" aria-hidden />}
             loading={testing}
-            disabled={!approved}
-            title={approved ? "Enviar a tu número de empresa" : "Solo aprobadas se pueden probar"}
+            disabled={!approved || insendible}
+            title={
+              !approved
+                ? "Solo aprobadas se pueden probar"
+                : insendible
+                  ? "La plantilla tiene variables sin nombre"
+                  : "Enviar al número de prueba"
+            }
             onClick={test}
           >
             {approved ? "Enviar mensaje de prueba" : "Pendiente de aprobación"}
@@ -465,8 +503,8 @@ function TemplateForm({
 
   const variables = useMemo(() => detectVariables(body), [body])
 
-  const setExample = (index: number, value: string) => {
-    setExamples((prev) => ({ ...prev, [String(index)]: value }))
+  const setExample = (key: string, value: string) => {
+    setExamples((prev) => ({ ...prev, [key]: value }))
   }
 
   const reset = () => {
@@ -674,18 +712,18 @@ if (!body.trim()) {
           </p>
           {variables.map((variable) => (
             <FormField
-              key={variable.index}
-              label={`Ejemplo para {{${variable.index}}}`}
-              htmlFor={`plantilla-ejemplo-${variable.index}`}
+              key={variable.key}
+              label={`Ejemplo para {{${variable.key}}}`}
+              htmlFor={`plantilla-ejemplo-${variable.key}`}
               error={errors.examples && variables.length === 1 ? errors.examples : undefined}
             >
               <Input
-                id={`plantilla-ejemplo-${variable.index}`}
+                id={`plantilla-ejemplo-${variable.key}`}
                 type="text"
                 autoComplete="off"
-                value={examples[String(variable.index)] ?? ""}
-                onChange={(event) => setExample(variable.index, event.target.value)}
-                placeholder={`Ejemplo ${variable.index}`}
+                value={examples[String(variable.key)] ?? ""}
+                onChange={(event) => setExample(variable.key, event.target.value)}
+                placeholder={`Ejemplo ${variable.key}`}
                 invalid={Boolean(errors.examples)}
               />
             </FormField>
@@ -742,6 +780,15 @@ function saveTemplates(templates: WaTemplate[]) {
   writeDurable(TEMPLATES_KEY, JSON.stringify(templates))
 }
 
+/**
+ * El número de la empresa a veces es un centro de contacto que no recibe
+ * WhatsApp, así que el destino del mensaje de prueba es configurable y se
+ * recuerda en este equipo. Si no hay nada guardado arranca con el de la empresa.
+ */
+function loadTestNumber(fallback: string) {
+  return readDurable(TEST_NUMBER_KEY) || fallback
+}
+
 export function TemplatesPage() {
   const navigate = useNavigate()
   const { ids, status, token, metaPhone } = useConexion()
@@ -753,7 +800,36 @@ export function TemplatesPage() {
   const [query, setQuery] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  // El número de la empresa a veces es un «Centro Contacto» que no recibe
+  // WhatsApp; el mensaje de prueba tiene que ir a un número que sí lo tenga.
+  const [testNumber, setTestNumber] = useState(() => loadTestNumber(metaPhone))
   const firstLoadRef = useRef(false)
+
+  // La conexión puede llegar después del primer render; si el operador no ha
+  // tocado el campo, se adopta el número real de la empresa.
+  const testNumberEdited = useRef(false)
+  useEffect(() => {
+    if (!testNumberEdited.current && metaPhone && !readDurable(TEST_NUMBER_KEY)) {
+      setTestNumber(metaPhone)
+    }
+  }, [metaPhone])
+
+  const onTestNumber = (value: string) => {
+    testNumberEdited.current = true
+    setTestNumber(value)
+    writeDurable(TEST_NUMBER_KEY, value.trim())
+  }
+
+  const testNumberInput = (
+    <Input
+      type="tel"
+      aria-label="Número de prueba"
+      className="h-9 w-44"
+      placeholder="Número de prueba"
+      value={testNumber}
+      onChange={(event) => onTestNumber(event.target.value)}
+    />
+  )
 
   const applyItems = useCallback((updater: (prev: WaTemplate[]) => WaTemplate[]) => {
     setItems((prev) => {
@@ -803,33 +879,33 @@ export function TemplatesPage() {
 
   const testTemplate = (template: WaTemplate) => {
     setSelectedId(template.id)
+    const unnamed = countUnnamedPlaceholders(componentText(template, "BODY"))
+    if (unnamed > 0) {
+      sileo.error({
+        title: "Esta plantilla no se puede probar",
+        description:
+          `Tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre ({{}}) en el cuerpo. ` +
+          "Recréala en el gestor de plantillas de Meta con nombres (como {{nombre}}) o con números ({{1}}).",
+      })
+      return
+    }
     sileo
       .promise(
         (async () => {
-          const bodyComponent = template.components.find((c) => c.type === "BODY")
-          const headerComponent = template.components.find((c) => c.type === "HEADER")
-          const variables = detectVariables(componentText(template, "BODY"))
-          let bodyParams: string[] | undefined
-          if (variables.length > 0) {
-            bodyParams = bodyComponent?.example?.body_text?.[0]?.slice(0, variables.length) ?? []
-            while (bodyParams.length < variables.length) {
-              bodyParams.push(`Ejemplo ${bodyParams.length + 1}`)
-            }
-          }
-          let headerParams: string[] | undefined
-          if (componentText(template, "HEADER")) {
-            headerParams = headerComponent?.example?.header_text?.[0]
-              ? [headerComponent.example.header_text[0]]
-              : ["Cabecera de ejemplo"]
+          const to = toWhatsAppNumber(testNumber)
+          if (!isMobileColombian(testNumber)) {
+            throw new Error(
+              "Escribe un móvil colombiano de 10 dígitos en «Número de prueba», por ejemplo 3001234567."
+            )
           }
           return sendTemplate({
             phoneNumberId: ids.phoneNumberId,
             token,
-            to: toWhatsAppNumber(metaPhone),
+            to,
             templateName: template.name,
             languageCode: template.language,
-            bodyParams,
-            headerParams,
+            bodyParams: buildTemplateBodyParams(template),
+            headerParams: buildTemplateHeaderParams(template),
           })
         })(),
         {
@@ -876,15 +952,16 @@ export function TemplatesPage() {
                     className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500"
                     aria-hidden
                   />
-                  <Input
-                    type="search"
-                    aria-label="Filtrar plantillas por nombre"
-                    className="h-9 w-56 pl-9"
-                    placeholder="Filtrar por nombre"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                  />
+<Input
+                  type="search"
+                  aria-label="Filtrar plantillas por nombre"
+                  className="h-9 w-56 pl-9"
+                  placeholder="Filtrar por nombre"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
                 </div>
+                {testNumberInput}
               </div>
             }
           >
@@ -916,7 +993,7 @@ export function TemplatesPage() {
               wabaId={ids.wabaId}
               phoneNumberId={ids.phoneNumberId}
               token={token}
-              to={toWhatsAppNumber(metaPhone)}
+              to={toWhatsAppNumber(testNumber)}
               onClose={() => setSelectedId(null)}
               onDeleted={() => setSelectedId(null)}
             />
@@ -942,7 +1019,8 @@ export function TemplatesPage() {
         <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink-400">
           Plantillas de mensaje sincronizadas con la cuenta{" "}
           <span className="font-mono text-ink-300">{ids.wabaId}</span>. Los mensajes de prueba se
-          envían a tu número de empresa ({metaPhone}).
+          envían al número de prueba: si el número de la empresa es un centro de contacto que no
+          recibe WhatsApp, pon aquí un móvil que sí lo tenga.
         </p>
       </header>
 
@@ -958,10 +1036,11 @@ export function TemplatesPage() {
                   aria-label="Filtrar plantillas por nombre"
                   className="h-9 w-56 pl-9"
                   placeholder="Filtrar por nombre"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 />
               </div>
+              {testNumberInput}
               <Button
                 size="sm"
                 icon={<RefreshCw className="size-3.5" aria-hidden />}
@@ -1008,7 +1087,7 @@ export function TemplatesPage() {
             wabaId={ids.wabaId}
             phoneNumberId={ids.phoneNumberId}
             token={token}
-            to={toWhatsAppNumber(metaPhone)}
+            to={toWhatsAppNumber(testNumber)}
             onClose={() => setSelectedId(null)}
             onDeleted={() => {
               setSelectedId(null)

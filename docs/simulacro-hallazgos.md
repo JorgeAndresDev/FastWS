@@ -54,6 +54,22 @@ Cada entrada: severidad (P0 pérdida de datos/seguridad · P1 función rota o mi
 | N11 | P2 | Los KPI de Auditoría se calculaban sobre el periodo completo, ignorando categoría y búsqueda: mostraban totales junto a una lista filtrada (o vacía) | `src/features/admin/audit.tsx` (`contarCategorias(periodoRegistros)`) | Texto que miente | nuevo · **confirmado** (6.24) · **CORREGIDO** (cuentan sobre `visible`) |
 | N12 | P2 | «Borrar todo» (Configuración) borraba `fastws.conexion.ids` pero **no** el token de Meta, que vive en sessionStorage: la app se reconectaba sola tras el borrado, contradiciendo el diálogo | `src/lib/demo.ts` (`KEYS`) + `acciones-panel.tsx` | Texto que miente | nuevo · **confirmado** (7.11) · **CORREGIDO** (borra también la sesión de sessionStorage) |
 
+## Hallazgos de la integración real con Meta (fuera del simulacro)
+
+Estos no aparecen en el simulacro porque el stub de `fetch` acepta cualquier payload. Solo se ven contra la API real.
+
+| # | Severidad | Descripción | Evidencia | Categoría | Estatus |
+|---|---|---|---|---|---|
+| R1 | P0 | `sendTemplate` mandaba los parámetros sin `parameter_name`. Las 3 plantillas reales de la cuenta usan `parameter_format: NAMED` (`{{nombre}}`, `{{fecha}}`), así que Meta rechazaba todo envío con `(#100) Parameter name is missing or empty`. El mensaje de la app solo enseñaba «Invalid parameter», sin la parte útil | API real: 3 plantillas NAMED; `tools/repro-plantilla.mjs` | Integración rota | **confirmado y CORREGIDO**: `toParameter()` emite `parameter_name` cuando el nombre no es numérico, y lo omite en las posicionales ({{1}}), donde Meta responde «Unexpected key parameter_name». Verificado con envío real: `rmd_mensajes` → HTTP 200 |
+| R2 | P1 | Se mandaba un parámetro de cabecera siempre que existiera texto de cabecera. Casi todas las cabeceras son texto fijo (`hello_world` → «Hello World»), y Meta rechaza el envío entero al recibir un parámetro que la plantilla no pide | API real: `hello_world` sin variables de cabecera | Integración rota | **confirmado y CORREGIDO**: `buildTemplateHeaderParams()` devuelve `undefined` si la cabecera no tiene variables. Verificado con envío real: `hello_world` → HTTP 200 |
+| R3 | P2 | El número de la empresa (`+57 310 3971042`, `verified_name` «Centro Contacto») no recibe WhatsApp: Meta devuelve `400 (#100) Invalid parameter` incluso para un mensaje de texto. «Probar» sin destino configurable fallaba siempre | API real: texto a `573103971042` → 400; a `573001234001` → 200 | Configuración | **CORREGIDO**: campo «Número de prueba», editable y persistente por equipo, con validación de móvil colombiano. El destino ya no se toma por defecto del número de la empresa |
+| R4 | P2 | Hay 3 plantillas `APPROVED` con placeholders `{{}}` sin nombre (`preventa`, `pedidos_reprogramados`, `clientes_cashless`). Meta las aprobó, pero no existe `parameter_name` al que asignar un valor: son inejables por construcción | API real: `parameter_format=NAMED` con `variables=[]` y `{{}}` en el cuerpo | Plantilla inválida de origen | **CORREGIDO en la app**: `countUnnamedPlaceholders()` las detecta, deshabilita «Probar» y explica que hay que recrearlas con nombres o números. La plantilla en sí se arregla en el gestor de Meta |
+| R5 | P3 | `readMetaError` se quedaba con `error.message` y tiraba `error_data.details`, que es justo el detalle accionable («Parameter name is missing or empty») | `src/lib/wsb/api.ts` | Diagnóstico | **CORREGIDO**: el mensaje concatena `details` |
+
+## Nota sobre el alcance de R1-R5
+
+`parameter_name` es la clave correcta, no `param_name`: `param_name` es el nombre del campo en la *respuesta* de Meta (`example.body_text_named_params[].param_name`) y en el cuerpo de *creación* de la plantilla, pero al *enviar* el campo es `parameter_name`. Confundirlos produce el error opuesto («Unexpected key param_name»), que es como se chegou a la respuesta anterior.
+
 ## Ranking final (confirmado a la Fase 7)
 
 Todos los hallazgos confirmados y corregidos (S1, S2, S3, S5-S14, S16, S17, S19-S23, S30, N2-N8, N10-N12) quedaron **verificados en verde** en las pasadas 0-7. Descartados: S18, S24, S26, S29 y la mitad de idioma de S12.
@@ -70,3 +86,5 @@ Todos los hallazgos confirmados y corregidos (S1, S2, S3, S5-S14, S16, S17, S19-
 S18 (`addClients` zombi — 4.12b: reimport genérico **limpia** los campos) · S24 (no hay selección ni «marcar leído» que persistir) · S26 (foco vuelve al avatar en Esc — 1.9) · S29 (el diálogo **sí** declara los turnos) · S4 (Sincronización **declara** que la sincronización aún no existe; no hay promesa rota) · S27 (estado reservado por PRODUCT.md §52, no código muerto) · idioma de S12 (el note ya declara que la UI sigue en español).
 
 **Balance final**: 27 defectos corregidos y verificados en verde (185 checks), 7 descartados, 1 abierto (S28, P2).
+
+**Integración real con Meta**: 5 hallazgos adicionales (R1-R5) corregidos y verificados contra la API real. R1 y R2 eran bloqueantes: sin ellos ninguna plantilla de la cuenta podía enviarse.

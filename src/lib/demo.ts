@@ -46,7 +46,7 @@ function campanas(): Campaign[] {
       name: "Despacho nocturno · Ruta Norte",
       description: "Recordatorio de ruta a comercios del norte de Manizales.",
       template: { name: "recordatorio_ruta", language: "es_CO" },
-      mapping: [{ index: 0, fuente: "campo", campo: "name" }],
+      mapping: [{ key: "1", fuente: "campo", campo: "name" }],
       filter: { zone: "Norte" },
       status: "EN_PROCESO",
       recipients: [
@@ -66,7 +66,7 @@ function campanas(): Campaign[] {
       name: "Promoción lunes de combustibles",
       description: "Aviso de promoción a comercios clientes.",
       template: { name: "promo_combustible", language: "es_CO" },
-      mapping: [{ index: 0, fuente: "campo", campo: "name" }],
+      mapping: [{ key: "1", fuente: "campo", campo: "name" }],
       filter: {},
       status: "BORRADOR",
       recipients: [

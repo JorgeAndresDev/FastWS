@@ -6,6 +6,7 @@ import { Button, FormField, Input } from "@/components/ui"
 import { formatNumber } from "@/lib/utils"
 import { toWhatsAppNumber } from "@/lib/phone"
 import { graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
+import type { TemplateParams } from "@/lib/wsb/api"
 
 import type {
   CampaignVariableMapping,
@@ -18,7 +19,14 @@ import type {
 
 import { useConexion } from "@/features/connection/conexion-store"
 import { useClients } from "@/features/clients/clients-store"
-import { componentText, detectVariables, languageLabel } from "@/features/templates/template-status"
+import {
+  buildTemplateBodyParams,
+  buildTemplateHeaderParams,
+  componentText,
+  countUnnamedPlaceholders,
+  detectVariables,
+  languageLabel,
+} from "@/features/templates/template-status"
 import { useCampaigns } from "./campaigns-store"
 
 const inputBase =
@@ -81,7 +89,7 @@ function hasMissingValue(value: string | undefined): boolean {
 function resolveBody(body: string, mappingArr: CampaignVariableMapping[], params: string[]): string {
   let out = body
   mappingArr.forEach((entry, i) => {
-    out = out.split(`{{${entry.index}}}`).join(params[i] ?? "")
+    out = out.split(`{{${entry.key}}}`).join(params[i] ?? "")
   })
   return out
 }
@@ -189,7 +197,7 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
     if (!template) return
     const next: Record<string, VariableChoice> = {}
     for (const variable of detectVariables(componentText(template, "BODY"))) {
-      next[String(variable.index)] = { fuente: "campo", campo: "name" }
+      next[String(variable.key)] = { fuente: "campo", campo: "name" }
     }
     setMapping(next)
   }
@@ -197,9 +205,9 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
   const mappingArr = useMemo<CampaignVariableMapping[]>(() => {
     if (!selectedTemplate) return []
     return detectVariables(componentText(selectedTemplate, "BODY")).map((variable) => {
-      const choice = mapping[String(variable.index)] ?? { fuente: "campo", campo: "name" as const }
+      const choice = mapping[String(variable.key)] ?? { fuente: "campo", campo: "name" as const }
       return {
-        index: variable.index,
+        key: variable.key,
         fuente: choice.fuente,
         campo: choice.fuente === "campo" ? choice.campo : undefined,
         texto: choice.fuente === "libre" ? (choice.texto ?? "") : undefined,
@@ -245,29 +253,39 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
     return resolveBody(componentText(selectedTemplate, "BODY"), mappingArr, mapped.preview.params)
   }, [selectedTemplate, mappingArr, mapped.preview])
 
-  const setChoice = (index: number, choice: VariableChoice) => {
-    setMapping((prev) => ({ ...prev, [String(index)]: choice }))
+  const setChoice = (key: string, choice: VariableChoice) => {
+    setMapping((prev) => ({ ...prev, [key]: choice }))
   }
 
   const probar = () => {
     if (!selectedTemplate) return
-    const bodyComponent = selectedTemplate.components.find((c) => c.type === "BODY")
-    let bodyParams: string[] | undefined
-    if (mappingArr.length > 0) {
-      bodyParams = mapped.preview?.params ?? []
-      while (bodyParams.length < mappingArr.length) {
-        bodyParams = [...bodyParams, `Ejemplo ${bodyParams.length + 1}`]
-      }
-      if (bodyParams.length === 0) return
-    } else {
-      bodyParams = bodyComponent?.example?.body_text?.[0]
+    const unnamed = countUnnamedPlaceholders(componentText(selectedTemplate, "BODY"))
+    if (unnamed > 0) {
+      sileo.error({
+        title: "Esta plantilla no se puede probar",
+        description:
+          `Tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre ({{}}) en el cuerpo. ` +
+          "Recréala en el gestor de plantillas de Meta con nombres (como {{nombre}}) o con números ({{1}}).",
+      })
+      return
     }
-    const headerComponent = selectedTemplate.components.find((c) => c.type === "HEADER")
-    let headerParams: string[] | undefined
-    if (componentText(selectedTemplate, "HEADER")) {
-      headerParams = headerComponent?.example?.header_text?.[0]
-        ? [headerComponent.example.header_text[0]]
-        : ["Cabecera de ejemplo"]
+    let bodyParams: TemplateParams | undefined
+    const nombres = detectVariables(componentText(selectedTemplate, "BODY")).map((v) => v.key)
+    if (mappingArr.length > 0) {
+      const values = mapped.preview?.params ?? []
+      while (values.length < mappingArr.length) {
+        values.push(`Ejemplo ${values.length + 1}`)
+      }
+      if (values.length === 0) return
+      // Cada valor viaja con el nombre de su variable: en las plantillas
+      // nombradas Meta exige `parameter_name` o rechaza el envío.
+      bodyParams = values.map((text, position) => ({
+        parameterName: nombres[position],
+        text,
+      }))
+    } else {
+      bodyParams = buildTemplateBodyParams(selectedTemplate)
+      if (!bodyParams) return
     }
     sileo.promise(
       (async () =>
@@ -278,7 +296,7 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
           templateName: selectedTemplate.name,
           languageCode: selectedTemplate.language,
           bodyParams,
-          headerParams,
+          headerParams: buildTemplateHeaderParams(selectedTemplate),
         }))(),
       {
         loading: { title: "Enviando mensaje de prueba…", description: selectedTemplate.name },
@@ -344,7 +362,7 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
   }
 
   const mappingInvalid = variables.some((variable) => {
-    const choice = mapping[String(variable.index)] ?? { fuente: "campo", campo: "name" }
+    const choice = mapping[String(variable.key)] ?? { fuente: "campo", campo: "name" }
     if (choice.fuente === "libre" && !(choice.texto ?? "").trim()) return true
     return false
   })
@@ -418,21 +436,21 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
                 <div className="flex flex-col gap-3">
                   <p className={label + " text-ink-500"}>Variables del cuerpo</p>
                   {variables.map((variable) => {
-                    const choice = mapping[String(variable.index)] ?? {
+                    const choice = mapping[String(variable.key)] ?? {
                       fuente: "campo",
                       campo: "name",
                     }
                     return (
                       <div
-                        key={variable.index}
+                        key={variable.key}
                         className="grid items-center gap-2 sm:grid-cols-[auto_11rem_1fr]"
                       >
-                        <span className="stamp stamp--fecha stamp--container font-mono">{`{{${variable.index}}}`}</span>
+                        <span className="stamp stamp--fecha stamp--container font-mono">{`{{${variable.key}}}`}</span>
                         <select
-                          aria-label={`Fuente de la variable ${variable.index}`}
+                          aria-label={`Fuente de la variable ${variable.key}`}
                           value={choice.fuente}
                           onChange={(e) =>
-                            setChoice(variable.index, {
+                            setChoice(variable.key, {
                               fuente: e.target.value as "campo" | "libre",
                               campo: "name",
                               texto: choice.texto,
@@ -445,10 +463,10 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
                         </select>
                         {choice.fuente === "campo" ? (
                           <select
-                            aria-label={`Campo para {{${variable.index}}}`}
+                            aria-label={`Campo para {{${variable.key}}}`}
                             value={choice.campo}
                             onChange={(e) =>
-                              setChoice(variable.index, {
+                              setChoice(variable.key, {
                                 ...choice,
                                 campo: e.target.value as ClientFieldKey,
                               })
@@ -466,9 +484,9 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
                             type="text"
                             value={choice.texto ?? ""}
                             onChange={(e) =>
-                              setChoice(variable.index, { ...choice, texto: e.target.value })
+                              setChoice(variable.key, { ...choice, texto: e.target.value })
                             }
-                            placeholder={`Texto para {{${variable.index}}}`}
+                            placeholder={`Texto para {{${variable.key}}}`}
                             invalid={!(choice.texto ?? "").trim()}
                           />
                         )}

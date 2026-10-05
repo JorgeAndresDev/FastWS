@@ -10,6 +10,7 @@ import type {
 } from "@/types"
 
 import { graphError, sendTemplate, sendText } from "@/lib/wsb/api"
+import type { TemplateParams } from "@/lib/wsb/api"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
 
 import { useConexion } from "@/features/connection/conexion-store"
@@ -24,8 +25,9 @@ interface ConversationsContextValue {
     templateName: string,
     languageCode: string,
     params: string[],
-    headerParams?: string[],
-    renderedText?: string
+    headerParams?: TemplateParams,
+    renderedText?: string,
+    paramNames?: string[]
   ) => Promise<boolean>
   sembrarDemo: () => void
   limpiarDemo: () => void
@@ -297,8 +299,9 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       templateName: string,
       languageCode: string,
       params: string[],
-      headerParams?: string[],
-      renderedText?: string
+      headerParams?: TemplateParams,
+      renderedText?: string,
+      paramNames?: string[]
     ): Promise<boolean> => {
       if (!tokenRef.current || !idsRef.current.phoneNumberId) {
         sileo.error({
@@ -327,7 +330,16 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
           to: phone,
           templateName,
           languageCode,
-          bodyParams: params.length > 0 ? params : undefined,
+          // Cada valor con el nombre de su variable: Meta exige `parameter_name`
+          // en las plantillas nombradas ({{nombre}}) y lo rechaza en las
+          // posicionales ({{1}}), así que el nombre solo viaja si corresponde.
+          bodyParams:
+            params.length > 0
+              ? params.map((text, position) => ({
+                  parameterName: paramNames?.[position],
+                  text,
+                }))
+              : undefined,
           headerParams: headerParams && headerParams.length > 0 ? headerParams : undefined,
         })
         sileo.success({

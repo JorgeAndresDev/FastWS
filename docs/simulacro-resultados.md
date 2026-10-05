@@ -17,7 +17,7 @@ cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
 | 2 Conexión | 11 | 11 | 0 | **CORREGIDOS S10/S30/N2/S23** (revalidación al arrancar, ids al form, confirmación y borrado de ids) |
 | 3 Campañas, Cola, motor | 24 | 24 | 0 | **CORREGIDOS S8/S13** (modal de cancelar con auditoría; `iniciar` mantiene el modal si falla) |
 | 4 Clientes, Importación, Segmentos | 17 | 17 | 0 | **CORREGIDOS S5/S6/S7/S17/N3** (CRUD clientes + estado vacío, panel de duplicados, hoja `generic`, grupo 31-60 d, sub-tabla de miembros) + nuevo 4.1b (alta de cliente); S18 descartado |
-| 5 Plantillas, Conversaciones, Mensajes | 38 | 38 | 0 | **CORREGIDOS S3/S9/S14/S16/S19/S22/S2 + N4-N8** (cache de plantillas, validación header/footer, textarea en fallo, params al cambiar pestaña, headerParams, mensaje renderizado, opciones filtro, reescaneo ENTREGADO/LEIDO, cursor de paginación, auditoría) |
+| 5 Plantillas, Conversaciones, Mensajes | 46 | 46 | 0 | **CORREGIDOS S3/S9/S14/S16/S19/S22/S2 + N4-N8** (cache de plantillas, validación header/footer, textarea en fallo, params al cambiar pestaña, headerParams, mensaje renderizado, opciones filtro, reescaneo ENTREGADO/LEIDO, cursor de paginación, auditoría) + **R1-R4** (`parameter_name` en NAMED, cabecera fija sin parámetros, número de prueba configurable y persistente, bloqueo de `{{}}` sin nombre) |
 | 6 Reportes, Historial, Auditoría, Dispositivos | 28 | 28 | 0 | **CORREGIDOS S20/S21/S24/S25/S29 + N10/N11** (rango de fechas acotado, CSV sin inyección de fórmulas, clave de día con relleno, KPI coherentes con la lista); S24/S25/S29 **descartados** |
 | 7 Configuración, Sync, integridad | 16 | 16 | 0 | **CORREGIDOS S1/S12 + N12** (demo siembra `{threads, merged}`, copy de velocidad en caliente, «Borrar todo» borra el token); S4 **descartado** (la página declara que la sincronización aún no existe) |
 | **Total** | **185** | **185** | **0** | todos los huecos confirmados corregidos y verificados en verde |
@@ -115,7 +115,14 @@ cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
 | 5.9b | Re-sync tras borrar OK | OK | tras "Sincronizar" quedan 2 filas (la borrada sale de la lista) |
 | 5.9c | Fallo en DELETE | OK | toast "No se pudo eliminar la plantilla"; la plantilla sigue en la lista (2) |
 | 5.9d | [N6] fallo en DELETE: el detalle se mantiene | OK | la confirmación se cierra pero el detalle **permanece abierto** y no se audita un borrado fallido |
-| 5.10 | [S3] cache de plantillas | OK | se guardan en `fastws.plantillas` (3 entradas) y reaparecen tras recargar |
+| 5.10 | [S3] cache de plantillas | OK | se guardan en `fastws.plantillas` (6 entradas) y reaparecen tras recargar |
+| 5.23 | [R1] `parameter_name` en NAMED | OK | `rmd_named` → `[{"type":"text","parameter_name":"nombre",...},{"type":"text","parameter_name":"fecha",...}]` |
+| 5.24 | [R2] cabecera de texto fijo | OK | `hello_world_sim` se envía sin componente `header` y sin `components` |
+| 5.25 | [R4] `{{}}` sin nombre | OK | «Probar» deshabilitado, el detalle lo explica y no hay llamada a Meta (`sends=0`) |
+| 5.25b | [R4] botón de enviar del detalle | OK | también deshabilitado |
+| 5.26 | [R3] número de prueba | OK | `to=573009999888`, no el de la empresa |
+| 5.26a | [R3] persistencia del número | OK | sobrevive a la recarga vía `fastws.plantillas.numeroPrueba` |
+| 5.27 | [R3] número inválido | OK | error «móvil colombiano» en pantalla y sin llamada a Meta |
 | 5.12 | Re-escaneo: hilos derivados de envíos | OK | 6 hilos con estados PROCESO/FALLIDO/CANCELADO/LEIDO/ENTREGADO (`Con error`, `Pendiente`) |
 | 5.12b | Re-escaneo idempotente | OK | 2º re-escaneo no duplica (6 hilos) |
 | 5.12c | Hilo CANCELADO con motivo | OK | el motivo llega al detalle del hilo |

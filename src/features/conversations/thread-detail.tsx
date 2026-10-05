@@ -6,7 +6,13 @@ import { cn } from "@/lib/utils"
 
 import type { ConversationMessage, ConversationThread, WaTemplate } from "@/types"
 
-import { componentText, detectVariables, languageLabel } from "@/features/templates/template-status"
+import {
+  buildTemplateHeaderParams,
+  componentText,
+  countUnnamedPlaceholders,
+  detectVariables,
+  languageLabel,
+} from "@/features/templates/template-status"
 import { useConexion } from "@/features/connection/conexion-store"
 import { useClients } from "@/features/clients/clients-store"
 import { ConvoChip } from "./conversation-status"
@@ -146,17 +152,17 @@ export function ThreadDetail({ thread, templates, templatesError }: ThreadDetail
       setError("Elige una plantilla aprobada.")
       return
     }
-    const paramsArr = variables.map((variable) => params[String(variable.index)] ?? "")
+    const paramsArr = variables.map((variable) => params[String(variable.key)] ?? "")
     if (variables.length > 0 && paramsArr.some((value) => !value.trim())) {
       setError("Completa las variables de la plantilla.")
       return
     }
-    const headerComponent = selectedTemplate.components.find((c) => c.type === "HEADER")
-    let headerParams: string[] | undefined
-    if (componentText(selectedTemplate, "HEADER")) {
-      headerParams = headerComponent?.example?.header_text?.[0]
-        ? [headerComponent.example.header_text[0]]
-        : ["Cabecera de ejemplo"]
+    const unnamed = countUnnamedPlaceholders(componentText(selectedTemplate, "BODY"))
+    if (unnamed > 0) {
+      setError(
+        `Esta plantilla tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre ({{}}) y no se puede enviar. Recréala en Meta con nombres o con números.`
+      )
+      return
     }
     setSending(true)
     try {
@@ -165,8 +171,11 @@ export function ThreadDetail({ thread, templates, templatesError }: ThreadDetail
         selectedTemplate.name,
         selectedTemplate.language,
         paramsArr,
-        headerParams,
-        renderTemplate(selectedTemplate, params)
+        buildTemplateHeaderParams(selectedTemplate),
+        renderTemplate(selectedTemplate, params),
+        // Cada valor con el nombre de su variable: Meta lo exige en las
+        // plantillas nombradas.
+        variables.map((variable) => variable.key)
       )
       if (ok) setTemplateId("")
     } finally {
@@ -282,18 +291,18 @@ export function ThreadDetail({ thread, templates, templatesError }: ThreadDetail
                   </p>
                 )}
                 {variables.map((variable) => (
-                  <div key={variable.index} className="grid items-center gap-2 sm:grid-cols-[auto_1fr]">
-                    <span className="stamp stamp--fecha stamp--container font-mono">{`{{${variable.index}}}`}</span>
+                  <div key={variable.key} className="grid items-center gap-2 sm:grid-cols-[auto_1fr]">
+                    <span className="stamp stamp--fecha stamp--container font-mono">{`{{${variable.key}}}`}</span>
                     <input
                       type="text"
-                      value={params[String(variable.index)] ?? ""}
+                      value={params[String(variable.key)] ?? ""}
                       onChange={(e) =>
                         setParams((prev) => ({
                           ...prev,
-                          [String(variable.index)]: e.target.value,
+                          [String(variable.key)]: e.target.value,
                         }))
                       }
-                      placeholder={`Valor para {{${variable.index}}}`}
+                      placeholder={`Valor para {{${variable.key}}}`}
                       className={cn(inputBase, "h-10")}
                     />
                   </div>

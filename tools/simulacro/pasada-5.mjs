@@ -142,6 +142,9 @@ const R_ = []
 let n = 0
 const ch = (label, ok, detalle) => { R_.push({ n: ++n, label, ok: Boolean(ok), detalle }) }
 
+/** Plantillas que devuelve el stub (3 originales + 3 de los hallazgos R1/R2/R4). */
+const TPL = 6
+
 async function main() {
   const { cdp } = await spawnEdge()
   const dir = outDir("pasada-5")
@@ -160,8 +163,8 @@ async function main() {
   await act(cdp, `sessionStorage.setItem('fastws.conexion.sesion', JSON.stringify(${J(seedP5()["fastws.conexion.sesion"])}));return 'ok'`)
   await reload(cdp)
   await go(cdp, "/app/plantillas")
-  const rows52 = await waitFor(async () => (await rowsN(cdp)) === 3, true, 12000)
-  ch("5.2 sincroniza al cargar: 3 plantillas de Meta (2 aprobadas + 1 pendiente)", rows52, `rows=${await rowsN(cdp)}`)
+  const rows52 = await waitFor(async () => (await rowsN(cdp)) === TPL, true, 12000)
+  ch(`5.2 sincroniza al cargar: ${TPL} plantillas de Meta (5 aprobadas + 1 pendiente)`, rows52, `rows=${await rowsN(cdp)}`)
   writeArtifacts(dir, "5x-diag", {
     txt: JSON.stringify({
       sim: await evalJson(cdp, `window.__SIM||null`),
@@ -183,21 +186,21 @@ async function main() {
   await act(cdp, `F('input[aria-label="Filtrar plantillas por nombre"]','confirmacion');return 'ok'`)
   const ok53 = await waitFor(async () => (await rowsN(cdp)) === 1, true, 8000)
   const rows53 = await rowsN(cdp)
-  ch("5.3 filtro por nombre deja 1 de 3", ok53 && rows53 === 1, `rows=${rows53}`)
+  ch(`5.3 filtro por nombre deja 1 de ${TPL}`, ok53 && rows53 === 1, `rows=${rows53}`)
   await act(cdp, `F('input[aria-label="Filtrar plantillas por nombre"]','');return 'ok'`)
-  await waitFor(async () => (await rowsN(cdp)) === 3, true, 8000)
+  await waitFor(async () => (await rowsN(cdp)) === TPL, true, 8000)
 
   // ── 5.4 paging ─────────────────────────────────────────────────────────
   await waitFor(async () => await hasBody(cdp, "Cargar m\u00e1s plantillas"), true, 8000)
   await clickMain(cdp, 'main button', "Cargar m\u00e1s plantillas")
   await wait(1200)
   const rows54a = await rowsN(cdp)
-  ch("5.4a paginacion con cursor: al cargar mas se anexan filas", rows54a === 4, `rows=${rows54a}`)
+  ch("5.4a paginacion con cursor: al cargar mas se anexan filas", rows54a === TPL + 1, `rows=${rows54a}`)
 
   await act(cdp, `SIM({paging:'next-url'});return 'ok'`)
   await reload(cdp)
   await go(cdp, "/app/plantillas")
-  await waitFor(async () => (await rowsN(cdp)) === 3, true, 12000)
+  await waitFor(async () => (await rowsN(cdp)) === TPL, true, 12000)
   await waitFor(async () => await hasBody(cdp, "Cargar m\u00e1s plantillas"), true, 8000)
   await clickMain(cdp, 'main button', "Cargar m\u00e1s plantillas")
   await wait(1000)
@@ -208,7 +211,7 @@ async function main() {
   await act(cdp, `SIM({paging:'cursor'});return 'ok'`)
   await reload(cdp)
   await go(cdp, "/app/plantillas")
-  await waitFor(async () => (await rowsN(cdp)) === 3, true, 12000)
+  await waitFor(async () => (await rowsN(cdp)) === TPL, true, 12000)
 
   // ── 5.5 crear valida ───────────────────────────────────────────────────
   const auditBefore = await store(cdp, "fastws.auditoria").then((a) => (Array.isArray(a) ? a.length : 0))
@@ -270,6 +273,73 @@ async function main() {
   ch("5.8b la prueba desde lista envia headerParams de la cabecera {{1}}", ok58toast && hasHeader58 && bodyParams58.length === 1, `hasHeader=${hasHeader58} bodyParams=${bodyParams58.length}`)
   writeArtifacts(dir, "5c-probar-lista", { json: parsed58, png: shot(cdp), dump: null })
 
+  // ── 5.23 [R1] NAMED: parameter_name en cada parámetro del cuerpo ──────────
+  await clickRowAction(cdp, "rmd_named", "Probar")
+  await waitToast(cdp, "Mensaje de prueba enviado")
+  const named = JSON.parse((await evalJson(cdp, `JSON.stringify(window.__simBody||null)`)) || "null")
+  const namedBody = ((named.template || {}).components || []).find((c) => c.type === "body") || {}
+  const namedParams = namedBody.parameters || []
+  const conNombre = namedParams.length === 2 && namedParams.every((p) => p.parameter_name && p.text)
+  ch("5.23 [R1] plantilla NAMED: cada bodyParam lleva parameter_name", conNombre, JSON.stringify(namedParams))
+
+  // ── 5.24 [R2] cabecera de texto fijo: no se manda parámetro de header ────
+  await act(cdp, `window.__simBody=null;return 'ok'`)
+  await clickRowAction(cdp, "hello_world_sim", "Probar")
+  await waitToast(cdp, "Mensaje de prueba enviado")
+  const hw = JSON.parse((await evalJson(cdp, `JSON.stringify(window.__simBody||null)`)) || "null")
+  const hwComps = (hw.template || {}).components || []
+  ch(
+    "5.24 [R2] cabecera fija 'Hello World': sin componente header y sin components",
+    !hwComps.some((c) => c.type === "header") && !("components" in (hw.template || {})),
+    JSON.stringify(hw.template)
+  )
+
+  // ── 5.25 [R4] {{}} sin nombre: la app no llama a Meta y lo explica ────────
+  await act(cdp, `window.__simBody=null;window.__simLog=[];return 'ok'`)
+  const btnVacia = await act(cdp, `return JSON.stringify((()=>{const b=[...document.querySelectorAll('[role="row"]')].find(r=>r.innerText.includes('preventa_sin_nombre'));if(!b)return null;const x=[...b.querySelectorAll('button')].find(y=>(y.textContent||'').trim()==='Probar');return x?{disabled:x.disabled,title:x.title}:null})())`)
+  const parsedBtn = JSON.parse(btnVacia || "null")
+  const sendsAntes = await evalJson(cdp, `(window.__simLog||[]).length`)
+  // El aviso vive en el panel de detalle, así que se abre la fila primero.
+  await clickRow(cdp, "preventa_sin_nombre")
+  await wait(700)
+  const aviso = await hasBody(cdp, "sin nombre")
+  const avisoMeta = await hasBody(cdp, "{{}}")
+  const sendDesdeDetalle = await act(cdp, `return JSON.stringify((()=>{const b=[...document.querySelectorAll('main button')].find(x=>(x.textContent||'').trim()==='Enviar mensaje de prueba');return b?b.disabled:null})())`)
+  ch(
+    "5.25 [R4] plantilla con {{}} sin nombre: Probar deshabilitado y el detalle lo explica",
+    parsedBtn && parsedBtn.disabled === true && aviso && avisoMeta && sendsAntes === 0,
+    `disabled=${parsedBtn && parsedBtn.disabled} aviso=${aviso} meta=${avisoMeta} sends=${sendsAntes}`
+  )
+  ch(
+    "5.25b el botón de enviar del detalle también queda bloqueado",
+    JSON.parse(sendDesdeDetalle || "null") === true,
+    `disabled=${sendDesdeDetalle}`
+  )
+  await clickMain(cdp, 'main button', "Cerrar")
+  await wait(400)
+
+  // ── 5.26 [R3] el número de prueba manda sobre el de la empresa ───────────
+  await act(cdp, `localStorage.setItem('fastws.plantillas.numeroPrueba','573009999888');return 'ok'`)
+  await reload(cdp)
+  await go(cdp, "/app/plantillas")
+  await waitSel(cdp, 'input[aria-label="Número de prueba"]')
+  const valorGuardado = await act(cdp, `return JSON.stringify((document.querySelector('input[aria-label="Número de prueba"]')||{}).value||'')`)
+  ch("5.26a el número de prueba se recuerda entre recargas", JSON.parse(valorGuardado || '""') === "573009999888", `value=${valorGuardado}`)
+  await clickRowAction(cdp, "recordatorio_ruta", "Probar")
+  await waitToast(cdp, "Mensaje de prueba enviado")
+  const conNumero = JSON.parse((await evalJson(cdp, `JSON.stringify(window.__simBody||null)`)) || "null")
+  ch("5.26 [R3] «Probar» usa el número de prueba, no el de la empresa", conNumero && conNumero.to === "573009999888", `to=${conNumero && conNumero.to}`)
+
+  // ── 5.27 [R3] un número inválido no llega a Meta ─────────────────────────
+  await act(cdp, `F('input[aria-label="Número de prueba"]','123');return 'ok'`)
+  await act(cdp, `window.__simLog=[];return 'ok'`)
+  await clickRowAction(cdp, "recordatorio_ruta", "Probar")
+  await wait(700)
+  const errorNum = await hasTxt(cdp, "móvil colombiano")
+  const sendsInvalido = await evalJson(cdp, `(window.__simLog||[]).length`)
+  ch("5.27 [R3] número de prueba inválido: error en pantalla y sin llamada a Meta", errorNum && sendsInvalido === 0, `error=${errorNum} sends=${sendsInvalido}`)
+  await act(cdp, `localStorage.removeItem('fastws.plantillas.numeroPrueba');return 'ok'`)
+
   // ── 5.9 eliminar ok y con fallo ────────────────────────────────────────
   const row59 = await clickRow(cdp, "pedido_listo_pickup")
   await wait(700)
@@ -283,9 +353,9 @@ async function main() {
   ch("5.9 eliminar inline confirma, borra en Meta y audita 'Plantilla eliminada'", row59 === "ok" && del59 === "ok" && si59 === "ok" && ok59del && delLog > 0 && aud59b.includes("Plantilla eliminada"), `delLog=${delLog} audit=${aud59b[0]}`)
   await wait(900)
   const sync59 = await clickMain(cdp, 'main button', "Sincronizar")
-  const ok59b = await waitFor(async () => (await rowsN(cdp)) === 2, true, 10000)
+  const ok59b = await waitFor(async () => (await rowsN(cdp)) === TPL - 1, true, 10000)
   const rows59 = await rowsN(cdp)
-  ch("5.9b tras eliminar OK: al re-sincronizar quedan 2 en Meta", sync59 === "ok" && ok59b && rows59 === 2, `sync=${sync59} rows=${rows59}`)
+  ch(`5.9b tras eliminar OK: al re-sincronizar quedan ${TPL - 1} en Meta`, sync59 === "ok" && ok59b && rows59 === TPL - 1, `sync=${sync59} rows=${rows59}`)
 
   await act(cdp, `SIM({mode:'5xx'});return 'ok'`)
   const row59c = await clickRow(cdp, "confirmacion_demo")
@@ -298,7 +368,7 @@ async function main() {
   const detalleSigue = await evalJson(cdp, `document.body.innerText.toLowerCase().includes('detalle de la plantilla')`)
   const confGone = !(await hasBody(cdp, "Eliminar esta plantilla"))
   const rows59after = await rowsN(cdp)
-  ch("5.9c fallo en DELETE: toast de error y la plantilla sigue en la lista", row59c === "ok" && del59c === "ok" && si59c === "ok" && ok59err && rows59after === 2, `si=${si59c} rows=${rows59after}`)
+  ch("5.9c fallo en DELETE: toast de error y la plantilla sigue en la lista", row59c === "ok" && del59c === "ok" && si59c === "ok" && ok59err && rows59after === TPL - 1, `si=${si59c} rows=${rows59after}`)
   ch("5.9d fallo en DELETE: toast de error, confirmacion cerrada y detalle permanece abierto (no se audita un borrado fallido)", ok59err && confGone && detalleSigue, `detalle=${detalleSigue} confirmBotonGone=${confGone}`)
   writeArtifacts(dir, "5d-eliminar-fallo", { png: shot(cdp), dump: null })
   await act(cdp, `SIM({mode:'ok'});return 'ok'`)
@@ -306,11 +376,11 @@ async function main() {
   // ── 5.10 se cachean y persisten al recargar ────────────────────────────
   await reload(cdp)
   await go(cdp, "/app/plantillas")
-  const rows510 = await waitFor(async () => (await rowsN(cdp)) === 3, true, 12000)
+  const rows510 = await waitFor(async () => (await rowsN(cdp)) === TPL, true, 12000)
   const cacheRaw = await evalJson(cdp, `localStorage.getItem('fastws.plantillas')`)
   let cacheLen = 0
   try { cacheLen = JSON.parse(cacheRaw || "[]").length } catch {}
-  ch("5.10 plantillas cacheadas en fastws.plantillas y reaparecen por red", cacheLen >= 2 && rows510, `cacheLen=${cacheLen} reloadRows=${rows510}`)
+  ch("5.10 plantillas cacheadas en fastws.plantillas y reaparecen por red", cacheLen >= TPL - 1 && rows510, `cacheLen=${cacheLen} reloadRows=${rows510}`)
 
   // ── Conversaciones ─────────────────────────────────────────────────────
   await go(cdp, "/app/conversaciones")

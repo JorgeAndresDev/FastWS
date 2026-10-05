@@ -58,6 +58,25 @@ function isCampaign(item: unknown): item is Campaign {
   )
 }
 
+/**
+ * Las campañas guardadas antes del cambio de `index` a `key` traen el índice
+ * numérico en ese campo. Sin esta traducción el motor enviaría una campaña
+ * nombrada sin `parameter_name` y Meta la rechazaría; con ella, una campaña
+ * posicional antigua sigue enviándose igual porque "1" es un nombre numérico y
+ * `sendTemplate` lo omite.
+ */
+function migrateMapping(campaign: Campaign): Campaign {
+  if (!Array.isArray(campaign.mapping)) return campaign
+  const mapping = campaign.mapping.map((entry, position) => {
+    const legacy = (entry as { index?: unknown }).index
+    if (typeof entry.key === "string" && entry.key !== "") return entry
+    if (typeof legacy === "string" && legacy !== "") return { ...entry, key: legacy }
+    if (typeof legacy === "number") return { ...entry, key: String(legacy) }
+    return { ...entry, key: String(position + 1) }
+  })
+  return { ...campaign, mapping }
+}
+
 function loadCampaigns(): Campaign[] {
   const raw = readDurable(CAMPAIGNS_KEY)
   if (raw) {
@@ -66,10 +85,12 @@ function loadCampaigns(): Campaign[] {
       if (Array.isArray(parsed)) {
         return parsed
           .filter(isCampaign)
-          .map((campaign) => ({
-            ...campaign,
-            activity: Array.isArray(campaign.activity) ? campaign.activity : [],
-          }))
+          .map((campaign) =>
+            migrateMapping({
+              ...campaign,
+              activity: Array.isArray(campaign.activity) ? campaign.activity : [],
+            })
+          )
       }
     } catch {
       /* datos corruptos */

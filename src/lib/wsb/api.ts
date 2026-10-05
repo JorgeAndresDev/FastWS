@@ -12,7 +12,14 @@ export async function readMetaError(response: Response): Promise<Error> {
   let message = `Meta respondió ${response.status} (código ${response.status})`
   let code = String(response.status)
   try {
-    const json = (await response.json()) as { error?: { message?: string; code?: number } }
+    const json = (await response.json()) as {
+      error?: {
+        message?: string
+        code?: number
+        error_subcode?: number
+        error_data?: { details?: string }
+      }
+    }
     const metaError = json.error
     if (metaError) {
       if (typeof metaError.message === "string" && metaError.message) {
@@ -20,6 +27,12 @@ export async function readMetaError(response: Response): Promise<Error> {
       }
       if (typeof metaError.code === "number") {
         code = String(metaError.code)
+      }
+      // `error_data.details` es la parte accionable ("Parameter name is missing
+      // or empty"): sin ella el operador solo ve un "Invalid parameter" sordo.
+      const details = metaError.error_data?.details
+      if (typeof details === "string" && details && !message.includes(details)) {
+        message = `${message} — ${details}`
       }
     }
   } catch {
@@ -82,6 +95,7 @@ interface RawTemplateComponent {
   example?: {
     body_text?: string[][]
     header_text?: string[]
+    body_text_named_params?: Array<{ param_name: string; example: string }>
   }
   buttons?: Array<{
     type?: string
@@ -191,6 +205,7 @@ export interface TemplateComponentInput {
   example?: {
     body_text?: string[][]
     header_text?: string[]
+    body_text_named_params?: Array<{ param_name: string; example: string }>
   }
   buttons?: Array<{ type: string; text?: string; url?: string; phone_number?: string }>
 }
@@ -241,8 +256,8 @@ export interface SendTemplateInput {
   to: string
   templateName: string
   languageCode: string
-  bodyParams?: string[]
-  headerParams?: string[]
+  bodyParams?: TemplateParams
+  headerParams?: TemplateParams
 }
 
 export interface SendTemplateResult {
@@ -251,21 +266,49 @@ export interface SendTemplateResult {
   waId?: string
 }
 
+/**
+ * Un parámetro de plantilla. Un string suelto es posicional ({{1}}, {{2}}…);
+ * el objeto con `parameterName` es para las plantillas nombradas ({{nombre}}).
+ */
+export interface TemplateTextParam {
+  parameterName?: string
+  text: string
+}
+
+export type TemplateParams = Array<string | TemplateTextParam>
+
+/**
+ * Meta tiene dos formatos de variable y no los mezcla:
+ * - `POSITIONAL` ({{1}}) → parámetros sin nombre, en orden.
+ * - `NAMED` ({{nombre}}) → cada parámetro debe llevar `parameter_name` con el
+ *   nombre exacto de la variable; sin él responde «Parameter name is missing or
+ *   empty», y con él en una posicional responde «Unexpected key parameter_name».
+ * Un nombre compuesto solo de dígitos es una variable posicional ({{1}}), nunca
+ * un nombre, así que se envía sin `parameter_name`.
+ */
+function toParameter(param: string | TemplateTextParam) {
+  if (typeof param === "string") return { type: "text" as const, text: param }
+  const name = param.parameterName?.trim()
+  return name && !/^\d+$/.test(name)
+    ? { type: "text" as const, parameter_name: name, text: param.text }
+    : { type: "text" as const, text: param.text }
+}
+
 export async function sendTemplate(input: SendTemplateInput): Promise<SendTemplateResult> {
   const components: Array<{
     type: "header" | "body"
-    parameters: Array<{ type: "text"; text: string }>
+    parameters: Array<{ type: "text"; text: string; parameter_name?: string }>
   }> = []
   if (input.headerParams && input.headerParams.length > 0) {
     components.push({
       type: "header",
-      parameters: input.headerParams.map((text) => ({ type: "text", text })),
+      parameters: input.headerParams.map(toParameter),
     })
   }
   if (input.bodyParams && input.bodyParams.length > 0) {
     components.push({
       type: "body",
-      parameters: input.bodyParams.map((text) => ({ type: "text", text })),
+      parameters: input.bodyParams.map(toParameter),
     })
   }
   // Meta rechaza un `components: []` con "invalid parameter": si la plantilla no

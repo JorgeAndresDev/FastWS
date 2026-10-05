@@ -108,7 +108,16 @@ async function tick(id: string) {
           to: recipient.phone,
           templateName: campaign.template.name,
           languageCode: campaign.template.language,
-          bodyParams: recipient.params.length > 0 ? recipient.params : undefined,
+          // El mapeo de la campaña guarda la clave de cada variable en el mismo
+          // orden que `recipient.params`. Meta la exige como `parameter_name`
+          // cuando la plantilla usa nombres ({{nombre}}).
+          bodyParams:
+            recipient.params.length > 0
+              ? recipient.params.map((text, position) => ({
+                  parameterName: campaign.mapping[position]?.key,
+                  text,
+                }))
+              : undefined,
         })
         recipients[index] = {
           ...recipient,

@@ -66,6 +66,7 @@ export interface WaTemplateComponent {
   example?: {
     body_text?: string[][]
     header_text?: string[]
+    body_text_named_params?: Array<{ param_name: string; example: string }>
   }
   buttons?: WaTemplateButton[]
 }
@@ -96,7 +97,8 @@ export type ClientFieldKey =
   | "enRuta"
 
 export interface CampaignVariableMapping {
-  index: number
+  /** Clave de la variable: "1","2" para {{1}}; "nombre" para {{nombre}}. */
+  key: string
   fuente: "campo" | "libre"
   campo?: ClientFieldKey
   texto?: string

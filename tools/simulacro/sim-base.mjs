@@ -245,10 +245,22 @@ export function fetchStubSrc() {
   const noBody = (status) => Promise.resolve(new Response(null, { status }));
   const metaErr = (code, message, status) => json({ error: { message, code } }, status);
   window.__SIM = Object.assign({ mode: "ok", paging: "cursor" }, JSON.parse(sessionStorage.getItem("__sim") || "{}"));
+  // Las tresNAMED reproducen lo que devuelve la cuenta real: parameter_format
+  // "NAMED", ejemplos en body_text_named_params y cabeceras que sí llevan
+  // variable. Las otras dos cubren los fallos que el stub anterior no veía:
+  // una cabecera de texto fijo y placeholders {{}} sin nombre.
   const TEMPLATES = () => (window.__simTpl = window.__simTpl || [
-    { id: "tpl-cnf", name: "confirmacion_demo", status: "APPROVED", category: "MARKETING", language: "es", components: [ { type: "HEADER", format: "TEXT", text: "Hola {{1}},", example: { header_text: ["Andres"] } }, { type: "BODY", text: "Tu pedido {{1}} va en camino.", example: { body_text: [["Pedido 1234"]] } }, { type: "FOOTER", text: "Gracias por comprar con nosotros." } ], quality_score: { score: "GREEN" }, last_updated_time: 1726000000 },
-    { id: "tpl-rec", name: "recordatorio_ruta", status: "APPROVED", category: "UTILITY", language: "es", components: [ { type: "BODY", text: "Su ruta hoy a las {{1}}.", example: { body_text: [["6 pm"]] } } ], quality_score: { score: "YELLOW" }, last_updated_time: 1726000000 },
-    { id: "tpl-pend", name: "pedido_listo_pickup", status: "PENDING", category: "UTILITY", language: "es", components: [ { type: "BODY", text: "Tu pedido esta listo para recoger." } ], quality_score: null, last_updated_time: 1726000000 },
+    { id: "tpl-cnf", name: "confirmacion_demo", status: "APPROVED", category: "MARKETING", language: "es", parameter_format: "NAMED", components: [ { type: "HEADER", format: "TEXT", text: "Hola {{1}},", example: { header_text: ["Andres"] } }, { type: "BODY", text: "Tu pedido {{1}} va en camino.", example: { body_text: [["Pedido 1234"]] } }, { type: "FOOTER", text: "Gracias por comprar con nosotros." } ], quality_score: { score: "GREEN" }, last_updated_time: 1726000000 },
+    { id: "tpl-rec", name: "recordatorio_ruta", status: "APPROVED", category: "UTILITY", language: "es", parameter_format: "NAMED", components: [ { type: "BODY", text: "Su ruta hoy a las {{1}}.", example: { body_text: [["6 pm"]] } } ], quality_score: { score: "YELLOW" }, last_updated_time: 1726000000 },
+    { id: "tpl-pend", name: "pedido_listo_pickup", status: "PENDING", category: "UTILITY", language: "es", parameter_format: "NAMED", components: [ { type: "BODY", text: "Tu pedido esta listo para recoger." } ], quality_score: null, last_updated_time: 1726000000 },
+    // R1: NAMED con nombres reales. Sin parameter_name Meta responde
+    // "Parameter name is missing or empty".
+    { id: "tpl-named", name: "rmd_named", status: "APPROVED", category: "UTILITY", language: "es_CO", parameter_format: "NAMED", components: [ { type: "BODY", text: "Hola {{nombre}}, tu pedido del {{fecha}}.", example: { body_text_named_params: [ { param_name: "nombre", example: "Punto Frio" }, { param_name: "fecha", example: "23/03/2026" } ] } } ], quality_score: { score: "GREEN" }, last_updated_time: 1726000000 },
+    // R2: cabecera de texto fijo, como hello_world. Mandarle un parámetro hace
+    // que Meta rechace el envío entero.
+    { id: "tpl-hw", name: "hello_world_sim", status: "APPROVED", category: "UTILITY", language: "en_US", parameter_format: "POSITIONAL", components: [ { type: "HEADER", format: "TEXT", text: "Hello World" }, { type: "BODY", text: "Welcome and congratulations." }, { type: "FOOTER", text: "WhatsApp Business Platform" } ], quality_score: { score: "GREEN" }, last_updated_time: 1726000000 },
+    // R4: aprobada por Meta pero inejable, con {{}} sin nombre.
+    { id: "tpl-vacia", name: "preventa_sin_nombre", status: "APPROVED", category: "UTILITY", language: "es_CO", parameter_format: "NAMED", components: [ { type: "BODY", text: "Buenos dias, {{}} su pedido llega el {{}}." } ], quality_score: null, last_updated_time: 1726000000 },
   ]);
   const EXTRA = { id: "tpl-extra", name: "encuesta_final", status: "APPROVED", category: "MARKETING", language: "es", components: [ { type: "BODY", text: "Cuentanos {{1}}.", example: { body_text: [["que tal tu pedido"]] } } ], quality_score: { score: "GREEN" }, last_updated_time: 1726000000 };
   window.fetch = (input, init) => {
