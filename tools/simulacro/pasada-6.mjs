@@ -47,7 +47,7 @@ async function boot(cdp, route) {
 }
 
 const esperaConexion = async (cdp, ms = 12000) => {
-  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.conexion.sesion') && !!localStorage.getItem('fastws.conexion.ids')`)
+  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.meta-token') && !!localStorage.getItem('fastws.conexion.ids')`)
   if (!hay) return false
   return waitFor(async () => hasTxt(cdp, "Listo para despacho"), true, ms)
 }

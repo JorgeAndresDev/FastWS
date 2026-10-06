@@ -11,15 +11,13 @@ import {
 
 import { graphError, readMetaError } from "@/lib/wsb/api"
 import { registrarAuditoria } from "@/lib/audit-log"
+import { borrarToken, guardarToken, leerToken } from "@/lib/secrets"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import {
   clearDurable,
-  clearEphemeral,
   readDurable,
-  readEphemeral,
   writeDurable,
-  writeEphemeral,
 } from "@/lib/db/session-scope"
 
 export type ConexionStatus = "sin-configurar" | "probando" | "conectada" | "error"
@@ -50,13 +48,43 @@ interface ConexionContextValue {
 const ConexionContext = createContext<ConexionContextValue | null>(null)
 
 const IDS_KEY = "fastws.conexion.ids"
-const SESSION_KEY = "fastws.conexion.sesion"
+const META_KEY = "fastws.conexion.meta"
 
-interface StoredSession {
-  token: string
+/**
+ * Lo que NO es secreto va a la base y sobrevive al cierre: el número, el nombre
+ * de la cuenta y cuándo se verificó. Es lo que permite que la pantalla de
+ * Conexión muestre la cuenta conectada sin tener el token delante.
+ */
+interface StoredMeta {
   metaPhone: string
   wabaName: string
   verifiedAt: string
+}
+
+function loadMeta(): StoredMeta | null {
+  const raw = readDurable(META_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredMeta>
+    if (typeof parsed.metaPhone === "string" && parsed.metaPhone) {
+      return {
+        metaPhone: parsed.metaPhone,
+        wabaName: String(parsed.wabaName ?? ""),
+        verifiedAt: String(parsed.verifiedAt ?? new Date().toISOString()),
+      }
+    }
+  } catch {
+    /* dato corrupto */
+  }
+  return null
+}
+
+function saveMeta(meta: StoredMeta) {
+  writeDurable(META_KEY, JSON.stringify(meta))
+}
+
+function clearMeta() {
+  clearDurable(META_KEY)
 }
 
 function loadIds(): ConexionIds {
@@ -75,50 +103,16 @@ function loadIds(): ConexionIds {
   return { phoneNumberId: "", wabaId: "" }
 }
 
-/**
- * El token es un secreto: vive en el alcance efimero, que en Tauri sigue siendo
- * el sessionStorage del webview y muere con la ventana. Los identificadores no
- * son secretos y van a la base. Mover el token al almacen seguro del sistema es
- * trabajo de la fase de credenciales.
- */
-function loadSession(): StoredSession | null {
-  const raw = readEphemeral(SESSION_KEY)
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as Partial<StoredSession>
-      if (parsed && typeof parsed.token === "string" && parsed.token.length > 0) {
-        return {
-          token: parsed.token,
-          metaPhone: String(parsed.metaPhone ?? ""),
-          wabaName: String(parsed.wabaName ?? ""),
-          verifiedAt: String(parsed.verifiedAt ?? new Date().toISOString()),
-        }
-      }
-    } catch {
-      /* dato corrupto */
-    }
-  }
-  return null
-}
-
-function saveSession(session: StoredSession) {
-  writeEphemeral(SESSION_KEY, JSON.stringify(session))
-}
-
-function clearSession() {
-  clearEphemeral(SESSION_KEY)
-}
-
 export function ConexionProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<ConexionIds>(loadIds)
-  const [restored] = useState(loadSession)
+  const [meta, setMeta] = useState<StoredMeta | null>(loadMeta)
   const [status, setStatus] = useState<ConexionStatus>(() =>
-    restored && ids.phoneNumberId && ids.wabaId ? "probando" : "sin-configurar"
+    meta && ids.phoneNumberId && ids.wabaId ? "probando" : "sin-configurar"
   )
-  const [metaPhone, setMetaPhone] = useState(restored?.metaPhone ?? "")
-  const [wabaName, setWabaName] = useState(restored?.wabaName ?? "")
-  const [token, setToken] = useState(restored?.token ?? "")
-  const [verifiedAt, setVerifiedAt] = useState<string | undefined>(restored?.verifiedAt)
+  const [metaPhone, setMetaPhone] = useState(meta?.metaPhone ?? "")
+  const [wabaName, setWabaName] = useState(meta?.wabaName ?? "")
+  const [token, setToken] = useState("")
+  const [verifiedAt, setVerifiedAt] = useState<string | undefined>(meta?.verifiedAt)
   const [lastError, setLastError] = useState<ConexionErrorInfo | null>(null)
   const idsRef = useRef(ids)
   idsRef.current = ids
@@ -190,14 +184,18 @@ export function ConexionProvider({ children }: { children: ReactNode }) {
           )
         }
         setToken(token)
-        const session: StoredSession = {
-          token,
+        const nuevaMeta: StoredMeta = {
           metaPhone: String(phoneJson.display_phone_number),
           wabaName: String(wabaJson.name ?? ""),
           verifiedAt: new Date().toISOString(),
         }
-        saveSession(session)
-        setVerifiedAt(session.verifiedAt)
+        // El token va al almacén seguro (cifrado con DPAPI en escritorio); el
+        // resto de la sesión sí es dato normal y va a la base. Así la conexión
+        // sobrevive al cierre de la ventana sin dejar el secreto en claro.
+        await guardarToken(token)
+        saveMeta(nuevaMeta)
+        setMeta(nuevaMeta)
+        setVerifiedAt(nuevaMeta.verifiedAt)
         setStatus("conectada")
         if (auditar) {
           const device = getDeviceIdentity()
@@ -224,12 +222,28 @@ export function ConexionProvider({ children }: { children: ReactNode }) {
     []
   )
 
-  useEffect(() => {
-    if (revalidadoRef.current) return
-    if (!restored || !ids.phoneNumberId || !ids.wabaId) return
-    revalidadoRef.current = true
-    void prueba(restored.token, ids, false)
-  }, [ids, prueba, restored])
+  /**
+ * El token se lee del almacén seguro (DPAPI en escritorio). Por eso la restauración
+ * es asíncrona: el proveedor arranca en "probando" y, si no hay token guardado,
+ * baja a "sin-configurar" sin pedir nada. Ese es el caso del navegador, donde el
+ * token solo vive en la sesión.
+ */
+useEffect(() => {
+  if (revalidadoRef.current) return
+  if (!meta || !ids.phoneNumberId || !ids.wabaId) return
+  revalidadoRef.current = true
+  void (async () => {
+    const guardado = await leerToken()
+    if (!guardado) {
+      setStatus("sin-configurar")
+      return
+    }
+    setToken(guardado)
+    // Se revalida contra Meta antes de dar la conexión por buena: un token
+    // puede seguir en disco y haber caducado.
+    await prueba(guardado, ids, false)
+  })()
+}, [ids, meta, prueba])
 
   const desconectar = useCallback(() => {
     setStatus("sin-configurar")
@@ -238,15 +252,20 @@ export function ConexionProvider({ children }: { children: ReactNode }) {
     setToken("")
     setVerifiedAt(undefined)
     setLastError(null)
+    setMeta(null)
     setIds({ phoneNumberId: "", wabaId: "" })
     clearDurable(IDS_KEY)
-    clearSession()
+    clearMeta()
+    // El borrado del secreto no puede fallar en silencio: si el almacén seguro
+    // no lo deja fuera, quedaría un token vivo en el equipo. `borrarToken`
+    // limpia además el fallback del navegador.
+    void borrarToken()
     const device = getDeviceIdentity()
     const sessionUser = readSession()
     registrarAuditoria({
       categoria: "conexion",
       titulo: "Conexión Meta cerrada",
-      detalle: "Sesión e identificadores borrados de este equipo.",
+      detalle: "Token, sesión e identificadores borrados de este equipo.",
       usuario: sessionUser?.name ?? "Operador",
       dispositivo: `${device.id} · ${device.code}`,
     })

@@ -21,9 +21,11 @@ try {
   await writeArtifacts(dir, "dev-server", { json: { ok: okBase, probe: clean } })
 
 const seeded = await evalJson(cdp, seedExpr("conectado"))
-  // S10: la sesion de conexion va a sessionStorage, asi que se cuentan ambos almacenes
+  // S10: la sesion de conexion va a sessionStorage, asi que se cuentan ambos almacenes.
+  // Con el token en la guarda de secretos (0.1) son 12: 10 en localStorage +
+  // `fastws.conexion.meta` en la base + `fastws.meta-token` en sessionStorage.
   const seedCount = await evalJson(cdp, `Object.keys(localStorage).filter(k => k.startsWith('fastws.')).length + Object.keys(sessionStorage).filter(k => k.startsWith('fastws.')).length`)
-  results.seed11 = seedCount === 11 && seeded.startsWith("seeded:")
+  results.seed11 = seedCount === 12 && seeded.startsWith("seeded:")
   await writeArtifacts(dir, "seed-conectado", { json: { seedResponse: seeded, fastwsKeys: seedCount } })
 
   const baseline = await evalJson(cdp, dumpExpr())

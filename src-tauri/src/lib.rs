@@ -1,4 +1,5 @@
 mod db;
+mod secrets;
 #[cfg(windows)]
 mod titlebar;
 
@@ -19,6 +20,16 @@ pub fn run() {
       let db = db::Db::open(&dir).map_err(std::io::Error::other)?;
       app.manage(db);
 
+      // Los secretos (token de Meta) van cifrados con DPAPI en un directorio
+      // hermano al de la base, nunca en la tabla `settings`. Van antes del
+      // título porque si el directorio no se puede crear es mejor fallar al
+      // arrancar que fallar en el primer guardado de token.
+      #[cfg(windows)]
+      {
+        let secrets = secrets::Secrets::new(&dir).map_err(std::io::Error::other)?;
+        app.manage(secrets);
+      }
+
       // La barra de título nativa de Windows en verde FastWS. Va dentro de
       // `setup` y no en `run` porque el caption se puede restaurar al recrear la
       // ventana, y así se vuelve a teñir en cada arranque.
@@ -35,7 +46,11 @@ pub fn run() {
       db::doc_all,
       db::doc_save,
       db::doc_wipe,
-      db::db_info
+      db::db_info,
+      secrets::secret_write,
+      secrets::secret_read,
+      secrets::secret_delete,
+      secrets::secret_labels
     ])
     .run(tauri::generate_context!())
     .expect("error while building tauri application");

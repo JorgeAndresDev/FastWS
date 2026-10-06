@@ -88,3 +88,19 @@ S18 (`addClients` zombi — 4.12b: reimport genérico **limpia** los campos) · 
 **Balance final**: 27 defectos corregidos y verificados en verde (185 checks), 7 descartados, 1 abierto (S28, P2).
 
 **Integración real con Meta**: 5 hallazgos adicionales (R1-R5) corregidos y verificados contra la API real. R1 y R2 eran bloqueantes: sin ellos ninguna plantilla de la cuenta podía enviarse.
+
+## Fase 0.1 — El token ya no se pierde al cerrar la app
+
+El operador reportó que había que escribir el token de Meta en cada arranque. Causa: vivía en `sessionStorage` del webview, que en Tauri muere con la ventana.
+
+- `src-tauri/src/secrets.rs`: guarda con DPAPI (`CryptProtectData`/`CryptUnprotectData`). El token solo existe en claro dentro del proceso; lo que se escribe a disco es base64 cifrado con un prefijo de versión. 8 tests, incluido uno que comprueba que el token **no** aparece en claro en el archivo.
+- `src/lib/secrets.ts`: fachada con fallback a `sessionStorage` para el navegador (donde no hay Tauri). 6 tests.
+- `conexion-store.tsx`: el token va a la guarda de secretos; el resto de la sesión (número, nombre de la cuenta, fecha) va a `fastws.conexion.meta` en la base. `desconectar()` borra ambos.
+- `demo.ts` / `tauri-store.ts`: «Borrar todo» llama a `borrarToken()` y la migración de `localStorage` a SQLite ya no arrastra el token.
+
+### Regresión encontrada y corregida en el camino
+El token se restaura de forma **asíncrona** ahora. El auto-arranque de campañas (`campaigns-store.tsx`) corría en el primer render, antes de que llegara el token, así que el motor arrancaba sin token, se quedaba en pausa y nada lo reanudaba. El efecto ahora depende de `token` y reanuda motores ya arrancados. Sin esto, `pasada-3` 3.23 (auto-arranque) fallaba.
+
+### Verificación
+- 19 tests Rust (8 nuevos de DPAPI), 52 tests Vitest (6 nuevos de `secrets.ts`).
+- Simulacro: 189 checks en verde, con 2.6b («tras recargar, conexión lista sin volver a escribir el token») y 7.11 («Borrar todo borra también el token») actualizados a las claves nuevas.

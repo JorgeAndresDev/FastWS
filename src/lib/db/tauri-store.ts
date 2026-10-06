@@ -4,12 +4,13 @@ import type { DocStore } from "./contracts"
 import { describeError, reportStoreError } from "./errors"
 
 /**
- * La sesion de Meta lleva el token de acceso: es un secreto y su vida util es
- * la sesion de la app, no la base. Por eso no se copia desde el navegador ni se
- * persiste en SQLite. Moverla al almacen seguro del sistema es trabajo de la
- * fase de credenciales, no de esta.
+ * El token de Meta es un secreto y ya no pasa por aquí: vive cifrado con DPAPI
+ * (`src-tauri/src/secrets.rs`, `src/lib/secrets.ts`). Antes era la sesión
+ * completa en `sessionStorage`; ahora el único nombre que hay que evitar es el
+ * que usa el fallback de navegador, para que una copia de `localStorage` desde
+ * el navegador a la base no arrastre un token en claro.
  */
-const NO_MIGRAR = new Set(["fastws.conexion.sesion"])
+const NO_MIGRAR = new Set(["fastws.meta-token"])
 
 function leerDelNavegador(): Record<string, string> {
   const out: Record<string, string> = {}

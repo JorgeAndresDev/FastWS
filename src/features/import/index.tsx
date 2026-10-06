@@ -52,37 +52,41 @@ function ImportChip({ status }: { status: ImportRow["status"] }) {
   )
 }
 
-const VALIDATION_TEMPLATE = "minmax(16rem, 1fr) 9rem 8.5rem 8rem 7rem 7.5rem minmax(12rem, 1fr)"
+// Sin ancho mínimo fijo (ver Plantillas): la primera y la última columna
+// comparten el sobrante y las intermedias se compactan, así no aparece la barra
+// horizontal cuando la tabla llega a muchos registros.
+const VALIDATION_TEMPLATE =
+  "minmax(0, 1.2fr) 8rem 7.5rem 7rem 6.5rem 7rem minmax(0, 1fr)"
 
 function ValidationRowCells({ row }: { row: ImportRow }) {
   const pedido = row.orderState ?? "—"
   return (
     <>
       <div role="cell" className="min-w-0 px-4 py-3">
-        <p className="text-[0.8125rem] font-semibold text-ink-100">{row.name}</p>
-        <p className="mt-0.5 font-mono text-[0.75rem] text-ink-600">línea {row.line}</p>
+        <p className="truncate text-[0.8125rem] font-semibold text-ink-100">{row.name}</p>
+        <p className="mt-0.5 truncate font-mono text-[0.75rem] text-ink-600">línea {row.line}</p>
       </div>
-      <div role="cell" className="overflow-hidden px-4 py-3 font-mono text-[0.75rem] text-ink-500 text-ellipsis">
+      <div role="cell" className="min-w-0 truncate px-4 py-3 font-mono text-[0.75rem] text-ink-500">
         {row.code || "—"}
       </div>
       <div role="cell" className="min-w-0 px-4 py-3">
-        <p className="font-mono text-[0.75rem] text-ink-500">{row.phone}</p>
+        <p className="truncate font-mono text-[0.75rem] text-ink-500">{row.phone}</p>
         {row.phones.length > 0 && (
           <p className="mt-0.5 font-mono text-[0.75rem] text-ink-600">
             +{row.phones.length} tel.
           </p>
         )}
       </div>
-      <div role="cell" className="px-4 py-3">
+      <div role="cell" className="min-w-0 px-4 py-3">
         <ClientChip clientType={row.clientType} />
       </div>
-      <div role="cell" className="px-4 py-3 text-[0.75rem] font-semibold text-ink-400">
+      <div role="cell" className="min-w-0 truncate px-4 py-3 text-[0.75rem] font-semibold text-ink-400">
         {pedido}
       </div>
-      <div role="cell" className="px-4 py-3 text-right">
+      <div role="cell" className="min-w-0 px-4 py-3 text-right">
         <ImportChip status={row.status} />
       </div>
-      <div role="cell" className="min-w-0 overflow-hidden px-4 py-3 text-[0.75rem] text-ink-500 text-ellipsis">
+      <div role="cell" className="min-w-0 truncate px-4 py-3 text-[0.75rem] text-ink-500">
         {row.reason || row.cancelReason || "—"}
       </div>
     </>
@@ -99,8 +103,8 @@ function ValidationTable({ rows }: { rows: ImportRow[] }) {
   })
   const cols = ["Nombre", ...rightCols]
   return (
-    <div ref={scrollRef} className="max-h-[24rem] overflow-x-auto overflow-y-auto">
-      <div role="table" className="min-w-[64rem]">
+    <div ref={scrollRef} className="max-h-[24rem] overflow-y-auto">
+      <div role="table" className="w-full">
         <div
           role="rowgroup"
           className="sticky top-0 z-10 border-b border-rule-soft bg-base-850"

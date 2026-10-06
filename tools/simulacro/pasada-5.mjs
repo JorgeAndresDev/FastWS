@@ -1,4 +1,4 @@
-import { spawnEdge, fetchStubSrc, evalJson, waitFor, wait, navigate, shot, outDir, writeArtifacts, BASE, iso, bodyText } from "./sim-base.mjs"
+import { spawnEdge, fetchStubSrc, evalJson, waitFor, wait, navigate, shot, outDir, writeArtifacts, BASE, iso, bodyText, measureOverflow, overflowDetail } from "./sim-base.mjs"
 
 const J = JSON.stringify
 
@@ -97,7 +97,8 @@ function seedP5() {
   seed["fastws.device"] = { id: "PC-01", code: "FW-SIM1", platform: "Windows" }
   seed["fastws.session"] = { name: "Administrador", email: "admin@fastws.local", role: "Operativo" }
   seed["fastws.conexion.ids"] = { phoneNumberId: "1234567890", wabaId: "9876543210" }
-  seed["fastws.conexion.sesion"] = { token: "EAAG-sim-token", metaPhone: "573100000000", wabaName: "FastWS WABA", verifiedAt: iso(30) }
+  seed["fastws.meta-token"] = "EAAG-sim-token"
+  seed["fastws.conexion.meta"] = { metaPhone: "573100000000", wabaName: "FastWS WABA", verifiedAt: iso(30) }
   return seed
 }
 
@@ -105,7 +106,7 @@ function seedExprP5() {
   const seed = seedP5()
   const lines = Object.entries(seed).map(([k, v]) => {
     const raw = k === "fastws.app.locale" ? v : JSON.stringify(k.endsWith(".velocidad") ? JSON.stringify(v) : v)
-    const store = k === "fastws.conexion.sesion" ? "sessionStorage" : "localStorage"
+    const store = k === "fastws.meta-token" ? "sessionStorage" : "localStorage"
     return `  ${store}.setItem(${J(k)}, ${J(raw)});`
   })
   return `(() => {\n${lines.join("\n")}\n  return "seeded:" + Object.keys(localStorage).length;\n})()`
@@ -114,7 +115,7 @@ function seedExprP5() {
 async function resetAll(cdp) {
   await act(cdp, `Object.keys(localStorage).filter(k=>k.startsWith('fastws.')).forEach(k=>localStorage.removeItem(k));sessionStorage.removeItem('__sim');return 'ok'`)
   await evalJson(cdp, seedExprP5())
-  await act(cdp, `localStorage.removeItem('fastws.conexion.sesion');sessionStorage.removeItem('fastws.conexion.sesion');return 'ok'`)
+  await act(cdp, `localStorage.removeItem('fastws.conexion.meta');sessionStorage.removeItem('fastws.meta-token');return 'ok'`)
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: `(()=>{window.__simLog=[];window.__simBody=null;window.__simAfter=null;window.__SIM=Object.assign({mode:'ok',paging:'cursor'},JSON.parse(sessionStorage.getItem('__sim')||'{}'))})()` })
 }
 
@@ -160,7 +161,7 @@ async function main() {
   writeArtifacts(dir, "5a-sinconexion", { png: shot(cdp), dump: null })
 
   // restore connection
-  await act(cdp, `sessionStorage.setItem('fastws.conexion.sesion', JSON.stringify(${J(seedP5()["fastws.conexion.sesion"])}));return 'ok'`)
+  await act(cdp, `localStorage.setItem('fastws.conexion.meta', JSON.stringify(${J(seedP5()["fastws.conexion.meta"])}));sessionStorage.setItem('fastws.meta-token', ${J(seedP5()["fastws.meta-token"])});return 'ok'`)
   await reload(cdp)
   await go(cdp, "/app/plantillas")
   const rows52 = await waitFor(async () => (await rowsN(cdp)) === TPL, true, 12000)
@@ -174,6 +175,17 @@ async function main() {
       bodyHead: (await bodyText(cdp)).slice(0, 300),
     }, null, 2),
   })
+
+  // ── 5.2c la tabla no desborda en horizontal ─────────────────────────────
+  // Regresion de 0.2: un `min-w-[64rem]` fijo, sumado a la barra vertical de
+  // scroll, pintaba una barra lateral de unos pixeles que el operador no
+  // quiere. Se mide el desbordamiento real del contenedor, no el CSS.
+  const overflowTemplates = await measureOverflow(cdp)
+  ch(
+    "5.2c la tabla de plantillas no desborda en horizontal",
+    overflowTemplates <= 1,
+    `overflowX=${overflowTemplates}px ${await overflowDetail(cdp)}`
+  )
 
   // sync error mapeado
   await act(cdp, `SIM({mode:'network'});return 'ok'`)

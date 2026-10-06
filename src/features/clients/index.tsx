@@ -45,7 +45,10 @@ function PedidoStamp({ state, reason }: { state?: OrderState; reason?: string })
   )
 }
 
-const CLIENTS_TEMPLATE = "minmax(16rem, 1fr) 9rem 9rem 8rem 10rem 8rem"
+// Igual que en Plantillas: sin ancho mínimo fijo, la primera columna flexible
+// y el resto en rem compacto, para que la tabla quepa en el panel sin barra
+// horizontal (el `min-w` anterior la pintaba en cuanto aparecía el scrollbar).
+const CLIENTS_TEMPLATE = "minmax(0, 1fr) 8rem 8rem 7rem 9rem 7rem"
 
 function ClientRowCells({ client }: { client: Client }) {
   const ventana =
@@ -54,23 +57,23 @@ function ClientRowCells({ client }: { client: Client }) {
   return (
     <>
       <div role="cell" className="min-w-0 px-4 py-3">
-        <p className="text-[0.8125rem] font-semibold text-ink-100">{client.name}</p>
+        <p className="truncate text-[0.8125rem] font-semibold text-ink-100">{client.name}</p>
         <p className="mt-0.5 truncate text-[0.75rem] text-ink-500">{client.company}</p>
       </div>
-      <div role="cell" className="overflow-hidden px-4 py-3 font-mono text-[0.75rem] text-ink-500 text-ellipsis">
+      <div role="cell" className="min-w-0 truncate px-4 py-3 font-mono text-[0.75rem] text-ink-500">
         {client.code}
       </div>
       <div role="cell" className="min-w-0 px-4 py-3">
-        <p className="font-mono text-[0.8125rem] text-ink-100">{client.phone}</p>
-        <p className="mt-0.5 text-[0.75rem] text-ink-500">{client.city}</p>
+        <p className="truncate font-mono text-[0.8125rem] text-ink-100">{client.phone}</p>
+        <p className="mt-0.5 truncate text-[0.75rem] text-ink-500">{client.city}</p>
       </div>
-      <div role="cell" className="px-4 py-3 font-mono text-[0.75rem] text-ink-500">
+      <div role="cell" className="min-w-0 truncate px-4 py-3 font-mono text-[0.75rem] text-ink-500">
         {ventana}
       </div>
       <div role="cell" className="min-w-0 px-4 py-3">
         <PedidoStamp state={client.orderState} reason={client.cancelReason} />
       </div>
-      <div role="cell" className="px-4 py-3 text-right">
+      <div role="cell" className="min-w-0 px-4 py-3 text-right">
         <ClientChip clientType={client.clientType as ClientType} />
       </div>
     </>
@@ -387,8 +390,8 @@ export function ClientsPage() {
             }
           />
         ) : (
-          <div ref={scrollRef} className="max-h-[36rem] overflow-x-auto overflow-y-auto">
-            <div role="table" className="min-w-[72rem]">
+          <div ref={scrollRef} className="max-h-[36rem] overflow-y-auto">
+            <div role="table" className="w-full">
               <div
                 role="rowgroup"
                 className="sticky top-0 z-10 border-b border-rule-soft bg-base-850"
@@ -434,7 +437,7 @@ export function ClientsPage() {
                       }}
                     >
                       <ClientRowCells client={client} />
-                      <div role="cell" className="flex items-center justify-end gap-1 px-4 py-3">
+                      <div role="cell" className="flex shrink-0 items-center justify-end gap-1 px-4 py-3">
                         <Button
                           size="sm"
                           variant="ghost"

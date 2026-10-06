@@ -221,7 +221,13 @@ export function mkSeed(scenario = "conectado") {
   seed["fastws.session"] = { name: "Administrador", email: "admin@fastws.local", role: "Operativo" }
   if (connected) {
     seed["fastws.conexion.ids"] = { phoneNumberId: "1234567890", wabaId: "9876543210" }
-    seed["fastws.conexion.sesion"] = { token: "EAAG-sim-token", metaPhone: "573100000000", wabaName: "FastWS WABA", verifiedAt: iso(30) }
+    // El token ya no viaja en la sesión de conexión: en escritorio vive
+    // cifrado con DPAPI y en el navegador el fallback lo deja en
+    // `fastws.meta-token`. El simulacro corre en navegador, así que siembra
+    // esa clave; `fastws.conexion.meta` es el resto de la sesión y sí va a la
+    // base.
+    seed["fastws.meta-token"] = "EAAG-sim-token"
+    seed["fastws.conexion.meta"] = { metaPhone: "573100000000", wabaName: "FastWS WABA", verifiedAt: iso(30) }
   }
   return seed
 }
@@ -230,8 +236,8 @@ export function seedExpr(scenario = "conectado") {
   const seed = mkSeed(scenario)
   const lines = Object.entries(seed).map(([k, v]) => {
     const raw = k === "fastws.app.locale" ? v : JSON.stringify(k.endsWith(".velocidad") ? JSON.stringify(v) : v)
-    // la sesion de conexion vive en sessionStorage (S10), no en localStorage
-    const store = k === "fastws.conexion.sesion" ? "sessionStorage" : "localStorage"
+    // el token va al fallback efímero (sessionStorage); el resto, a la base
+    const store = k === "fastws.meta-token" ? "sessionStorage" : "localStorage"
     return `  ${store}.setItem(${JSON.stringify(k)}, ${JSON.stringify(raw)});`
   })
   return `(() => {\n${lines.join("\n")}\n  return "seeded:" + Object.keys(localStorage).length;\n})()`
@@ -311,6 +317,41 @@ export function fetchStubSrc() {
   };
   window.__stubActive = true;
 })()`
+}
+
+/**
+ * Cuántos píxeles desborda en horizontal el contenedor con scroll de una tabla.
+ *
+ * Se mide `scrollWidth - clientWidth` sobre el elemento que declara
+ * `overflow-x: auto|scroll`, que es el que puede pintar la barra lateral. No se
+ * mira el CSS: el síntoma que reportó el operador era una barra horizontal de
+ * unos píxeles, y eso es lo que este check tiene que detectar.
+ */
+export function measureOverflow(cdp) {
+  return evalJson(cdp, `(()=>{
+    const malos=[...document.querySelectorAll('main *')].filter(el=>{
+      const cs=getComputedStyle(el);
+      return el.scrollWidth - el.clientWidth > 1 && (cs.overflowX==='auto'||cs.overflowX==='scroll');
+    });
+    return Math.max(0, ...malos.map(el=>el.scrollWidth - el.clientWidth));
+  })()`)
+}
+
+/** Igual que `measureOverflow`, pero devuelve qué elementos desbordan y por qué. */
+export function overflowDetail(cdp) {
+  return evalJson(
+    cdp,
+    `JSON.stringify([...document.querySelectorAll('main *')].filter(el=>{
+      const cs=getComputedStyle(el);
+      return el.scrollWidth - el.clientWidth > 1 && (cs.overflowX==='auto'||cs.overflowX==='scroll');
+    }).map(el=>({
+      px: el.scrollWidth - el.clientWidth,
+      sw: el.scrollWidth,
+      cw: el.clientWidth,
+      tag: el.tagName.toLowerCase(),
+      clase: (el.className || '').toString().slice(0, 70)
+    })).sort((a,b)=>b.px-a.px).slice(0,4))`
+  )
 }
 
 export function dumpExpr() {

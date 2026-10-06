@@ -81,13 +81,16 @@ const setMode = (cdp, m) => evalJson(cdp, `window.__SIM={mode:'${m}'};'ok'`)
     // 2.4 probar ok -> conectada + sesion + auditoria + toast
     await setMode(cdp, "ok")
     await act(cdp, `D('Probar conexión');await new Promise(r=>setTimeout(r,1100));return 'ok'`)
-    const v24 = JSON.parse(await act(cdp, `return JSON.stringify({stamp:document.body.innerText.includes('Listo para despacho'),toast:document.body.innerText.includes('Conexión establecida'),sesion:sessionStorage.getItem('fastws.conexion.sesion'),localSes:localStorage.getItem('fastws.conexion.sesion'),aud:JSON.parse(localStorage.getItem('fastws.auditoria')||'[]').map(a=>a.titulo).slice(0,3)})`))
+    const v24 = JSON.parse(await act(cdp, `return JSON.stringify({stamp:document.body.innerText.includes('Listo para despacho'),toast:document.body.innerText.includes('Conexión establecida'),token:sessionStorage.getItem('fastws.meta-token'),meta:localStorage.getItem('fastws.conexion.meta'),localToken:localStorage.getItem('fastws.meta-token'),aud:JSON.parse(localStorage.getItem('fastws.auditoria')||'[]').map(a=>a.titulo).slice(0,3)})`))
     ch("2.4 probar ok (stub): conectada + sesion + auditoria 'Conexión Meta establecida'",
-      v24.stamp && v24.sesion !== null && v24.aud.some((t) => t === "Conexión Meta establecida"),
-      JSON.stringify({ stamp: v24.stamp, totas: v24.toast, audTop: v24.aud[0] }))
-    ch("2.5 token en sessionStorage (nunca en localStorage)",
-      v24.sesion !== null && v24.sesion.includes("EAAQ_SIMTOKEN") && v24.sesion.includes("573100000000") && v24.localSes === null,
-      v24.sesion?.slice(0, 60))
+      v24.stamp && v24.token !== null && v24.meta !== null && v24.aud.some((t) => t === "Conexión Meta establecida"),
+      JSON.stringify({ stamp: v24.stamp, toast: v24.toast, audTop: v24.aud[0] }))
+    // 2.5 el token va al almacen de secretos y NUNCA a localStorage. En
+    // escritorio esa guarda es DPAPI (src-tauri/src/secrets.rs); aqui, sin
+    // Tauri, el fallback del navegador lo deja en sessionStorage.
+    ch("2.5 token fuera de localStorage (en la guarda de secretos)",
+      v24.token === "EAAQ_SIMTOKEN" && v24.meta !== null && v24.meta.includes("573100000000") && v24.localToken === null,
+      `token=${v24.token} meta=${v24.meta?.slice(0, 60)}`)
     await writeArtifacts(outDir("pasada-2"), "conectada", { png: shot(cdp) })
 
     // 2.8a pill conectada en /app
@@ -108,16 +111,29 @@ const setMode = (cdp, m) => evalJson(cdp, `window.__SIM={mode:'${m}'};'ok'`)
       JSON.stringify({ stamp: v26.stamp, llamadas: gReqs }))
     await writeArtifacts(outDir("pasada-2"), "recarga-optimista", { png: shot(cdp) })
 
+    // 2.6b la conexion sobrevive a la recarga sin volver a escribir el token.
+    // Eso es lo que reporto el operador: al reabrir la app habia que teclear el
+    // token otra vez. En escritorio el token vive cifrado con DPAPI y se
+    // revalida al arrancar; aqui el fallback de sessionStorage.
+    await navigate(cdp, "/app/conexion")
+    await waitSel(cdp, "#conexion-phoneid")
+    await waitFor(async () => hasBody(cdp, "Listo para despacho"), true, 8000)
+    const tokenVivo = await evalJson(cdp, `sessionStorage.getItem('fastws.meta-token')`)
+    const sinFormPido = await evalJson(cdp, `!document.querySelector('#conexion-token') || document.querySelector('#conexion-token').value === ''`)
+    ch("2.6b tras recargar: conexion lista sin volver a escribir el token",
+      tokenVivo === "EAAQ_SIMTOKEN" && sinFormPido,
+      `tokenVivo=${Boolean(tokenVivo)} tokenVacio=${sinFormPido}`)
+
     // 2.7 [S23] Desconectar exige confirmacion y borra sesion E ids, audita
     await act(cdp, `D('Desconectar');await new Promise(r=>setTimeout(r,200));return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
     const confirmOpen = await evalJson(cdp, `document.body.innerText.toLowerCase().includes('desconectar meta')`)
     await act(cdp, `D('Desconectar y borrar');await new Promise(r=>setTimeout(r,400));return 'ok'`)
     await wait(400)
-    const v27 = JSON.parse(await act(cdp, `return JSON.stringify({stamp:document.body.innerText.includes('Sin configurar'),ids:localStorage.getItem('fastws.conexion.ids'),sesion:sessionStorage.getItem('fastws.conexion.sesion'),localSes:localStorage.getItem('fastws.conexion.sesion'),aud:JSON.parse(localStorage.getItem('fastws.auditoria')||'[]').map(a=>a.titulo).slice(0,3),modal:${JSON.stringify(confirmOpen)}})`))
-    ch("2.7 [S23] desconectar: exige confirmacion, sin-configurar, borra sesion E ids, audita",
-      v27.stamp && v27.sesion === null && v27.ids === null && v27.aud.some((t) => t === "Conexión Meta cerrada") && v27.modal,
-      JSON.stringify({ ids: v27.ids, sesion: v27.sesion, audTop: v27.aud[0], modal: v27.modal }))
+    const v27 = JSON.parse(await act(cdp, `return JSON.stringify({stamp:document.body.innerText.includes('Sin configurar'),ids:localStorage.getItem('fastws.conexion.ids'),meta:localStorage.getItem('fastws.conexion.meta'),token:sessionStorage.getItem('fastws.meta-token'),aud:JSON.parse(localStorage.getItem('fastws.auditoria')||'[]').map(a=>a.titulo).slice(0,3),modal:${JSON.stringify(confirmOpen)}})`))
+    ch("2.7 [S23] desconectar: exige confirmacion, sin-configurar, borra token/meta/ids, audita",
+      v27.stamp && v27.token === null && v27.meta === null && v27.ids === null && v27.aud.some((t) => t === "Conexión Meta cerrada") && v27.modal,
+      JSON.stringify({ ids: v27.ids, token: v27.token, meta: v27.meta, audTop: v27.aud[0], modal: v27.modal }))
     await writeArtifacts(outDir("pasada-2"), "desconectada", { png: shot(cdp) })
 
     // 2.8b pill sin conexión tras desconectar

@@ -32,7 +32,14 @@ import {
 } from "./template-status"
 
 const th = "px-4 py-2 text-[0.75rem] font-bold uppercase tracking-[0.14em] text-ink-500"
-const TEMPLATES_TEMPLATE = "minmax(16rem, 1fr) 9.5rem 8.5rem 9rem 9rem 10.5rem"
+// La tabla se ajusta al panel en vez de imponer un ancho mínimo: un `min-w`
+// fijo, sumado a la barra vertical de scroll, pinta una barra horizontal de
+// unos píxeles en ventanas normales. Además las columnas fijas van como
+// `minmax(0, Nrem)` para que puedan encogerse si un sello o un botón no caben
+// en el ancho dado; con un `Nrem` a secas, el contenido se desborda hacia
+// fuera y la barra horizontal vuelve a aparecer.
+const TEMPLATES_TEMPLATE =
+  "minmax(0, 1fr) minmax(0, 9rem) minmax(0, 7.5rem) minmax(0, 9rem) minmax(0, 8.5rem) minmax(0, 12rem)"
 const LANGUAGES = ["es", "es_CO", "es_MX", "es_AR", "es_CL", "en", "en_US", "pt", "pt_BR", "fr"]
 const CATEGORIES: TemplateCategory[] = ["MARKETING", "UTILITY", "AUTHENTICATION"]
 const TEMPLATES_KEY = "fastws.plantillas"
@@ -87,7 +94,7 @@ function TemplateRowActions({
   return (
     <div
       role="cell"
-      className="flex items-center gap-2 px-4 py-3"
+      className="flex min-w-0 items-center gap-2 overflow-hidden px-4 py-3"
       onClick={(event) => event.stopPropagation()}
     >
       <Button
@@ -136,8 +143,8 @@ function TemplatesTable({
     )
   }
   return (
-    <div ref={scrollRef} className="max-h-[32rem] overflow-x-auto overflow-y-auto">
-      <div role="table" className="min-w-[64rem]">
+    <div ref={scrollRef} className="max-h-[32rem] overflow-y-auto">
+      <div role="table" className="w-full">
         <div role="rowgroup" className="sticky top-0 z-10 border-b border-rule-soft bg-base-850">
           <div
             role="row"
@@ -177,23 +184,23 @@ function TemplatesTable({
                   <p className="truncate font-mono text-[0.8125rem] font-semibold text-ink-100">
                     {template.name}
                   </p>
-                  <p className="mt-0.5 text-[0.75rem] text-ink-600">
+                  <p className="mt-0.5 truncate text-[0.75rem] text-ink-600">
                     {variables.length > 0
                       ? `${variables.length} variable${variables.length === 1 ? "" : "s"} · `
                       : ""}
                     {languageLabel(template.language)}
                   </p>
                 </div>
-                <div role="cell" className="px-4 py-3">
+                <div role="cell" className="min-w-0 px-4 py-3">
                   <TemplateStatusChip status={template.status} />
                 </div>
-                <div role="cell" className="px-4 py-3 text-[0.8125rem] text-ink-300">
+                <div role="cell" className="min-w-0 truncate px-4 py-3 text-[0.8125rem] text-ink-300">
                   {categoryLabel[template.category] ?? template.category}
                 </div>
-                <div role="cell" className="px-4 py-3">
+                <div role="cell" className="min-w-0 px-4 py-3">
                   <QualityBadge quality={template.qualityScore} />
                 </div>
-                <div role="cell" className="px-4 py-3 tabular-nums text-[0.75rem] text-ink-500">
+                <div role="cell" className="min-w-0 px-4 py-3 tabular-nums text-[0.75rem] text-ink-500">
                   {template.updatedAt
                     ? formatDateShort(new Date(template.updatedAt * 1000).toISOString())
                     : "—"}

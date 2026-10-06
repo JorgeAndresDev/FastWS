@@ -29,7 +29,7 @@ async function boot(cdp, route) {
   await wait(900)
 }
 const esperaConexion = async (cdp, ms = 12000) => {
-  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.conexion.sesion') && !!localStorage.getItem('fastws.conexion.ids')`)
+  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.meta-token') && !!localStorage.getItem('fastws.conexion.ids')`)
   if (!hay) return false
   return waitFor(async () => hasTxt(cdp, "Listo para despacho"), true, ms)
 }
@@ -126,17 +126,18 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
       JSON.stringify(dlgB))
     await writeArtifacts(outDir("pasada-7"), "7a2-borrar-dialogo", { png: shot(cdp) })
 
-    // 7.11 [NUEVO] borrar 'todo' no borra el token de Meta (vive en sessionStorage) y la app reconecta sola
-    const sesionAntes = await evalJson(cdp, `!!sessionStorage.getItem('fastws.conexion.sesion')`)
+    // 7.11 el token vive en la guarda de secretos (DPAPI en escritorio), asi que
+    // "Borrar todo" tiene que llamarla explicitamente o el token sobrevive y la
+    // app se reconecta sola.
+    const tokenAntes = await evalJson(cdp, `!!sessionStorage.getItem('fastws.meta-token')`)
     await clickMain(cdp, '[role="dialog"] button', "Borrar todo")
     await wait(3000)
-    // 7.11 'Borrar todo' limpia también el token de Meta (sessionStorage): no se reconecta solo
-    const post = JSON.parse(await probe(cdp, `({ids:localStorage.getItem('fastws.conexion.ids'),sesion:!!sessionStorage.getItem('fastws.conexion.sesion'),clientes:localStorage.getItem('fastws.clientes'),turnoAntiguo:(()=>{try{return JSON.parse(localStorage.getItem('fastws.sesiones')||'[]').some(s=>s.id==='ses-1')}catch(e){return null}})()})`))
+    const post = JSON.parse(await probe(cdp, `({ids:localStorage.getItem('fastws.conexion.ids'),meta:localStorage.getItem('fastws.conexion.meta'),token:!!sessionStorage.getItem('fastws.meta-token'),clientes:localStorage.getItem('fastws.clientes'),turnoAntiguo:(()=>{try{return JSON.parse(localStorage.getItem('fastws.sesiones')||'[]').some(s=>s.id==='ses-1')}catch(e){return null}})()})`))
     await wait(400)
     const reconectada = await hasTxt(cdp, "Listo para despacho")
     ch("7.11 'Borrar todo' borra también el token de Meta: la app queda desconectada y no se reconecta sola",
-      sesionAntes === true && post.ids === null && post.sesion === false && post.clientes === null && post.turnoAntiguo === false && reconectada === false,
-      JSON.stringify({ ...post, reconectada }))
+      tokenAntes === true && post.ids === null && post.meta === null && post.token === false && post.clientes === null && post.turnoAntiguo === false && reconectada === false,
+      JSON.stringify({ ...post, tokenAntes, reconectada }))
   } finally { edge.kill() }
 }
 

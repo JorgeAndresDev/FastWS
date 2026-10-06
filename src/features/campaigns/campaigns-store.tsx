@@ -211,16 +211,24 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     [commit]
   )
 
+  // Auto-arranque de las campañas EN_PROCESO. Depende de `token` a propósito:
+  // el token se restaura de forma asíncrona (DPAPI en escritorio), así que en
+  // el primer render aún no está. Sin esta dependencia el motor arrancaba sin
+  // token, se quedaba en pausa y nada lo reanudaba cuando el token llegaba.
   useEffect(() => {
+    if (!token) return
     for (const campaign of campaignsRef.current) {
-      if (campaign.status === "EN_PROCESO") {
+      if (campaign.status !== "EN_PROCESO") continue
+      if (engineHas(campaign.id)) {
+        engineResume(campaign.id)
+      } else {
         engineStart(campaign.id, makeHooks(campaign.id))
       }
     }
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
-  }, [makeHooks])
+  }, [makeHooks, token])
 
   const guardar = useCallback(
     (campaign: Campaign) => {

@@ -28,7 +28,7 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 - **Oráculo de storage**: antes y después de cada acción determinista se vuelca el juego de claves `fastws.*` + `sessionStorage` (`sim-oracle.mjs`) para detectar escrituras silenciosas, claves sobrevivientes y eventos de auditoría.
 - **Fetch-stub**: las pasadas que tocan `graph.facebook.com` inyectan un mock de `window.fetch` (`sim-fetch-stub.mjs`) vía `Page.addScriptToEvaluateOnNewDocument` con escenarios `ok | rate | auth | terminal | 5xx | network`. Todo offline.
 - **Severidad de hueco**: `P0` pérdida de datos / seguridad · `P1` función rota o miente · `P2` pulido, a11y, etiquetas.
-- **Claves conocidas**: `fastws.clientes`, `fastws.campanas`, `fastws.campanas.velocidad`, `fastws.conversaciones` (`{threads, merged}`), `fastws.sesiones`, `fastws.auditoria`, `fastws.conexion.ids`, `fastws.conexion.sesion`, `fastws.app.locale`, `fastws.device`, `fastws.session` (local **o** sessionStorage según "recordar").
+- **Claves conocidas**: `fastws.clientes`, `fastws.campanas`, `fastws.campanas.velocidad`, `fastws.conversaciones` (`{threads, merged}`), `fastws.sesiones`, `fastws.auditoria`, `fastws.conexion.ids`, `fastws.conexion.meta`, `fastws.app.locale`, `fastws.device`, `fastws.session` (local **o** sessionStorage según "recordar"). El token de Meta ya no va en una clave propia: vive en la guarda de secretos (`fastws.meta-token` en sessionStorage sin Tauri, DPAPI en escritorio).
 
 ## Criterio de "hueco"
 
@@ -42,9 +42,9 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 |---|---|---|---|
 | Dev server | `npm run dev` | `http://localhost:5173` responde | Sin server, todo el simulacro falla |
 | Perfil limpio | Edge headless con `--user-data-dir` desechable | `localStorage` vacío antes del seed | Estado heredado invalida los checks |
-| Seed baseline | `sim-base.mjs` siembra las 11 claves | Todas las claves con forma esperada; auditar con 2 registros | Clave mal formada rompe la app |
+| Seed baseline | `sim-base.mjs` siembra las 12 claves | Todas las claves con forma esperada; auditar con 2 registros | Clave mal formada rompe la app |
 | Fetch-stub | Inyectar mock en documento nuevo | `window.fetch` intercepta urls `graph.facebook.com` | El stub no aplica → llamadas reales (inaceptable offline) |
-| Snapshot oracle | `sim-oracle.mjs` | Dump de 11 claves + `sessionStorage` + cola auditoría | Dump incompleto |
+| Snapshot oracle | `sim-oracle.mjs` | Dump de 12 claves + `sessionStorage` + cola auditoría | Dump incompleto |
 | Detector + build | `npm run build`, `impeccable detect --json src` | `tsc` 0 · detector `[]` (código está ok al arrancar el simulacro) | Ruido previo |
 
 **Pré-condición de todas las pasadas**: build verde + detector `[]`.
@@ -83,10 +83,10 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 | 2.1 | Guardar IDs | Sin conexión | phoneNumberId + wabaId numéricos, Guardar | `fastws.conexion.ids` escrito; estado sigue sin-configurar | Escritura parcial/silenciosa |
 | 2.2 | Probar sin token | IDs guardados | Probar | Estado `error` con mensaje "Completa los identificadores y el token" | Sin feedback |
 | 2.3 | Probar sin red | IDs + token | Probar (fetch real bloqueado/offline) | `graphError` → "No hay conexión con Meta"; estado `error`; se audita? (verificar) | Crash sin mapeo |
-| 2.4 | Probar ok (stub) | IDs + token | Probar con stub `ok` | Estado `conectada`; `fastws.conexion.sesion` con token; auditoría "Conexión Meta establecida" | Sin sello / sin auditoría |
-| 2.5 | Token en claro | Conectada | Inspeccionar `fastws.conexion.sesion` | `token` legible en el localStorage | (ya es un hallazgo conocido #H-stat) |
+| 2.4 | Probar ok (stub) | IDs + token | Probar con stub `ok` | Estado `conectada`; token en la guarda de secretos y `fastws.conexion.meta` en la base; auditoría "Conexión Meta establecida" | Sin sello / sin auditoría |
+| 2.5 | Token en claro | Conectada | Inspeccionar la guarda de secretos | `token` legible en el localStorage | (ya es un hallazgo conocido #H-stat) |
 | 2.6 | Conectada optimista al recargar | Conectada | Recargar | Estado `conectada` **sin revalidar** el token | (hueco conocido #H-stat: si token revocado, miente) |
-| 2.7 | Desconectar | Conectada | Desconectar | Estado sin-configurar; borra `fastws.conexion.sesion`; **mantiene `conexion.ids`?** (verificar) · audita "Conexión Meta cerrada" | Sin confirmación (hueco candidato) · ids borrados si no deberían |
+| 2.7 | Desconectar | Conectada | Desconectar | Estado sin-configurar; borra token, `fastws.conexion.meta` y `conexion.ids` · audita "Conexión Meta cerrada" | Sin confirmación (hueco candidato) · ids borrados si no deberían |
 | 2.8 | Pill + sello integración | Conectada / sin | Vista `/app` y `/app/configuracion` | Coordinan con el estado | Pill y sello en desacuerdo |
 
 ---

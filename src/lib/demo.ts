@@ -4,7 +4,8 @@ import { registrarAuditoria } from "@/lib/audit-log"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { getStore } from "@/lib/db"
-import { clearEphemeral, writeDurable } from "@/lib/db/session-scope"
+import { borrarToken } from "@/lib/secrets"
+import { writeDurable } from "@/lib/db/session-scope"
 
 const KEYS = [
   "fastws.clientes",
@@ -13,7 +14,7 @@ const KEYS = [
   "fastws.conversaciones",
   "fastws.sesiones",
   "fastws.conexion.ids",
-  "fastws.conexion.sesion",
+  "fastws.conexion.meta",
 ] as const
 
 function iso(minAgo: number) {
@@ -135,10 +136,11 @@ export function restablecerDemo() {
 export function borrarDatosLocales() {
   const store = getStore()
   store.removeMany(KEYS)
-  // La sesión de conexión vive en el alcance efímero: sin esto el token
-  // sobrevivía al borrado y la app se reconectaba sola (la copia promete lo
-  // contrario).
-  clearEphemeral("fastws.conexion.sesion")
+  // El token ya no vive en un `sessionStorage` que este `removeMany` alcanza:
+  // está en la guarda de secretos. Sin esta llamada sobrevivía al borrado y la
+  // app se reconectaba sola, que es justo lo contrario de lo que promete el
+  // diálogo.
+  void borrarToken()
 
   registrarAuditoria({
     categoria: "configuracion",

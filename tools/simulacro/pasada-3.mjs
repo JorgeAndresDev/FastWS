@@ -25,7 +25,7 @@ const ch = (label, ok, detalle) => { R.push({ n: ++n, label, ok: Boolean(ok), de
 // Tras una recarga el provider revalida el token (status probando -> conectada).
 // Sin esta espera, `iniciar()` puede devolver false y la campaña queda en BORRADOR.
 const esperaConexion = async (cdp, ms = 12000) => {
-  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.conexion.sesion') && !!localStorage.getItem('fastws.conexion.ids')`)
+  const hay = await evalJson(cdp, `!!sessionStorage.getItem('fastws.meta-token') && !!localStorage.getItem('fastws.conexion.ids')`)
   if (!hay) return false
   return waitFor(async () => hasBody(cdp, "Listo para despacho"), true, ms)
 }
@@ -273,7 +273,7 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
       JSON.stringify({ status: c5b?.status, rec: r5.map((r) => r.status), confirm: confirmCancel, audTop: audNueva[0] }))
 
     // 3.15 iniciar sin conexión: modal se mantiene abierto, sigue BORRADOR (S13)
-    await evalJson(cdp, `localStorage.removeItem('fastws.conexion.ids');localStorage.removeItem('fastws.conexion.sesion');sessionStorage.removeItem('fastws.conexion.sesion');'ok'`)
+    await evalJson(cdp, `localStorage.removeItem('fastws.conexion.ids');localStorage.removeItem('fastws.conexion.meta');sessionStorage.removeItem('fastws.meta-token');'ok'`)
     await cdp.send("Page.reload", { ignoreCache: true })
     await waitSel(cdp, "header")
     await wait(1200)

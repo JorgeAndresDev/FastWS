@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { spawnEdge, PROFILE, seedExpr, fetchStubSrc, evalJson, waitFor, wait, navigate, shot, outDir, writeArtifacts, BASE } from "./sim-base.mjs"
+import { spawnEdge, PROFILE, seedExpr, fetchStubSrc, evalJson, waitFor, wait, navigate, shot, outDir, writeArtifacts, BASE, measureOverflow } from "./sim-base.mjs"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const J = JSON.stringify
@@ -71,6 +71,10 @@ const CLIENTES10 = [
     const ctrl = Number(await evalJson(cdp, `JSON.stringify([...document.querySelectorAll('[role="table"] button,[role="table"] a')].filter(x=>x.offsetParent!==null).length)`))
     ch("4.1 cliente: tabla virtualizada (1 encabezado + 5 filas) con Editar/Eliminar por fila", rows === 6 && ctrl === 10, `rows=${rows} controles=${ctrl}`)
 
+    // 4.1c la tabla de clientes no desborda en horizontal (mismo sintoma que 0.2)
+    const ovfClientes = await measureOverflow(cdp)
+    ch("4.1c la tabla de clientes no desborda en horizontal", ovfClientes <= 1, `overflowX=${ovfClientes}px`)
+
     // 4.1b alta de cliente: formulario 'Nuevo cliente' persiste, audita y muestra la fila
     await clickMain(cdp, "Nuevo cliente")
     await waitSel(cdp, "#cliente-codigo")
@@ -105,6 +109,11 @@ const CLIENTES10 = [
     await setFile(cdp, "ok.csv")
     const p1 = JSON.parse(await evalJson(cdp, `JSON.stringify({titulo:document.body.innerText.toLowerCase().includes(${J("2 \u00b7 validaci\u00f3n (un cliente por c\u00f3digo)")}),filas:document.body.innerText.includes("5 filas"),validas:document.body.innerText.includes("4 v\u00e1lidas"),duplicadas:document.body.innerText.includes("0 duplicadas")})`))
     ch("4.3 CSV valido leido: paso 2 con conteos", p1.titulo && p1.filas && p1.validas && p1.duplicadas, JSON.stringify(p1))
+
+    // 4.3b la tabla de validacion no desborda en horizontal (mismo sintoma que
+    // 0.2 en Plantillas: `min-w` fijo + barra vertical = barra lateral).
+    const ovfImport = await measureOverflow(cdp)
+    ch("4.3b la tabla de validacion no desborda en horizontal", ovfImport <= 1, `overflowX=${ovfImport}px`)
 
     // 4.10 sin boton descartar
     const btns = await evalJson(cdp, `JSON.stringify([...document.querySelectorAll('main button,main a')].map(x=>(x.textContent||'').trim()).filter(t=>/Descartar|Cancelar importaci/.test(t)))`)
