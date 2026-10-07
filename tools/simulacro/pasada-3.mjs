@@ -30,6 +30,37 @@ const esperaConexion = async (cdp, ms = 12000) => {
   return waitFor(async () => hasBody(cdp, "Listo para despacho"), true, ms)
 }
 
+// Campañas para el wizard (P3A2): ninguna en EN_PROCESO, porque el motor
+// auto-arrancaría y su toast de "Campaña finalizada" se solaparía con las
+// pruebas del wizard (3.7). 3.23 necesita una EN_PROCESO y vive en P3B, con su
+// propio wipeProfile.
+const CAMPANAS_WIZARD = [
+  {
+    id: "camp-1",
+    name: "Despacho nocturno · Ruta Norte",
+    description: "Recordatorio de ruta al norte.",
+    template: { name: "recordatorio_ruta", language: "es" },
+    mapping: [{ key: "1", fuente: "campo", campo: "name" }],
+    filter: { zone: "Norte" },
+    status: "BORRADOR",
+    recipients: [],
+    createdAt: new Date(Date.now() - 90 * 60000).toISOString(),
+    activity: [{ tipo: "creada", at: new Date(Date.now() - 90 * 60000).toISOString() }],
+  },
+  {
+    id: "camp-2",
+    name: "Promoción fin de semana",
+    description: "",
+    template: { name: "confirmacion_pedido", language: "es" },
+    mapping: [{ key: "1", fuente: "campo", campo: "orderState" }],
+    filter: { city: "Armenia" },
+    status: "BORRADOR",
+    recipients: [],
+    createdAt: new Date(Date.now() - 10 * 60000).toISOString(),
+    activity: [{ tipo: "creada", at: new Date(Date.now() - 10 * 60000).toISOString() }],
+  },
+]
+
 async function boot(cdp, seed = "conectado", route = "/app") {
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: fetchStubSrc() })
   await cdp.send("Page.navigate", { url: BASE })
@@ -83,7 +114,14 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
   const { cdp, edge } = await spawnEdge()
   try {
     await boot(cdp, "conectado", "/app/campanas")
-    await reseed(cdp, "fastws.clientes", CLIENTES10)
+    // Sembrar clientes y campañas antes de una sola recarga: dos `reseed` serían
+    // dos recargas y el wizard se vuelve lento hasta el timeout.
+    await seedRaw(cdp, "fastws.clientes", CLIENTES10)
+    await seedRaw(cdp, "fastws.campanas", CAMPANAS_WIZARD)
+    await cdp.send("Page.reload", { ignoreCache: true })
+    await waitSel(cdp, "header")
+    await wait(800)
+    await esperaConexion(cdp)
     await act(cdp, `MB('Nueva campaña');return 'ok'`)
     await wait(600)
 
@@ -141,6 +179,20 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     ch("3.9 crear BORRADOR persistido + toast 'Campaña creada'",
       creada && tCreada.some((t) => t.includes("Campaña creada")),
       JSON.stringify({ enStorage: creada, toast: tCreada.slice(0, 2) }))
+
+    // 3.9b [S28] crear no reordena la planilla: las campañas que ya estaban
+    // conservan su posición y la nueva se añade al final. `guardar` hacía
+    // filter+append, que con una campaña existente la movía al final.
+    const orden = await camps(cdp)
+    const nombres = orden.map((c) => c.name)
+    const semilla = ["Despacho nocturno · Ruta Norte", "Promoción fin de semana"]
+    const ordenOk =
+      nombres.length === 3 &&
+      semilla.every((n, i) => nombres[i] === n) &&
+      nombres[2] === "Promo wizard simulacro"
+    ch("3.9b [S28] crear una campaña no reordena la planilla",
+      ordenOk,
+      JSON.stringify({ nombres }))
 
     // 3.10 segmento vacío -> Crear disabled + alert (zona Centro solo tiene c2,c4, ninguna en ruta)
     await act(cdp, `MB('Nueva campaña');await new Promise(r=>setTimeout(r,600));SEL('#campana-plantilla','tpl-cnf');await new Promise(r=>setTimeout(r,400));D('Continuar');await new Promise(r=>setTimeout(r,500));return 'ok'`)

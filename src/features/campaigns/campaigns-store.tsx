@@ -238,7 +238,14 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
       const activity = hasActivity
         ? (campaign.activity ?? [])
         : [{ tipo: "creada" as const, at: campaign.createdAt }]
-      commit([...campaignsRef.current.filter((c) => c.id !== campaign.id), { ...campaign, activity }])
+      // Reemplazar en su posición, no re-append: editar la primera campaña no
+      // debe moverla al final de la lista (S28). El orden de la planilla es el
+      // orden del arreglo, así que hay que conservarlo.
+      const indice = campaignsRef.current.findIndex((c) => c.id === campaign.id)
+      const next = [...campaignsRef.current]
+      if (indice >= 0) next[indice] = { ...campaign, activity }
+      else next.push({ ...campaign, activity })
+      commit(next)
     },
     [commit]
   )
