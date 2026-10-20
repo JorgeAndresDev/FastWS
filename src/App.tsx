@@ -4,7 +4,7 @@ import { Toaster } from "sileo"
 
 import { AppLayout } from "@/app/layout"
 import { Loader2 } from "lucide-react"
-import { AuthProvider, LoginPage, RecoverPage, RequireAuth } from "@/features/auth"
+import { AuthProvider, BootstrapPage, LoginPage, RecoverPage, RequireAuth } from "@/features/auth"
 import { CampaignsProvider } from "@/features/campaigns/campaigns-store"
 import { ClientsProvider } from "@/features/clients/clients-store"
 import { ConexionProvider } from "@/features/connection/conexion-store"
@@ -56,8 +56,9 @@ function App() {
                 <ConversationsProvider>
                   <Suspense fallback={pageLoader}>
                   <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/recuperar" element={<RecoverPage />} />
+<Route path="/login" element={<LoginPage />} />
+        <Route path="/recuperar" element={<RecoverPage />} />
+        <Route path="/bootstrap" element={<BootstrapPage />} />
 
           <Route element={<RequireAuth />}>
             <Route element={<AppLayout />}>

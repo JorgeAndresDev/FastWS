@@ -1,31 +1,29 @@
 import type { ReactNode } from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
+import { codigoRecuperacion, sha256 } from "@/lib/crypto"
+import { hashPassword, validarPassword } from "@/lib/auth"
 import { clearSession, readSession, sessionKind, writeSession, type SessionUser } from "./session"
 import { getDeviceIdentity } from "./device"
-import { codigoRecuperacion, sha256 } from "@/lib/crypto"
 import { cerrarSesion, registrarSesion, tieneSesionAbierta } from "@/lib/session-log"
 import { clearDurable, readDurable, writeDurable } from "@/lib/db/session-scope"
-
-export const DEMO_CREDENTIALS = {
-  email: "admin@fastws.local",
-  password: "despacho2026",
-}
+import {
+  createUser,
+  findUserByEmail,
+  hasUsers,
+  listUsers,
+  toSessionUser,
+  verifyUser,
+} from "./users"
 
 const MIN_DELAY = 600
 const RECOVERY_KEY = "fastws.recuperacion.codigo"
-const CLAVE_KEY = "fastws.clave.hash"
 
 function delay<T>(value: T, ms = MIN_DELAY) {
   return new Promise<T>((resolve) => window.setTimeout(() => resolve(value), ms))
 }
 
 interface StoredRecovery {
-  email: string
-  hash: string
-}
-
-interface StoredClave {
   email: string
   hash: string
 }
@@ -45,34 +43,18 @@ function leerRecovery(): StoredRecovery | null {
   return null
 }
 
-function leerClave(): StoredClave | null {
-  const raw = readDurable(CLAVE_KEY)
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as Partial<StoredClave>
-      if (parsed && typeof parsed.email === "string" && typeof parsed.hash === "string") {
-        return { email: parsed.email, hash: parsed.hash }
-      }
-    } catch {
-      /* datos corruptos */
-    }
-  }
-  return null
-}
-
-function guardarClave(email: string, hash: string) {
-  writeDurable(CLAVE_KEY, JSON.stringify({ email, hash }))
-}
-
 function borrarRecovery() {
   clearDurable(RECOVERY_KEY)
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: SessionUser | null
   ready: boolean
+  /** `true` cuando no hay ningún operador todavía: la app muestra el alta. */
+  bootstrapNeeded: boolean
   signIn: (email: string, password: string, remember: boolean) => Promise<void>
   signOut: () => void
+  createAdmin: (name: string, email: string, password: string) => Promise<void>
   requestRecovery: (email: string) => Promise<string>
   resetPassword: (email: string, code: string, password: string) => Promise<void>
 }
@@ -82,46 +64,51 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [ready, setReady] = useState(false)
+  const [bootstrapNeeded, setBootstrapNeeded] = useState(false)
 
   useEffect(() => {
-    const restored = readSession()
-    setUser(restored)
-    if (restored) {
-      const device = getDeviceIdentity()
-      if (!tieneSesionAbierta(device.code, restored.name)) {
-        registrarSesion({
-          usuario: restored.name,
-          email: restored.email,
-          rol: restored.role,
-          recordar: sessionKind() === "recordada",
-          equipo: device.code,
-          plataforma: device.platform,
-          origen: "restaurada",
-        })
+    let vivo = true
+    void (async () => {
+      // El alta va antes que la sesión: si no hay usuarios no tiene sentido
+      // restaurar una, porque no habría con quién.
+      const hayUsuarios = hasUsers()
+      if (!vivo) return
+      setBootstrapNeeded(!hayUsuarios)
+      if (!hayUsuarios) {
+        setReady(true)
+        return
       }
+      const restored = readSession()
+      if (restored && vivo) {
+        setUser(restored)
+        const device = getDeviceIdentity()
+        if (!tieneSesionAbierta(device.code, restored.name)) {
+          registrarSesion({
+            usuario: restored.name,
+            email: restored.email,
+            rol: restored.role,
+            recordar: sessionKind() === "recordada",
+            equipo: device.code,
+            plataforma: device.platform,
+            origen: "restaurada",
+          })
+        }
+      }
+      if (vivo) setReady(true)
+    })()
+    return () => {
+      vivo = false
     }
-    setReady(true)
   }, [])
 
   const signIn = useCallback(async (email: string, password: string, remember: boolean) => {
     await delay(null)
     const usuario = email.trim().toLowerCase()
-    if (usuario !== DEMO_CREDENTIALS.email) {
+    const encontrado = await verifyUser(usuario, password)
+    if (!encontrado) {
       throw new Error("Usuario o contraseña incorrectos.")
     }
-    const claveGuardada = leerClave()
-    const claveOk =
-      claveGuardada?.email === usuario
-        ? (await sha256(password)) === claveGuardada.hash
-        : password === DEMO_CREDENTIALS.password
-    if (!claveOk) {
-      throw new Error("Usuario o contraseña incorrectos.")
-    }
-    const nextUser: SessionUser = {
-      name: "Administrador",
-      email: DEMO_CREDENTIALS.email,
-      role: "Operativo",
-    }
+    const nextUser = toSessionUser(encontrado)
     writeSession(nextUser, remember)
     setUser(nextUser)
     const device = getDeviceIdentity()
@@ -142,16 +129,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [user])
 
+  const createAdmin = useCallback(async (name: string, email: string, password: string) => {
+    await delay(null)
+    const error = validarPassword(password)
+    if (error) throw new Error(error)
+    const creado = await createUser({ name, email, password, role: "Administrador" })
+    const nextUser = toSessionUser(creado)
+    writeSession(nextUser, true)
+    setUser(nextUser)
+    setBootstrapNeeded(false)
+    const device = getDeviceIdentity()
+    registrarSesion({
+      usuario: nextUser.name,
+      email: nextUser.email,
+      rol: nextUser.role,
+      recordar: true,
+      equipo: device.code,
+      plataforma: device.platform,
+    })
+  }, [])
+
   const requestRecovery = useCallback(async (email: string) => {
     await delay(null)
-    if (email.trim().toLowerCase() !== DEMO_CREDENTIALS.email) {
+    const normalizado = email.trim().toLowerCase()
+    if (!findUserByEmail(normalizado)) {
       throw new Error("No hay una cuenta registrada con ese correo.")
     }
     const codigo = codigoRecuperacion()
     const hash = await sha256(codigo)
     writeDurable(
       RECOVERY_KEY,
-      JSON.stringify({ email: DEMO_CREDENTIALS.email, hash } satisfies StoredRecovery)
+      JSON.stringify({ email: normalizado, hash } satisfies StoredRecovery)
     )
     return codigo
   }, [])
@@ -159,26 +167,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = useCallback(
     async (email: string, code: string, password: string) => {
       await delay(null)
-      if (email.trim().toLowerCase() !== DEMO_CREDENTIALS.email) {
-        throw new Error("No hay una cuenta registrada con ese correo.")
-      }
+      const normalizado = email.trim().toLowerCase()
+      const error = validarPassword(password)
+      if (error) throw new Error(error)
       const recovery = leerRecovery()
-      if (!recovery || recovery.email !== DEMO_CREDENTIALS.email || (await sha256(code.trim())) !== recovery.hash) {
+      if (
+        !recovery ||
+        recovery.email !== normalizado ||
+        (await sha256(code.trim())) !== recovery.hash
+      ) {
         throw new Error("El código de verificación no es válido.")
       }
-      if (password.length < 8) {
-        throw new Error("La contraseña debe tener al menos 8 caracteres.")
+      const existente = findUserByEmail(normalizado)
+      if (!existente) {
+        throw new Error("No hay una cuenta registrada con ese correo.")
       }
-      const hash = await sha256(password)
-      guardarClave(recovery.email, hash)
+      // La contraseña se vuelve a hashear con PBKDF2 y se guarda solo en
+      // `fastws.users`; el SHA-256 viejo (`fastws.clave.hash`) ya no se usa.
+      const nuevoHash = await hashPassword(password)
+      writeDurable(
+        "fastws.users",
+        JSON.stringify(listUsers().map((u) => (u.email === normalizado ? { ...u, passwordHash: nuevoHash } : u)))
+      )
       borrarRecovery()
     },
     []
   )
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, ready, signIn, signOut, requestRecovery, resetPassword }),
-    [user, ready, signIn, signOut, requestRecovery, resetPassword]
+    () => ({
+      user,
+      ready,
+      bootstrapNeeded,
+      signIn,
+      signOut,
+      createAdmin,
+      requestRecovery,
+      resetPassword,
+    }),
+    [user, ready, bootstrapNeeded, signIn, signOut, createAdmin, requestRecovery, resetPassword]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

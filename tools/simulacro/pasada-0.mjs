@@ -1,4 +1,4 @@
-import {
+﻿import {
   BASE, PROFILE, spawnEdge, seedExpr, fetchStubSrc, outDir, writeArtifacts,
   bodyText, evalJson, dumpExpr, wait, locVal, waitFor, shot,
 } from "./sim-base.mjs"
@@ -22,14 +22,14 @@ try {
 
 const seeded = await evalJson(cdp, seedExpr("conectado"))
   // S10: la sesion de conexion va a sessionStorage, asi que se cuentan ambos almacenes.
-  // Con el token en la guarda de secretos (0.1) son 12: 10 en localStorage +
-  // `fastws.conexion.meta` en la base + `fastws.meta-token` en sessionStorage.
+  // Con el token en la guarda de secretos (0.1) y los usuarios en fastws.users
+  // (Fase 2) son 13: 12 en localStorage + `fastws.meta-token` en sessionStorage.
   const seedCount = await evalJson(cdp, `Object.keys(localStorage).filter(k => k.startsWith('fastws.')).length + Object.keys(sessionStorage).filter(k => k.startsWith('fastws.')).length`)
-  results.seed11 = seedCount === 12 && seeded.startsWith("seeded:")
+  results.seed13 = seedCount === 13 && seeded.startsWith("seeded:")
   await writeArtifacts(dir, "seed-conectado", { json: { seedResponse: seeded, fastwsKeys: seedCount } })
 
   const baseline = await evalJson(cdp, dumpExpr())
-  await writeArtifacts(dir, "baseline-11-claves", { dump: baseline })
+  await writeArtifacts(dir, "baseline-13-claves", { dump: baseline })
 
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: fetchStubSrc() })
 
@@ -55,7 +55,8 @@ const seeded = await evalJson(cdp, seedExpr("conectado"))
     return JSON.stringify(out);
   })()`,)
   const stub = JSON.parse(stubCheck)
-  results.stubTemplates = stub.templates === 3
+  // El stub devuelve 6: 5 aprobadas + 1 pendiente (R1/R2/R4 incluidos).
+  results.stubTemplates = stub.templates === 6
   results.stubSend = typeof stub.sendWamid === "string" && stub.sendWamid.startsWith("wamid")
   results.stubRate = stub.rateCode === 130429
   await writeArtifacts(dir, "fetch-stub", { json: stub })
@@ -74,7 +75,7 @@ const seeded = await evalJson(cdp, seedExpr("conectado"))
   })
 
   const line = [
-    `pasada-0: dev=${results.devServer} limpio=${results.perfilLimpio} seed11=${results.seed11}`,
+    `pasada-0: dev=${results.devServer} limpio=${results.perfilLimpio} seed13=${results.seed13}`,
     `stub: templates=${stub.templates} send=${stub.sendWamid || "-"} rate=${stub.rateCode} appConSeed=${results.appConSeed}`,
   ]
   for (const l of line) console.log(l)

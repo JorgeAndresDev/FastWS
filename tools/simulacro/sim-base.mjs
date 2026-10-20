@@ -219,6 +219,20 @@ export function mkSeed(scenario = "conectado") {
   seed["fastws.app.locale"] = "es-CO" // valor crudo (no JSON), igual que app-config
   seed["fastws.device"] = device
   seed["fastws.session"] = { name: "Administrador", email: "admin@fastws.local", role: "Operativo" }
+  // El operador del simulacro. El hash es PBKDF2-HMAC-SHA256 de
+  // "despacho2026" con la sal fija de abajo (100 000 iteraciones), generado
+  // con crypto.pbkdf2Sync. Sin este usuario la app mostraría la pantalla de
+  // alta en vez de la de login.
+  seed["fastws.users"] = [
+    {
+      id: "usr-1",
+      email: "admin@fastws.local",
+      name: "Administrador",
+      role: "Administrador",
+      passwordHash: "pbkdf2$100000$MDEyMzQ1Njc4OWFiY2RlZg==$BjGsnqre/mhohyyhgj38ryXKwkf7gJMJJO0vAeRiBe4=",
+      createdAt: iso(600),
+    },
+  ]
   if (connected) {
     seed["fastws.conexion.ids"] = { phoneNumberId: "1234567890", wabaId: "9876543210" }
     // El token ya no viaja en la sesión de conexión: en escritorio vive
@@ -232,8 +246,20 @@ export function mkSeed(scenario = "conectado") {
   return seed
 }
 
-export function seedExpr(scenario = "conectado") {
+/**
+ * `opciones.sinSession` quita `fastws.session` de la semilla. Lo usa la pasada
+ * de auth, que prueba el login y por tanto tiene que empezar **sin** sesión: con
+ * la sesión sembrada la app arranca logueada y la pantalla de login nunca
+ * aparece.
+ */
+export function seedExpr(scenario = "conectado", opciones = {}) {
   const seed = mkSeed(scenario)
+  if (opciones.sinSession) {
+    delete seed["fastws.session"]
+    // Sin sesión tampoco debe quedar un turno abierto en la bitácora: el login
+    // lo cerraría al registrarse y el check miraría la entrada vieja.
+    seed["fastws.sesiones"] = []
+  }
   const lines = Object.entries(seed).map(([k, v]) => {
     const raw = k === "fastws.app.locale" ? v : JSON.stringify(k.endsWith(".velocidad") ? JSON.stringify(v) : v)
     // el token va al fallback efímero (sessionStorage); el resto, a la base
@@ -365,6 +391,14 @@ export function dumpExpr() {
 }
 
 export async function spawnEdge() {
+  // Una instancia anterior puede tardar en soltar el puerto CDP en Windows. Si
+  // se arranca otra de inmediato, el nuevo Edge no puede bindear y `waitForTarget`
+  // se queda sin target. Esperamos a que el puerto quede libre.
+  for (let i = 0; i < 20; i++) {
+    const vivo = await getJson(`http://127.0.0.1:${PORT}/json/version`)
+    if (!vivo) break
+    await wait(250)
+  }
   const edge = spawn(EDGE, [
     "--headless=new",
     "--disable-gpu",

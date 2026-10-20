@@ -36,10 +36,54 @@ const ch = (label, ok, detalle) => { R.push({ n: ++n, label, ok: Boolean(ok), de
 const sinAcentos = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase()
 const DATE_RE = /\b(VIE|SAB|DOM|LUN|MAR|MIE|JUE)\s+\d{1,2}\s+(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\s+\d{4}\b/
 
-// ---------------------------------------------------------------- P1: perfil vacío (auth pública)
+// ---------------------------------------------------------------- P0: alta inicial
 {
+  await wipeProfile()
   const { cdp, edge } = await spawnEdge()
   try {
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: fetchStubSrc() })
+    await cdp.send("Page.navigate", { url: BASE })
+    const boot = await waitFor(pathGet(cdp), "/bootstrap", 12000)
+    ch("1.0 primer arranque sin usuarios deriva a /bootstrap", boot, "/->/bootstrap")
+    await waitSel(cdp, "#operador-nombre")
+    await act(cdp, `F('#operador-nombre','Operadora Uno');F('#operador-correo','${ADMIN.u}');F('#operador-clave','Despacho2026');F('#operador-clave-2','Despacho2026');C('button[type="submit"]');return 'ok'`)
+    const bootLand = await waitFor(pathGet(cdp), "/app", 8000)
+    await wait(700)
+    const bootState = JSON.parse(await act(cdp, `return JSON.stringify({users:JSON.parse(localStorage.getItem('fastws.users')||'[]'),ls:localStorage.getItem('fastws.session')})`))
+    const bootUsers = bootState.users
+    ch("1.0b el alta crea el operador y abre sesion",
+      bootLand && Array.isArray(bootUsers) && bootUsers.length === 1 && Boolean(bootState.ls),
+      JSON.stringify(bootUsers[0] ? { email: bootUsers[0].email, rol: bootUsers[0].role } : null))
+    ch("1.0c el hash guardado tiene el formato PBKDF2 completo",
+      bootUsers.length === 1 && bootUsers[0].passwordHash.split("$").length === 4,
+      String(bootUsers[0] && bootUsers[0].passwordHash).slice(0, 18) + "…")
+
+    // Salir del alta y comprobar que el operador recien creado puede entrar.
+    await act(cdp, `localStorage.removeItem('fastws.session');sessionStorage.removeItem('fastws.session');return 'ok'`)
+    await navigate(cdp, "/login")
+    await waitSel(cdp, "#usuario")
+    await act(cdp, `F('#usuario','${ADMIN.u}');F('#clave','Despacho2026');C('button[type="submit"]');return 'ok'`)
+    const bootLogin = await waitFor(pathGet(cdp), "/app", 8000)
+    ch("1.0d el operador creado en el alta inicia sesion", bootLogin, "alta -> login -> /app")
+  } finally {
+    await cdp.send("Browser.close", {}).catch(() => {})
+    edge.kill()
+    await wait(800)
+  }
+}
+
+// ---------------------------------------------------------------- P1: perfil vacío (auth pública)
+{
+  await wipeProfile()
+  const { cdp, edge } = await spawnEdge()
+  try {
+    // El operador tiene que existir para que la app muestre /login y no la
+    // pantalla de alta. Sin esta semilla, un perfil limpio va a /bootstrap.
+    // `sinSession`: la pasada de auth prueba el login, así que tiene que empezar
+    // sin sesión; con la sesión sembrada la app arranca logueada en /app.
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: seedExpr("conectado", { sinSession: true }),
+    })
     await cdp.send("Page.navigate", { url: BASE })
     await waitFor(pathGet(cdp), "/login", 15000)
     ch("1.12 ruta raiz / sin sesion deriva a /login", true, "/->/login")

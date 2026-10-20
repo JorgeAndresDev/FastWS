@@ -85,7 +85,7 @@ Todos los hallazgos confirmados y corregidos (S1, S2, S3, S5-S14, S16, S17, S19-
 ### Descartados
 S18 (`addClients` zombi — 4.12b: reimport genérico **limpia** los campos) · S24 (no hay selección ni «marcar leído» que persistir) · S26 (foco vuelve al avatar en Esc — 1.9) · S29 (el diálogo **sí** declara los turnos) · S4 (Sincronización **declara** que la sincronización aún no existe; no hay promesa rota) · S27 (estado reservado por PRODUCT.md §52, no código muerto) · idioma de S12 (el note ya declara que la UI sigue en español).
 
-**Balance final**: 27 defectos corregidos y verificados en verde (185 checks), 7 descartados, 1 abierto (S28, P2).
+**Balance final**: 28 defectos corregidos y verificados en verde (194 checks), 7 descartados, ninguno abierto.
 
 **Integración real con Meta**: 5 hallazgos adicionales (R1-R5) corregidos y verificados contra la API real. R1 y R2 eran bloqueantes: sin ellos ninguna plantilla de la cuenta podía enviarse.
 
@@ -104,3 +104,31 @@ El token se restaura de forma **asíncrona** ahora. El auto-arranque de campaña
 ### Verificación
 - 19 tests Rust (8 nuevos de DPAPI), 52 tests Vitest (6 nuevos de `secrets.ts`).
 - Simulacro: 189 checks en verde, con 2.6b («tras recargar, conexión lista sin volver a escribir el token») y 7.11 («Borrar todo borra también el token») actualizados a las claves nuevas.
+
+## Fase 2 — Autenticación real
+
+Se eliminaron las credenciales demo (`DEMO_CREDENTIALS`). Ahora la app verifica contra
+`fastws.users` y, en el primer arranque sin usuarios, muestra el alta del primer operador
+en `/bootstrap`.
+
+- `src/lib/auth.ts`: PBKDF2-HMAC-SHA256, 100 000 iteraciones, sal por usuario y comparación
+  en tiempo constante; política mínima de contraseña.
+- `src/features/auth/users.ts`: documento `fastws.users` con hash, rol y fecha de alta.
+  La tabla `users` del esquema SQLite queda para la migración relacional.
+- `auth-provider.tsx`: `signIn` contra `fastws.users`, `createAdmin` para el primer
+  operador y `resetPassword` que reescribe el hash PBKDF2.
+- `bootstrap-page.tsx` + ruta `/bootstrap`: alta del primer operador; `RequireAuth`
+  redirige ahí cuando no hay ninguno.
+
+### Bug encontrado y corregido
+`hashPassword` unía sal y hash sin el `$` separador (`pbkdf2$iter$salhash`), así que el
+hash tenía tres partes y `verifyPassword` —que exige cuatro— lo rechazaba. El seed del
+simulacro traía el formato correcto, por lo que el fallo solo aparecía al cambiar la
+contraseña (1.7h) o al crear un operador desde el alta. Corregido en `src/lib/auth.ts:44`
+y cubierto por `src/lib/auth.test.ts` (formato, viaje redondo, clave incorrecta y hash
+corrupto).
+
+### Verificación
+- 58 tests Vitest (6 nuevos de `auth.ts`), 19 tests Rust.
+- Simulacro: **194 checks en verde**. La pasada 1 crece a 48 con 4 checks de alta
+  (1.0-1.0d); el resto mantiene sus recuentos (12+25+19+46+28+16).

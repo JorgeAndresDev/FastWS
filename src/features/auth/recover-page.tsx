@@ -6,7 +6,7 @@ import { ArrowLeft, Check, MailCheck } from "lucide-react"
 import { Button, FormField, Input } from "@/components/ui"
 
 import { AuthShell } from "./auth-shell"
-import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
+import { useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -111,7 +111,7 @@ export function RecoverPage() {
               mono
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder={DEMO_CREDENTIALS.email}
+              placeholder="operador@empresa.co"
               invalid={Boolean(fieldErrors.correo)}
               aria-describedby={fieldErrors.correo ? "correo-error" : undefined}
               disabled={pending}
@@ -154,7 +154,7 @@ export function RecoverPage() {
               className="rounded-md border border-rule-soft bg-base-800/60 px-3 py-2.5 text-xs leading-relaxed text-ink-400"
             >
               <p className="font-semibold text-ink-300">
-                Bandeja simulada · {DEMO_CREDENTIALS.email}
+                Bandeja simulada · {email}
               </p>
               <p className="mt-1.5">
                 Tu código de verificación es{" "}

@@ -96,6 +96,18 @@ function seedP5() {
   seed["fastws.app.locale"] = "es-CO"
   seed["fastws.device"] = { id: "PC-01", code: "FW-SIM1", platform: "Windows" }
   seed["fastws.session"] = { name: "Administrador", email: "admin@fastws.local", role: "Operativo" }
+  // Sin usuario, AuthProvider muestra el alta (/bootstrap) y toda la pasada
+  // queda en blanco: el hash es PBKDF2 de "despacho2026" igual que en sim-base.
+  seed["fastws.users"] = [
+    {
+      id: "usr-1",
+      email: "admin@fastws.local",
+      name: "Administrador",
+      role: "Administrador",
+      passwordHash: "pbkdf2$100000$MDEyMzQ1Njc4OWFiY2RlZg==$BjGsnqre/mhohyyhgj38ryXKwkf7gJMJJO0vAeRiBe4=",
+      createdAt: iso(600),
+    },
+  ]
   seed["fastws.conexion.ids"] = { phoneNumberId: "1234567890", wabaId: "9876543210" }
   seed["fastws.meta-token"] = "EAAG-sim-token"
   seed["fastws.conexion.meta"] = { metaPhone: "573100000000", wabaName: "FastWS WABA", verifiedAt: iso(30) }
@@ -289,7 +301,7 @@ async function main() {
   await clickRowAction(cdp, "rmd_named", "Probar")
   await waitToast(cdp, "Mensaje de prueba enviado")
   const named = JSON.parse((await evalJson(cdp, `JSON.stringify(window.__simBody||null)`)) || "null")
-  const namedBody = ((named.template || {}).components || []).find((c) => c.type === "body") || {}
+  const namedBody = (((named || {}).template || {}).components || []).find((c) => c.type === "body") || {}
   const namedParams = namedBody.parameters || []
   const conNombre = namedParams.length === 2 && namedParams.every((p) => p.parameter_name && p.text)
   ch("5.23 [R1] plantilla NAMED: cada bodyParam lleva parameter_name", conNombre, JSON.stringify(namedParams))
@@ -299,11 +311,11 @@ async function main() {
   await clickRowAction(cdp, "hello_world_sim", "Probar")
   await waitToast(cdp, "Mensaje de prueba enviado")
   const hw = JSON.parse((await evalJson(cdp, `JSON.stringify(window.__simBody||null)`)) || "null")
-  const hwComps = (hw.template || {}).components || []
+  const hwComps = ((hw || {}).template || {}).components || []
   ch(
     "5.24 [R2] cabecera fija 'Hello World': sin componente header y sin components",
-    !hwComps.some((c) => c.type === "header") && !("components" in (hw.template || {})),
-    JSON.stringify(hw.template)
+    !hwComps.some((c) => c.type === "header") && !("components" in ((hw || {}).template || {})),
+    JSON.stringify(hw && hw.template)
   )
 
   // ── 5.25 [R4] {{}} sin nombre: la app no llama a Meta y lo explica ────────

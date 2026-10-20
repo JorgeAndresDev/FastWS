@@ -8,18 +8,26 @@ contrato de repositorios no rompió la interfaz: los 185 checks siguen corriendo
 `impl-web` (`localStorage`) mientras `impl-tauri` (SQLite) entra debajo. El simulacro no
 cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
 
+**Re-ejecución `2026-10-19` tras la autenticación real (Fase 2):** **194 checks, 194 OK,
+0 fallos** en las pasadas 1-7 (la preparación de la pasada 0 suma 7 comprobaciones aparte).
+Incluye 4 checks nuevos del alta del primer operador (`/bootstrap`): crea el usuario, guarda
+un hash PBKDF2 de cuatro partes y ese operador puede iniciar sesión. El login ya no usa
+credenciales demo: verifica contra `fastws.users` con PBKDF2-HMAC-SHA256 (100 000
+iteraciones) y la recuperación reescribe ese mismo hash.
+
 ## Resumen
 
 | Fase | Checks | OK | HUECO | Notas |
 |---|---|---|---|---|
-| 0 Preparación | 7 | 7 | 0 | dev, perfil, seed 11 claves (10 local + 1 session), stub templates/send/rate, app con seed |
-| 1 Auth & shell | 44 | 44 | 0 | **CORREGIDO S11** (código de 6 dígitos expuesto en el input + clave persistida con hash); N1 informativo |
-| 2 Conexión | 11 | 11 | 0 | **CORREGIDOS S10/S30/N2/S23** (revalidación al arrancar, ids al form, confirmación y borrado de ids) |
-| 3 Campañas, Cola, motor | 24 | 24 | 0 | **CORREGIDOS S8/S13** (modal de cancelar con auditoría; `iniciar` mantiene el modal si falla) |
-| 4 Clientes, Importación, Segmentos | 17 | 17 | 0 | **CORREGIDOS S5/S6/S7/S17/N3** (CRUD clientes + estado vacío, panel de duplicados, hoja `generic`, grupo 31-60 d, sub-tabla de miembros) + nuevo 4.1b (alta de cliente); S18 descartado |
-| 5 Plantillas, Conversaciones, Mensajes | 46 | 46 | 0 | **CORREGIDOS S3/S9/S14/S16/S19/S22/S2 + N4-N8** (cache de plantillas, validación header/footer, textarea en fallo, params al cambiar pestaña, headerParams, mensaje renderizado, opciones filtro, reescaneo ENTREGADO/LEIDO, cursor de paginación, auditoría) + **R1-R4** (`parameter_name` en NAMED, cabecera fija sin parámetros, número de prueba configurable y persistente, bloqueo de `{{}}` sin nombre) || 6 Reportes, Historial, Auditoría, Dispositivos | 28 | 28 | 0 | **CORREGIDOS S20/S21/S24/S25/S29 + N10/N11** (rango de fechas acotado, CSV sin inyección de fórmulas, clave de día con relleno, KPI coherentes con la lista); S24/S25/S29 **descartados** |
+| 0 Preparación | 7 | 7 | 0 | dev, perfil, seed 13 claves (12 local + 1 session), stub templates/send/rate, app con seed |
+| 1 Auth & shell | 48 | 48 | 0 | **Auth real (Fase 2)**: alta del primer operador, PBKDF2 y sesión; **CORREGIDO S11** (código de 6 dígitos expuesto en el input + clave persistida con hash); N1 informativo |
+| 2 Conexión | 12 | 12 | 0 | **CORREGIDOS S10/S30/N2/S23** (revalidación al arrancar, ids al form, confirmación y borrado de ids) |
+| 3 Campañas, Cola, motor | 25 | 25 | 0 | **CORREGIDOS S8/S13/S28** (modal de cancelar con auditoría; `iniciar` mantiene el modal si falla; `guardar` no reordena la planilla); N1 informativo |
+| 4 Clientes, Importación, Segmentos | 19 | 19 | 0 | **CORREGIDOS S5/S6/S7/S17/N3** (CRUD clientes + estado vacío, panel de duplicados, hoja `generic`, grupo 31-60 d, sub-tabla de miembros) + 4.1b/4.1c/4.3b (alta y tablas sin scroll); S18 descartado |
+| 5 Plantillas, Conversaciones, Mensajes | 46 | 46 | 0 | **CORREGIDOS S3/S9/S14/S16/S19/S22/S2 + N4-N8** (cache de plantillas, validación header/footer, textarea en fallo, params al cambiar pestaña, headerParams, mensaje renderizado, opciones filtro, reescaneo ENTREGADO/LEIDO, cursor de paginación, auditoría) + **R1-R4** (`parameter_name` en NAMED, cabecera fija sin parámetros, número de prueba configurable y persistente, bloqueo de `{{}}` sin nombre) |
+| 6 Reportes, Historial, Auditoría, Dispositivos | 28 | 28 | 0 | **CORREGIDOS S20/S21/S24/S25/S29 + N10/N11** (rango de fechas acotado, CSV sin inyección de fórmulas, clave de día con relleno, KPI coherentes con la lista); S24/S25/S29 **descartados** |
 | 7 Configuración, Sync, integridad | 16 | 16 | 0 | **CORREGIDOS S1/S12 + N12** (demo siembra `{threads, merged}`, copy de velocidad en caliente, «Borrar todo» borra el token); S4 **descartado** (la página declara que la sincronización aún no existe) |
-| **Total** | **185** | **185** | **0** | todos los huecos confirmados corregidos y verificados en verde |
+| **Total** | **194** | **194** | **0** | todos los huecos confirmados corregidos y verificados en verde (pasadas 1-7) |
 
 ## Detalle
 
@@ -27,9 +35,13 @@ cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
 |---|---|---|---|
 | 0.1 | Dev server :5173 | OK | responde; pasadas corren |
 | 0.2 | Perfil limpio | OK | local/session vacíos antes del seed |
-| 0.3 | Seed baseline 11 claves | OK | 10 en localStorage + `fastws.conexion.sesion` en sessionStorage (S10) + auditoría 2 regs |
-| 0.4 | Fetch-stub templates/send/rate | OK | 3 plantillas · wamid-sim-* · rate ok |
+| 0.3 | Seed baseline 13 claves | OK | 12 en localStorage + `fastws.meta-token` en sessionStorage (S10) + auditoría 2 regs |
+| 0.4 | Fetch-stub templates/send/rate | OK | 6 plantillas (5 aprobadas + 1 pendiente) · wamid-sim-* · rate ok |
 | 0.5 | App carga con seed conectado | OK | dashboard no vacío, pill conectada |
+| 1.0 | Primer arranque sin usuarios | OK | `/`→`/bootstrap`; el alta pide nombre, correo y clave |
+| 1.0b | Alta del primer operador | OK | crea `fastws.users` y abre sesión en `/app` |
+| 1.0c | Hash del alta | OK | PBKDF2 con cuatro partes (`pbkdf2$iter$sal$hash`) |
+| 1.0d | Login del operador creado | OK | alta → login → `/app` (sin credenciales demo) |
 | 1.12 | Vetado `/` sin sesión | OK | `/`→`/login` |
 | 1.3 | Login incorrecto | OK | error inline genérico; sin sesión; permanece en /login |
 | 1.4 | Reveal de clave | OK | toggle Mostrar/Ocultar alterna `password`→`text`→`password` |
@@ -38,7 +50,7 @@ cubre SQLite — para eso están las 8 pruebas de `npm run test:rust`.
 | 1.6 | Sesión corrupta | OK | `ls=@@corrupto` no revienta; redirige a /login |
 | 1.7 | Recuperar clave | OK | email demo avanza; el código real (6 dígitos) + contraseña coincidente llega a "Contraseña actualizada" |
 | 1.7 | [S11] código de recuperación expuesto | OK | el input `#codigo` publica el código en su placeholder (6 dígitos ≠ `000000`) y la bandeja simulada lo muestra |
-| 1.7h | [S11] clave nueva persiste | OK | login con `nuevaClave2026` **funciona** (hash en `fastws.clave.hash`); luego se restaura la clave demo limpiando ese registro |
+| 1.7h | [S11] clave nueva persiste | OK | login con `nuevaClave2026` **funciona** (hash PBKDF2 en `fastws.users`); la recuperación ya no escribe el SHA-256 viejo |
 | 1.1 | Login temporal | OK | ss solo en sessionStorage; ls null |
 | 1.16 | Sello de fecha topbar | OK | `VIE 25 SEP 2026` |
 | 1.15 | "Nueva campaña" (topbar) | OK | navega a `/app/campanas` |

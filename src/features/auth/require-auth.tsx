@@ -16,11 +16,13 @@ function OpeningPlanilla() {
 }
 
 export function RequireAuth() {
-  const { user, ready } = useAuth()
+  const { user, ready, bootstrapNeeded } = useAuth()
   const location = useLocation()
 
   if (!ready) return <OpeningPlanilla />
+  // Sin usuarios no hay con quién entrar: la pantalla de login no serviría.
+  // El alta es lo primero, y desde ahí se vuelve a la app.
+  if (bootstrapNeeded) return <Navigate to="/bootstrap" replace />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
-
   return <Outlet />
 }

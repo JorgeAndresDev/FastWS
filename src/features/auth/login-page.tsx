@@ -6,7 +6,7 @@ import { Eye, EyeOff, ShieldCheck, TriangleAlert } from "lucide-react"
 import { Button, FormField, Input } from "@/components/ui"
 
 import { AuthShell } from "./auth-shell"
-import { DEMO_CREDENTIALS, useAuth } from "./auth-provider"
+import { useAuth } from "./auth-provider"
 import { getDeviceIdentity } from "./device"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -58,13 +58,6 @@ export function LoginPage() {
       device={device}
       title="Bitácora de entrada"
       intro="Abra su turno de despacho con las credenciales del operador. La planilla queda sellada a su nombre hasta el cierre."
-      footer={
-        <p className="text-balance text-[0.75rem] leading-relaxed text-ink-500">
-          Datos de demostración. Usuario{" "}
-          <span className="font-mono text-ink-300">{DEMO_CREDENTIALS.email}</span> · contraseña{" "}
-          <span className="font-mono text-ink-300">{DEMO_CREDENTIALS.password}</span>
-        </p>
-      }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
         <FormField
