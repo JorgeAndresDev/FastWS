@@ -9,6 +9,7 @@ import { Button, EmptyState, FormField, Input, Panel } from "@/components/ui"
 import { formatDateStamp, formatDateShort } from "@/app/date-stamp"
 import { cn } from "@/lib/utils"
 import { isMobileColombian, toWhatsAppNumber } from "@/lib/phone"
+import { motivoBloqueoEnvio } from "@/lib/envio"
 
 import { createTemplate, deleteTemplate, graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
 import type { CreateTemplateInput, TemplateComponentInput } from "@/lib/wsb/api"
@@ -267,6 +268,11 @@ function TemplateDetail({
         description:
           "Escribe un móvil colombiano de 10 dígitos en «Número de prueba», por ejemplo 3001234567.",
       })
+      return
+    }
+    const bloqueo = motivoBloqueoEnvio(to)
+    if (bloqueo) {
+      sileo.error({ title: "Envío bloqueado", description: bloqueo })
       return
     }
     setTesting(true)
@@ -894,6 +900,11 @@ export function TemplatesPage() {
           `Tiene ${unnamed} variable${unnamed === 1 ? "" : "s"} sin nombre ({{}}) en el cuerpo. ` +
           "Recréala en el gestor de plantillas de Meta con nombres (como {{nombre}}) o con números ({{1}}).",
       })
+      return
+    }
+    const bloqueo = motivoBloqueoEnvio(toWhatsAppNumber(testNumber))
+    if (bloqueo) {
+      sileo.error({ title: "Envío bloqueado", description: bloqueo })
       return
     }
     sileo

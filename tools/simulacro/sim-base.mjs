@@ -213,6 +213,9 @@ export function mkSeed(scenario = "conectado") {
   seed["fastws.clientes"] = clientes
   seed["fastws.campanas"] = [campanaEnProceso, campanaBorrador]
   seed["fastws.campanas.velocidad"] = "1000/h"
+  // El simulacro necesita despachar y responder de verdad (contra el stub de
+  // Meta): siembra el modo real. En la app el valor de fábrica es ensayo.
+  seed["fastws.envio.modo"] = "real"
   seed["fastws.conversaciones"] = { threads, merged: { "camp-1:5:EN_PROCESO:": "camp:1:4" } }
   seed["fastws.sesiones"] = sesiones
   seed["fastws.auditoria"] = auditoria

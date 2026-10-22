@@ -42,11 +42,18 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
     await boot(cdp, "/app/configuracion")
     await esperaConexion(cdp)
 
-    // 7.1 los 5 paneles
+    // 7.1 los 6 paneles
     const paneles = JSON.parse(await textos(cdp, 'main section.panel > header h2'))
-    ch("7.1 Configuración: los 5 paneles (velocidad, integración, estado, parámetros, acciones)",
-      ["Intercambio con Meta", "Integración de WhatsApp Business", "Estado del equipo", "Parámetros de la aplicación", "Acciones de datos"].every((p) => paneles.includes(p)),
+    ch("7.1 Configuración: los 6 paneles (velocidad, envío, integración, estado, parámetros, acciones)",
+      ["Intercambio con Meta", "Guardas de envío", "Integración de WhatsApp Business", "Estado del equipo", "Parámetros de la aplicación", "Acciones de datos"].every((p) => paneles.includes(p)),
       JSON.stringify(paneles))
+
+    // 7.1b guardas de envío: el simulacro siembra modo real, pero la lista
+    // blanca sigue disponible y el panel declara el modo activo.
+    const guardas = JSON.parse(await act(cdp, `const g=document.querySelector('[role="group"][aria-label="Modo de envío"]');return JSON.stringify({modo:g?[...g.querySelectorAll('button')].find(b=>b.getAttribute('aria-pressed')==='true')?.textContent.trim():null,lista:!!document.querySelector('#envio-lista-blanca'),texto:document.body.textContent.includes('Lista blanca de desarrollo')})`))
+    ch("7.1b Guardas de envío: modo real activo (semilla), grupo de modo y lista blanca presentes",
+      guardas.modo === "Envío real" && guardas.lista === true && guardas.texto === true,
+      JSON.stringify(guardas))
 
     // 7.2 velocidad: 4 opciones, 1000/h activo por defecto
     const vel = JSON.parse(await probe(cdp, `(()=>{const g=document.querySelector('[role="group"][aria-label="Velocidad de despacho global"]');if(!g)return null;return {grupo:g.getAttribute('aria-label'),botones:[...g.querySelectorAll('button')].map(b=>({t:b.textContent.trim(),p:b.getAttribute('aria-pressed')}))}})()`))

@@ -22,14 +22,14 @@ try {
 
 const seeded = await evalJson(cdp, seedExpr("conectado"))
   // S10: la sesion de conexion va a sessionStorage, asi que se cuentan ambos almacenes.
-  // Con el token en la guarda de secretos (0.1) y los usuarios en fastws.users
-  // (Fase 2) son 13: 12 en localStorage + `fastws.meta-token` en sessionStorage.
+  // Con el token en la guarda de secretos (0.1), los usuarios en fastws.users
+  // (Fase 2) y el modo de envío (Fase 5) son 14: 13 en localStorage + `fastws.meta-token` en sessionStorage.
   const seedCount = await evalJson(cdp, `Object.keys(localStorage).filter(k => k.startsWith('fastws.')).length + Object.keys(sessionStorage).filter(k => k.startsWith('fastws.')).length`)
-  results.seed13 = seedCount === 13 && seeded.startsWith("seeded:")
+  results.seed14 = seedCount === 14 && seeded.startsWith("seeded:")
   await writeArtifacts(dir, "seed-conectado", { json: { seedResponse: seeded, fastwsKeys: seedCount } })
 
   const baseline = await evalJson(cdp, dumpExpr())
-  await writeArtifacts(dir, "baseline-13-claves", { dump: baseline })
+  await writeArtifacts(dir, "baseline-14-claves", { dump: baseline })
 
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: fetchStubSrc() })
 
@@ -75,7 +75,7 @@ const seeded = await evalJson(cdp, seedExpr("conectado"))
   })
 
   const line = [
-    `pasada-0: dev=${results.devServer} limpio=${results.perfilLimpio} seed13=${results.seed13}`,
+    `pasada-0: dev=${results.devServer} limpio=${results.perfilLimpio} seed14=${results.seed14}`,
     `stub: templates=${stub.templates} send=${stub.sendWamid || "-"} rate=${stub.rateCode} appConSeed=${results.appConSeed}`,
   ]
   for (const l of line) console.log(l)

@@ -12,16 +12,17 @@ interfaz y tokens de diseño en [`DESIGN.md`](./DESIGN.md).
 
 | Capa | Estado |
 |---|---|
-| Interfaz (12 módulos del MVP) | Completa y verificada: **185 comprobaciones** end‑to‑end, 0 fallos |
-| Lógica pura | **31 tests unitarios** (Vitest) + **8 tests de persistencia** (Rust) |
-| Capa de datos | **Real en escritorio**: SQLite vía Tauri. `localStorage` en el navegador |
+| Interfaz (12 módulos del MVP) | Completa y verificada: **198 comprobaciones** end‑to‑end, 0 fallos |
+| Lógica pura | **65 tests unitarios** (Vitest) + **26 tests de persistencia** (Rust) |
+| Capa de datos | **Real en escritorio**: SQLite relacional vía Tauri. `localStorage` en el navegador |
 | Shell de escritorio | **Tauri 2.12** compilando y arrancando; base creada con el esquema completo |
-| Integración Meta | **Verificada contra la API real** (lectura); el envío aún no se ha ejecutado |
+| Integración Meta | **Verificada contra la API real** (lectura); el envío real aún no se ha ejecutado |
+| Guardas de envío | Modo ensayo por defecto, lista blanca en desarrollo y confirmación por campaña |
 | Webhooks | **Pendiente** (los estados entregado/leído no llegan todavía) |
 
 > La app **no está lista para producción**: los envíos reales nunca se han ejecutado, los
-> estados de entrega llegan simulados y la autenticación sigue siendo de demostración.
-> Ver la sección *Qué falta*.
+> estados de entrega llegan simulados y varias plantillas de Meta deben recrearse con
+> variables con nombre. Ver la sección *Qué falta*.
 
 ## Requisitos
 
@@ -49,7 +50,7 @@ npm test               # tests unitarios (Vitest)
 npm run test:rust      # tests de la capa SQLite (cargo test)
 npm run verify         # lint + test + test:rust + build: el gate de calidad
 
-npm run sim            # simulacro end-to-end (185 checks, 8 pasadas)
+npm run sim            # simulacro end-to-end (198 checks, 8 pasadas)
 npm run smoke:meta     # validación de solo lectura contra la API real de Meta
 ```
 
@@ -74,25 +75,30 @@ sirve desde memoria y persiste en segundo plano, con una cola que respeta el ord
 
 - **Duradero** — sobrevive al cierre. Clientes, campañas, conversaciones, auditoría, turnos,
   identidad del equipo, sesión recordada, identificadores de Meta. Va a la base.
-- **Efímero** — muere con la ventana. El **token de Meta** y la sesión temporal. Se queda en
-  `sessionStorage` del webview incluso en Tauri.
+- **Efímero** — muere con la ventana. La sesión temporal. Se queda en `sessionStorage`
+  del webview incluso en Tauri. El **token de Meta** es la excepción: en escritorio se
+  cifra con **DPAPI** (`src-tauri/src/secrets.rs`), no vive en `sessionStorage`.
 
 **Migración:** la primera vez que la app de escritorio arranca con datos del navegador, los
 copia a SQLite y a partir de ahí SQLite manda. El token nunca se copia.
 
-El esquema es `src-tauri/schema.sql` (fuente única, la aplica Rust al abrir). La tabla
-`documents` guarda hoy cada raíz de agregado como JSON; las tablas relacionales están
-definidas y son la capa 2.
+El esquema es `src-tauri/schema.sql` (fuente única, la aplica Rust al abrir). Desde la
+Fase 4, las raíces de agregado viven en tablas relacionales: `users`, `clients`,
+`campaigns` + `messages`, `audit_logs` y los ajustes en `settings`. `documents` queda como
+respaldo para JSON ilegible o datos de versiones anteriores; si existe un documento, gana
+sobre la tabla. La migración de documentos corre en cada arranque con un *savepoint* por
+raíz, y las tablas del esquema viejo se conservan como `<tabla>_legacy` cuando tenían filas.
 
 ## Validación
 
-Hay dos capas complementarias, y conviene entender la diferencia.
+Hay tres capas complementarias, y conviene entender la diferencia.
 
 ### 1. Simulacro end‑to‑end (`npm run sim`)
 
 Ocho pasadas que conducen un Edge headless por la interfaz con el **Graph API simulado**
-(ver `tools/simulacro/sim-base.mjs`, función `fetchStubSrc`). Comprueba 185 behaviours:
-recorridos, formularios, estados de carga y error, persistencia, auditoría y permisos.
+(ver `tools/simulacro/sim-base.mjs`, función `fetchStubSrc`). Comprueba 198 behaviours:
+recorridos, formularios, estados de carga y error, persistencia, auditoría, permisos y las
+guardas de envío.
 
 ```
 tools/simulacro/
@@ -102,16 +108,19 @@ tools/simulacro/
 └── artifacts/          # capturas y JSON de cada corrida (ignorado por git)
 ```
 
-**Límite importante:** al.stubbar la API, el simulacro *no* valida autenticación, formatos
-de petición ni respuestas reales de Meta. Para eso está la capa 2. Tampoco prueba SQLite:
+**Límite importante:** al simular la API, el simulacro *no* valida autenticación, formatos
+de petición ni respuestas reales de Meta. Para eso está la capa 3. Tampoco prueba SQLite:
 corre siempre contra la implementación de navegador. La persistencia se cubre aparte, en la
-capa 3.
+capa 2.
 
 ### 2. Persistencia SQLite (`npm run test:rust`)
 
-Ocho pruebas sobre la base real, sin Tauri ni webview (`src-tauri/src/db.rs`): aplicación del
-esquema, vuelta guardar/leer, reemplazo por clave, borrado, lotes mixtos de alta y borrado,
-conservación literal del JSON, reapertura sin duplicar tablas y vaciado reutilizable.
+Veintiséis pruebas sobre la base real, sin Tauri ni webview (`src-tauri/src/db.rs` y
+`src-tauri/src/relational.rs`): esquema, vuelta guardar/leer, reemplazo por clave, borrado,
+lotes mixtos, conservación literal del JSON, reapertura sin duplicar tablas, vaciado
+reutilizable, ida y vuelta de raíces relacionales, reemplazo de campañas con sus
+destinatarios, migración de documentos con *savepoint* por raíz y migración del esquema
+anterior dejando `<tabla>_legacy`.
 
 ### 3. Validación contra la API real (`npm run smoke:meta`)
 
@@ -136,33 +145,30 @@ Conviene ser explícito, porque es donde una demo puede engañar:
 |---|---|
 | Interfaz y navegación | Real |
 | Estados, filtros, auditoría | Reales. Sobre SQLite en escritorio, `localStorage` en navegador |
-| Persistencia | Real: SQLite, sobrevive al cierre de la app |
-| Plantillas y envíos | Se simulan; contra Meta solo se ha leído |
+| Persistencia | Real: SQLite relacional, sobrevive al cierre de la app |
+| Plantillas y envíos | Lectura de plantillas real; el envío contra Meta aún no se ha ejecutado |
 | Entregado / leído / respuestas | **Simulados.** Requiere webhooks (Fase 3) |
-| Token de Meta | Efímero: vive en sesión y **no** se escribe en la base |
-| Autenticación | **Demostración**: credenciales fijas en el código fuente |
+| Guardas de envío | Reales: ensayo por defecto, lista blanca en desarrollo, confirmación explícita por campaña |
+| Token de Meta | Cifrado con DPAPI en escritorio; `sessionStorage` solo en el navegador |
+| Autenticación | Real: PBKDF2 con sal, hash y comparación en tiempo constante |
 | Datos de clientes | Datos de demostración. No se han usado datos reales de clientes |
 | Multi‑PC | No existe. Es una decisión de producto pendiente (`PRODUCT.md §69`) |
 
 ## Qué falta para producción
 
-1. **Autenticación de verdad** — hoy `admin@fastws.local` / `despacho2026` están literales en
-   `src/features/auth/auth-provider.tsx`. Esto solo, ya bloquea la producción.
-2. **Token de Meta cifrado en reposo** — hoy vive en `sessionStorage` del webview, que no
-   cifra. Debe pasar al almacén seguro de Windows (DPAPI o Credential Manager).
-3. **Capa relacional** — `documents` sigue guardando cada agregado como JSON. Una campaña de
-   5.000 destinatarios reescribe 5.000 filas por lote. La capa 2 migra raíz por raíz sin
-   cambiar el contrato del repositorio.
-4. **Envío real** — guardas: modo ensayo, lista blanca en desarrollo y confirmación explícita
-   al arrancar una campaña.
-5. **Webhooks** — un Worker de Cloudflare que reciba los estados y respuestas. Sin esto la
+1. **Envío real validado** — las guardas y el flujo están listos, pero el despacho contra
+   Meta no se ha ejecutado. Antes hay que recrear en el gestor de Meta las plantillas que
+   usan `{{}}` sin nombre y correr una campaña de prueba con el modo real.
+2. **Webhooks** — un Worker de Cloudflare que reciba los estados y respuestas. Sin esto la
    columna de entrega/read nunca se llena con datos reales.
-6. **Sincronización multi‑PC** — fuera de alcance mientras opere en un equipo.
+3. **Empaquetado de instalación** — generar y firmar el instalador NSIS/MSI con
+   `npm run tauri:build` (Fase 6).
+4. **Sincronización multi‑PC** — fuera de alcance mientras opere en un equipo.
 
 ## Documentación
 
 - [`docs/simulacro-hallazgos.md`](./docs/simulacro-hallazgos.md) — ficha de hallazgos con
   severidad, evidencia y estado (confirmado / descartado / corregido).
-- [`docs/simulacro-resultados.md`](./docs/simulacro-resultados.md) — resultado de las 185
+- [`docs/simulacro-resultados.md`](./docs/simulacro-resultados.md) — resultado de las 198
   comprobaciones, una por una.
 - [`docs/simulacro.md`](./docs/simulacro.md) — cómo se ejecuta y cómo se lee el simulacro.

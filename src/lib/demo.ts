@@ -4,8 +4,9 @@ import { registrarAuditoria } from "@/lib/audit-log"
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { getStore } from "@/lib/db"
+import { clearDurable, writeDurable } from "@/lib/db/session-scope"
+import { MODO_ENVIO_KEY } from "@/lib/envio"
 import { borrarToken } from "@/lib/secrets"
-import { writeDurable } from "@/lib/db/session-scope"
 
 const KEYS = [
   "fastws.clientes",
@@ -15,6 +16,8 @@ const KEYS = [
   "fastws.sesiones",
   "fastws.conexion.ids",
   "fastws.conexion.meta",
+  "fastws.envio.modo",
+  "fastws.envio.listaBlanca",
 ] as const
 
 function iso(minAgo: number) {
@@ -110,6 +113,10 @@ export function restablecerDemo() {
   set("fastws.campanas.velocidad", "1000/h")
   // El store espera {threads, merged}: sembrar un array plano perdía el hilo al recargar.
   set("fastws.conversaciones", { threads: hilo(), merged: {} })
+  // La demo siembra una campaña EN_PROCESO: si el modo real siguiera activo, el
+  // auto-arranque dispararía envíos a los números de ejemplo. Restablecer
+  // devuelve las guardas al modo seguro de fábrica.
+  clearDurable(MODO_ENVIO_KEY)
   set("fastws.sesiones", [
     {
       id: "ses-demo",

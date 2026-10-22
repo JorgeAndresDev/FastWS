@@ -12,6 +12,7 @@ import type {
 import { graphError, sendTemplate, sendText } from "@/lib/wsb/api"
 import type { TemplateParams } from "@/lib/wsb/api"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
+import { motivoBloqueoEnvio } from "@/lib/envio"
 
 import { useConexion } from "@/features/connection/conexion-store"
 import { useCampaigns } from "@/features/campaigns/campaigns-store"
@@ -240,6 +241,11 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
 
   const responder = useCallback(
     async (phone: string, text: string): Promise<boolean> => {
+      const bloqueo = motivoBloqueoEnvio(phone)
+      if (bloqueo) {
+        sileo.error({ title: "Envío bloqueado", description: bloqueo })
+        return false
+      }
       if (!tokenRef.current || !idsRef.current.phoneNumberId) {
         sileo.error({
           title: "Conecta tu cuenta primero",
@@ -303,6 +309,11 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       renderedText?: string,
       paramNames?: string[]
     ): Promise<boolean> => {
+      const bloqueo = motivoBloqueoEnvio(phone)
+      if (bloqueo) {
+        sileo.error({ title: "Envío bloqueado", description: bloqueo })
+        return false
+      }
       if (!tokenRef.current || !idsRef.current.phoneNumberId) {
         sileo.error({
           title: "Conecta tu cuenta primero",

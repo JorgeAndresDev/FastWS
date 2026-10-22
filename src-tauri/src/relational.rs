@@ -753,7 +753,7 @@ pub fn migrar_documentos(conn: &mut Connection) -> Result<usize, String> {
         // Un savepoint por raiz: si una fila no cumple una restriccion
         // (UNIQUE de email o codigo, por ejemplo), esa raiz se revierte
         // entera y el documento queda intacto; las demas se migran igual.
-        let mut sp = tx.savepoint().map_err(|e| e.to_string())?;
+        let sp = tx.savepoint().map_err(|e| e.to_string())?;
         let resultado = (|| -> Result<(), String> {
             if guardar(&sp, key, Some(raw))? {
                 sp.execute("DELETE FROM documents WHERE key = ?1", params![key])

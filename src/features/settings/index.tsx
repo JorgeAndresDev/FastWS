@@ -3,6 +3,7 @@ import { Settings } from "lucide-react"
 import { formatDateStamp } from "@/app/date-stamp"
 
 import { VelocidadesPanel } from "./velocidades-panel"
+import { EnvioPanel } from "./envio-panel"
 import { IntegracionPanel } from "./integracion-panel"
 import { DatosPanel } from "./datos-panel"
 import { ParametrosPanel } from "./parametros-panel"
@@ -34,6 +35,7 @@ export function SettingsPage() {
 
       <div className="flex flex-col gap-4">
         <VelocidadesPanel />
+        <EnvioPanel />
         <IntegracionPanel />
         <DatosPanel />
         <ParametrosPanel />

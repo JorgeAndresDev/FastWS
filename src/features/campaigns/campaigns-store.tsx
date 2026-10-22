@@ -8,6 +8,7 @@ import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { registrarAuditoria } from "@/lib/audit-log"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
+import { getModoEnvio } from "@/lib/envio"
 import { useConexion } from "@/features/connection/conexion-store"
 import {
   engineCancel,
@@ -114,6 +115,14 @@ function loadVelocidad(): string {
   return VELOCIDAD_DEFAULT
 }
 
+function avisarModoEnsayo() {
+  sileo.error({
+    title: "Modo ensayo activo",
+    description:
+      "No se envía nada a Meta. Activa el envío real en Configuración → Guardas de envío.",
+  })
+}
+
 export function CampaignsProvider({ children }: { children: ReactNode }) {
   const { ids, token } = useConexion()
 
@@ -217,6 +226,10 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
   // token, se quedaba en pausa y nada lo reanudaba cuando el token llegaba.
   useEffect(() => {
     if (!token) return
+    // El modo ensayo también frena el auto-arranque tras un reinicio: una
+    // campaña EN_PROCESO sembrada o pausada no debe salir sola si el operador
+    // dejó la app en modo seguro.
+    if (getModoEnvio() !== "real") return
     for (const campaign of campaignsRef.current) {
       if (campaign.status !== "EN_PROCESO") continue
       if (engineHas(campaign.id)) {
@@ -254,6 +267,10 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     (id: string): boolean => {
       const nearest = campaignsRef.current.find((c) => c.id === id)
       if (!nearest || nearest.status !== "BORRADOR") return false
+      if (getModoEnvio() !== "real") {
+        avisarModoEnsayo()
+        return false
+      }
       if (!tokenRef.current || !idsRef.current.phoneNumberId) {
         sileo.error({
           title: "Conecta tu cuenta primero",
@@ -311,6 +328,10 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
       const nearest = campaignsRef.current.find((c) => c.id === id)
       if (!nearest) return
       if (nearest.status !== "PAUSADA" && nearest.status !== "CON_ERROR") return
+      if (getModoEnvio() !== "real") {
+        avisarModoEnsayo()
+        return
+      }
       if (!tokenRef.current || !idsRef.current.phoneNumberId) {
         sileo.error({
           title: "Conecta tu cuenta primero",

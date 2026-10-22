@@ -260,6 +260,14 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     // 3.16 iniciar desde BORRADOR -> EN_PROCESO + dispatchedBy + motor arranca
     await act(cdp, `const tr=ROW('Promo motor 3');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
+    // Fase 5: el envío real exige marcar la confirmación explícita antes de
+    // habilitar el botón de arranque.
+    const gate = JSON.parse(await act(cdp, `const b=[...document.querySelectorAll('[role="dialog"] button')].find(x=>(x.textContent||'').trim()==='Iniciar despacho');return JSON.stringify({check:!!document.querySelector('#confirmar-envio-real'),disabled:b?b.disabled:null})`))
+    ch("3.16a envío real: hay checkbox de confirmación y el botón arranca deshabilitado",
+      gate.check === true && gate.disabled === true, JSON.stringify(gate))
+    await act(cdp, `document.querySelector('#confirmar-envio-real')?.click();await new Promise(r=>setTimeout(r,150));return 'ok'`)
+    const gate2 = JSON.parse(await act(cdp, `const b=[...document.querySelectorAll('[role="dialog"] button')].find(x=>(x.textContent||'').trim()==='Iniciar despacho');return JSON.stringify({disabled:b?b.disabled:null})`))
+    ch("3.16b al confirmar, el botón de arranque se habilita", gate2.disabled === false, JSON.stringify(gate2))
     await act(cdp, `D('Iniciar despacho');await new Promise(r=>setTimeout(r,700));return 'ok'`)
     const inProc = await waitFor(async () => (await camps(cdp)).some((c) => c.id === "camp-3" && c.status === "EN_PROCESO"), true, 6000, 300)
     const c3a = (await camps(cdp)).find((c) => c.id === "camp-3")
@@ -281,7 +289,7 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     await reseed(cdp, "fastws.campanas", [c4])
     await act(cdp, `const tr=ROW('Promo pausa');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
-    await act(cdp, `D('Iniciar despacho');await new Promise(r=>setTimeout(r,600));return 'ok'`)
+    await act(cdp, `document.querySelector('#confirmar-envio-real')?.click();await new Promise(r=>setTimeout(r,150));D('Iniciar despacho');await new Promise(r=>setTimeout(r,600));return 'ok'`)
     await waitFor(async () => (await camps(cdp)).some((c) => c.id === "camp-4" && c.status === "EN_PROCESO"), true, 6000, 300)
     await evalJson(cdp, `window.__simLog=[];'ok'`)
     await act(cdp, `const tr=ROW('Promo pausa');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Pausar')?.click();return 'ok'`)
@@ -303,7 +311,7 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     await reseed(cdp, "fastws.campanas", [c5])
     await act(cdp, `const tr=ROW('Promo cancel');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
-    await act(cdp, `D('Iniciar despacho');await new Promise(r=>setTimeout(r,1400));return 'ok'`)
+    await act(cdp, `document.querySelector('#confirmar-envio-real')?.click();await new Promise(r=>setTimeout(r,150));D('Iniciar despacho');await new Promise(r=>setTimeout(r,1400));return 'ok'`)
     await waitFor(async () => (await camps(cdp)).some((c) => c.id === "camp-5" && c.status === "EN_PROCESO"), true, 6000, 300)
     await cdp.send("Network.enable")
     await act(cdp, `const tr=ROW('Promo cancel');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Cancelar')?.click();return 'ok'`)
@@ -337,7 +345,7 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     await wait(1000)
     await act(cdp, `const tr=ROW('Promo sin token');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
-    await act(cdp, `D('Iniciar despacho');await new Promise(r=>setTimeout(r,800));return 'ok'`)
+    await act(cdp, `document.querySelector('#confirmar-envio-real')?.click();await new Promise(r=>setTimeout(r,150));D('Iniciar despacho');await new Promise(r=>setTimeout(r,800));return 'ok'`)
     const sinConex = JSON.parse(await act(cdp, `return JSON.stringify({modal:[...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].length,row:(()=>{const tr=ROW('Promo sin token');return tr?tr.innerText.includes('Borrador'):false})()})`))
     const tNoConex = await toasts(cdp)
     const c6b = (await camps(cdp)).find((c) => c.id === "camp-6")
@@ -359,7 +367,7 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
 
     await act(cdp, `const tr=ROW('Promo rate');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
     await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
-    await act(cdp, `D('Iniciar despacho');return 'ok'`)
+    await act(cdp, `document.querySelector('#confirmar-envio-real')?.click();await new Promise(r=>setTimeout(r,150));D('Iniciar despacho');return 'ok'`)
     await waitFor(async () => (await camps(cdp)).some((c) => c.id === "camp-7" && c.status === "EN_PROCESO"), true, 6000, 300)
 
     // 3.18 backoff exponencial: lapsos entre reintentos crecen (2s,4s,...), sin FALLIDO prematuro
@@ -395,6 +403,26 @@ const entre = (code, name, phone) => ({ code, name, phone, status: "ENTREGADO", 
     await wait(3000)
     const c7d = (await camps(cdp)).find((c) => c.id === "camp-7")
     ch("3.24 CON_ERROR no se auto-reanuda al recargar", c7d?.status === "CON_ERROR", JSON.stringify({ status: c7d?.status }))
+  } finally { edge.kill() }
+}
+
+// ---------------------------------------------------------------- P3E: guarda de modo ensayo
+{
+  await wipeProfile()
+  const { cdp, edge } = await spawnEdge()
+  try {
+    await boot(cdp, "conectado", "/app/cola")
+    await evalJson(cdp, `localStorage.setItem('fastws.envio.modo', JSON.stringify('ensayo'));'ok'`)
+    const c9 = mkCamp("camp-9", "Promo ensayo", [pend("c1", "Café La Roca", "573001234001")])
+    await reseed(cdp, "fastws.campanas", [c9])
+    await act(cdp, `const tr=ROW('Promo ensayo');[...(tr?tr.querySelectorAll('button'):[])].find(b=>(b.textContent||'').trim()==='Iniciar')?.click();return 'ok'`)
+    await waitSel(cdp, '[role="dialog"][aria-modal="true"]')
+    const ens = JSON.parse(await act(cdp, `return JSON.stringify({aviso:document.body.innerText.includes('La app está en modo ensayo'),arranque:[...document.querySelectorAll('[role="dialog"] button')].some(b=>(b.textContent||'').trim()==='Iniciar despacho'),check:!!document.querySelector('#confirmar-envio-real'),config:[...document.querySelectorAll('[role="dialog"] button')].some(b=>(b.textContent||'').trim()==='Ir a Configuración')})`))
+    await act(cdp, `D('Cerrar');await new Promise(r=>setTimeout(r,300));return 'ok'`)
+    const c9b = (await camps(cdp)).find((c) => c.id === "camp-9")
+    ch("3.25 modo ensayo: el modal bloquea el arranque (sin confirmación) y la campaña sigue BORRADOR",
+      ens.aviso && ens.arranque === false && ens.check === false && ens.config === true && c9b?.status === "BORRADOR",
+      JSON.stringify({ ...ens, status: c9b?.status }))
   } finally { edge.kill() }
 }
 

@@ -5,6 +5,7 @@ import { sileo } from "sileo"
 import { Button, FormField, Input } from "@/components/ui"
 import { formatNumber } from "@/lib/utils"
 import { toWhatsAppNumber } from "@/lib/phone"
+import { motivoBloqueoEnvio } from "@/lib/envio"
 import { graphError, listTemplates, sendTemplate } from "@/lib/wsb/api"
 import type { TemplateParams } from "@/lib/wsb/api"
 
@@ -259,6 +260,11 @@ export function CampaignWizard({ onClose }: { onClose: () => void }) {
 
   const probar = () => {
     if (!selectedTemplate) return
+    const bloqueo = motivoBloqueoEnvio(toWhatsAppNumber(metaPhone))
+    if (bloqueo) {
+      sileo.error({ title: "Envío bloqueado", description: bloqueo })
+      return
+    }
     const unnamed = countUnnamedPlaceholders(componentText(selectedTemplate, "BODY"))
     if (unnamed > 0) {
       sileo.error({

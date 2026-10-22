@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Ban, Inbox, ListOrdered, Pause, Play, Settings, X } from "lucide-react"
+import { Ban, FlaskConical, Inbox, ListOrdered, Pause, Play, Settings, ShieldCheck, X } from "lucide-react"
 
 import { Button, DispatchBar, EmptyState, Panel, StatusStamp } from "@/components/ui"
 import { formatDateShort, formatDateStamp } from "@/app/date-stamp"
 import { cn, formatNumber } from "@/lib/utils"
+import { esDesarrollo, getListaBlanca, getModoEnvio } from "@/lib/envio"
 
 import type { Campaign } from "@/types"
 
@@ -126,13 +127,26 @@ export function QueuePage() {
   const { campaigns, velocidad, iniciar, pausar, reanudar, cancelar } = useCampaigns()
   const [confirmStart, setConfirmStart] = useState<Campaign | null>(null)
   const [confirmCancel, setConfirmCancel] = useState<Campaign | null>(null)
+  const [confirmado, setConfirmado] = useState(false)
+
+  const modoEnvio = getModoEnvio()
+  const listaBlanca = getListaBlanca()
+  const desarrollo = esDesarrollo()
 
   const totals = queueTotals(campaigns)
 
   const closeConfirm = () => setConfirmStart(null)
   const closeConfirmCancel = () => setConfirmCancel(null)
+  const abrirConfirm = (campaign: Campaign) => {
+    setConfirmado(false)
+    setConfirmStart(campaign)
+  }
   const doStart = () => {
     if (confirmStart && iniciar(confirmStart.id)) setConfirmStart(null)
+  }
+  const irAConfiguracion = () => {
+    setConfirmStart(null)
+    navigate("/app/configuracion")
   }
   const doCancel = () => {
     if (confirmCancel) cancelar(confirmCancel.id)
@@ -205,7 +219,7 @@ export function QueuePage() {
                 <QueueRow
                   key={c.id}
                   campaign={c}
-                  onStart={() => setConfirmStart(c)}
+                  onStart={() => abrirConfirm(c)}
                   onPause={() => pausar(c.id)}
                   onResume={() => reanudar(c.id)}
                   onCancel={() => setConfirmCancel(c)}
@@ -268,25 +282,87 @@ export function QueuePage() {
                   <dt className="text-ink-500">Horario</dt>
                   <dd className="text-ink-100">Empieza ahora</dd>
                 </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-ink-500">Modo</dt>
+                  <dd
+                    className={cn(
+                      "inline-flex items-center gap-1.5 font-semibold",
+                      modoEnvio === "real" ? "text-brand-300" : "text-ink-300"
+                    )}
+                  >
+                    {modoEnvio === "real" ? (
+                      <ShieldCheck className="size-3.5" aria-hidden />
+                    ) : (
+                      <FlaskConical className="size-3.5" aria-hidden />
+                    )}
+                    {modoEnvio === "real" ? "Envío real" : "Ensayo"}
+                  </dd>
+                </div>
               </dl>
-              <p className="mt-4 max-w-sm leading-relaxed text-xs text-ink-500">
-                La campaña entra a la cola del número y comienza a enviar de inmediato hasta alcanzar
-                la velocidad fijada. Podrás pausarla o reanudarla desde esta misma fila.
-              </p>
+
+              {modoEnvio === "real" ? (
+                <>
+                  <label
+                    htmlFor="confirmar-envio-real"
+                    className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-md border border-rule-soft bg-base-800 px-3 py-2.5 text-xs leading-relaxed text-ink-300"
+                  >
+                    <input
+                      id="confirmar-envio-real"
+                      type="checkbox"
+                      checked={confirmado}
+                      onChange={(event) => setConfirmado(event.target.checked)}
+                      className="mt-0.5 size-3.5 shrink-0 accent-[var(--color-brand-500)]"
+                    />
+                    <span>
+                      Confirmo que quiero enviar{" "}
+                      <strong className="tabular-nums text-ink-100">
+                        {formatNumber(campaignCounts(confirmStart).total)}
+                      </strong>{" "}
+                      mensajes reales por WhatsApp. Un mensaje enviado no se puede deshacer.
+                    </span>
+                  </label>
+                  {desarrollo && listaBlanca.length > 0 && (
+                    <p className="mt-2.5 leading-relaxed text-xs text-ink-500">
+                      En desarrollo, la lista blanca solo deja salir a{" "}
+                      <span className="font-mono text-ink-300">{listaBlanca.length}</span> número
+                      {listaBlanca.length === 1 ? "" : "s"}. Los demás quedarán bloqueados.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="mt-4 rounded-md border border-rule-soft bg-base-800 px-3 py-2.5">
+                  <p className="max-w-sm leading-relaxed text-xs text-ink-300">
+                    La app está en modo ensayo: el despacho no sale a Meta. Actívalo en
+                    Configuración → Guardas de envío cuando quieras enviar de verdad.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="mt-2.5"
+                    icon={<Settings className="size-3.5" aria-hidden />}
+                    onClick={irAConfiguracion}
+                  >
+                    Ir a Configuración
+                  </Button>
+                </div>
+              )}
             </div>
             <footer className="flex justify-end gap-2 border-t border-rule-soft px-5 py-4">
               <Button size="sm" variant="secondary" onClick={closeConfirm}>
-                Cancelar
+                {modoEnvio === "real" ? "Cancelar" : "Cerrar"}
               </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                icon={<Play className="size-3.5" aria-hidden />}
-                onClick={doStart}
-                autoFocus
-              >
-                Iniciar despacho
-              </Button>
+              {modoEnvio === "real" && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<Play className="size-3.5" aria-hidden />}
+                  onClick={doStart}
+                  disabled={!confirmado}
+                  autoFocus
+                >
+                  Iniciar despacho
+                </Button>
+              )}
             </footer>
           </div>
         </div>

@@ -88,6 +88,7 @@ function seedP5() {
   }
   seed["fastws.campanas"] = [campA, campB, campC]
   seed["fastws.campanas.velocidad"] = "1000/h"
+  seed["fastws.envio.modo"] = "real"
   seed["fastws.conversaciones"] = { threads: [], merged: {} }
   seed["fastws.sesiones"] = [{ id: "ses-1", origen: "inicio", usuario: "Administrador", email: "admin@fastws.local", rol: "Operativo", recordar: true, equipo: "FW-SIM1", plataforma: "Windows", inicio: iso(40) }]
   seed["fastws.auditoria"] = [

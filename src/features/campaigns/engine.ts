@@ -1,5 +1,6 @@
 import type { Campaign, CampaignRecipient, CampaignStatus } from "@/types"
 
+import { guardasActuales, motivoBloqueoEnvio } from "@/lib/envio"
 import { graphError, sendTemplate } from "@/lib/wsb/api"
 
 type ErrorKind = "auth" | "retry" | "terminal"
@@ -93,12 +94,29 @@ async function tick(id: string) {
     let brokeRetry = false
     let authError = false
 
+    // Se leen una vez por tick: si el operador pasa a ensayo a mitad de una
+    // campaña, el resto de pendientes se cierra como bloqueado, no se envía.
+    const guardas = guardasActuales()
+
     let sent = 0
     while (sent < todo && runtime.cursor < recipients.length) {
       const index = runtime.cursor
       const recipient = recipients[index]
       if (recipient.status !== "PENDIENTE") {
         runtime.cursor++
+        continue
+      }
+      const bloqueo = motivoBloqueoEnvio(recipient.phone, guardas)
+      if (bloqueo) {
+        recipients[index] = {
+          ...recipient,
+          status: "FALLIDO",
+          errorCode: "guardia",
+          errorMessage: bloqueo,
+          sentAt: new Date().toISOString(),
+        }
+        runtime.cursor++
+        sent++
         continue
       }
       try {
