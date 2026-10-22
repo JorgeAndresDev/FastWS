@@ -15,7 +15,7 @@ interfaz y tokens de diseño en [`DESIGN.md`](./DESIGN.md).
 | Interfaz (12 módulos del MVP) | Completa y verificada: **198 comprobaciones** end‑to‑end, 0 fallos |
 | Lógica pura | **65 tests unitarios** (Vitest) + **26 tests de persistencia** (Rust) |
 | Capa de datos | **Real en escritorio**: SQLite relacional vía Tauri. `localStorage` en el navegador |
-| Shell de escritorio | **Tauri 2.12** compilando y arrancando; base creada con el esquema completo |
+| Shell de escritorio | **Tauri 2.12** compilando y arrancando; instaladores MSI/NSIS generados (sin firmar) |
 | Integración Meta | **Verificada contra la API real** (lectura); el envío real aún no se ha ejecutado |
 | Guardas de envío | Modo ensayo por defecto, lista blanca en desarrollo y confirmación por campaña |
 | Webhooks | **Pendiente** (los estados entregado/leído no llegan todavía) |
@@ -161,8 +161,10 @@ Conviene ser explícito, porque es donde una demo puede engañar:
    usan `{{}}` sin nombre y correr una campaña de prueba con el modo real.
 2. **Webhooks** — un Worker de Cloudflare que reciba los estados y respuestas. Sin esto la
    columna de entrega/read nunca se llena con datos reales.
-3. **Empaquetado de instalación** — generar y firmar el instalador NSIS/MSI con
-   `npm run tauri:build` (Fase 6).
+3. **Firma del instalador** — `npm run tauri:build` ya produce
+   `FastWS_0.1.0_x64_en-US.msi` y `FastWS_0.1.0_x64-setup.exe` en
+   `src-tauri/target/release/bundle/`, pero sin certificado de firma de código. Windows
+   mostrará advertencias de SmartScreen hasta firmarlos.
 4. **Sincronización multi‑PC** — fuera de alcance mientras opere en un equipo.
 
 ## Documentación
