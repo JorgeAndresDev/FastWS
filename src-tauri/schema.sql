@@ -3,8 +3,9 @@
 --
 -- La tabla `documents` sostiene la capa 1: cada raíz de agregado se guarda como
 -- un JSON en una fila, el mismo contrato que la app ya usaba con localStorage.
--- La capa 2 migra cada raíz a las tablas relacionales de abajo sin cambiar el
--- contrato del repositorio, raíz por raíz.
+-- La capa 2 (src-tauri/src/relational.rs) migra las raíces a las tablas
+-- relacionales de abajo sin cambiar el contrato del repositorio. `documents`
+-- queda como respaldo para claves sin tabla y para JSON que no se pudo migrar.
 
 CREATE TABLE IF NOT EXISTS documents (
   key        TEXT PRIMARY KEY,
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   name          TEXT NOT NULL,
-  role          TEXT NOT NULL DEFAULT 'operator',
+  role          TEXT NOT NULL DEFAULT 'Operativo',
   is_active     INTEGER NOT NULL DEFAULT 1,
   created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
@@ -81,39 +82,43 @@ CREATE TABLE IF NOT EXISTS templates (
 );
 
 CREATE TABLE IF NOT EXISTS campaigns (
-  id             TEXT PRIMARY KEY,
-  name           TEXT NOT NULL,
-  description    TEXT,
-  template_id    TEXT REFERENCES templates(id),
-  status         TEXT NOT NULL DEFAULT 'DRAFT',
-  locks          TEXT,
-  created_by     TEXT NOT NULL REFERENCES users(id),
-  started_at     TEXT,
-  finished_at    TEXT,
-  created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  id                TEXT PRIMARY KEY,
+  name              TEXT NOT NULL,
+  description       TEXT,
+  template_name     TEXT NOT NULL,
+  template_language TEXT NOT NULL,
+  mapping           TEXT NOT NULL DEFAULT '[]',
+  filter            TEXT NOT NULL DEFAULT '{}',
+  status            TEXT NOT NULL DEFAULT 'BORRADOR',
+  started_at        TEXT,
+  finished_at       TEXT,
+  activity          TEXT NOT NULL DEFAULT '[]',
+  dispatched_by     TEXT,
+  created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
-CREATE TABLE IF NOT EXISTS campaign_recipients (
-  campaign_id TEXT NOT NULL REFERENCES campaigns(id),
-  client_id   TEXT NOT NULL REFERENCES clients(id),
-  PRIMARY KEY (campaign_id, client_id)
-);
-
+-- Un mensaje por destinatario de la campaña. `client_id` NO tiene clave
+-- foránea: los destinatarios son una foto del cliente al momento del envío y
+-- el cliente puede borrarse después. La posición conserva el orden original
+-- (el mismo cliente puede aparecer más de una vez en una campaña).
 CREATE TABLE IF NOT EXISTS messages (
-  id             TEXT PRIMARY KEY,
-  campaign_id    TEXT NOT NULL REFERENCES campaigns(id),
-  recipient_id   TEXT NOT NULL REFERENCES clients(id),
-  template_id    TEXT REFERENCES templates(id),
-  variables      TEXT,
-  status         TEXT NOT NULL DEFAULT 'PENDING',
+  id              TEXT PRIMARY KEY,
+  campaign_id     TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  position        INTEGER NOT NULL,
+  client_id       TEXT NOT NULL,
+  code            TEXT,
+  name            TEXT,
+  phone           TEXT NOT NULL,
+  variables       TEXT,
+  status          TEXT NOT NULL DEFAULT 'PENDIENTE',
   meta_message_id TEXT,
-  attempts       INTEGER NOT NULL DEFAULT 0,
-  error_code     TEXT,
-  error_message  TEXT,
-  created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  UNIQUE (campaign_id, recipient_id)
+  error_code      TEXT,
+  error_message   TEXT,
+  sent_at         TEXT,
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  UNIQUE (campaign_id, position)
 );
 
 CREATE TABLE IF NOT EXISTS message_events (
@@ -159,13 +164,14 @@ CREATE TABLE IF NOT EXISTS sync_queue (
 
 CREATE TABLE IF NOT EXISTS audit_logs (
   id          TEXT PRIMARY KEY,
-  user_id     TEXT REFERENCES users(id),
-  device_id   TEXT REFERENCES devices(id),
-  action      TEXT NOT NULL,
-  entity      TEXT,
-  entity_id   TEXT,
-  details     TEXT,
-  created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  at          TEXT NOT NULL,
+  categoria   TEXT NOT NULL,
+  titulo      TEXT NOT NULL,
+  detalle     TEXT NOT NULL,
+  usuario     TEXT,
+  dispositivo TEXT,
+  entidad     TEXT,
+  codigo_error TEXT
 );
 
 -- Las credenciales de Meta (access token de la WhatsApp Business API) NO viven

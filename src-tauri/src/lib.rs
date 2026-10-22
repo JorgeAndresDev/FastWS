@@ -1,4 +1,5 @@
 mod db;
+mod relational;
 mod secrets;
 #[cfg(windows)]
 mod titlebar;
