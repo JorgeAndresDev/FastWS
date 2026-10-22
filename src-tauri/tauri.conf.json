@@ -3,6 +3,7 @@
   "productName": "FastWS",
   "version": "0.1.0",
   "identifier": "co.fastws.app",
+  "mainBinaryName": "FastWS",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -28,6 +29,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "FastWS",
+    "category": "Business",
+    "shortDescription": "Gestión de campañas y conversaciones de WhatsApp Business",
+    "longDescription": "FastWS administra clientes, campañas y conversaciones de WhatsApp Business desde el escritorio, con datos locales y envíos mediante la API oficial de Meta.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

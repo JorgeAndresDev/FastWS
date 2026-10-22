@@ -197,7 +197,7 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 
 | # | Función | Precondición | Pasos | Resultado esperado | Señal de hueco |
 |---|---|---|---|---|---|
-| 7.1 | Configuración: 5 paneles visibles | Logueado | Ver página | Velocidades · Integración · Datos del equipo · Parámetros · Acciones | Panel ausente |
+| 7.1 | Configuración: 6 paneles visibles | Logueado | Ver página | Velocidades · Envío · Integración · Datos del equipo · Parámetros · Acciones | Panel ausente |
 | 7.2 | Velocidad: chips | Logueado | Cambiar a `2000/h` | Persiste `fastws.campanas.velocidad` (`"\"2000/h\""` con comillas → JSON válido al parsear); audita "Velocidad de despacho actualizada" | Sin auditoría / lectura rota |
 | 7.3 | Velocidad: aplica en caliente al engine | EN_PROCESO activo | Cambiar velocidad | El presupuesto del tick usa la nueva tasa **sin avisar** (hueco candidato) | No aplica |
 | 7.4 | Integración: resumen | Conectada / sin / error | Ver sellos | Sellos y botones a `/app/conexion`; caja de error si `error` | Sello "Conectada" sin verificación (optimista) |
