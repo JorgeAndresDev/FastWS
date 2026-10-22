@@ -16,7 +16,7 @@ const CONFIRM_DETAIL: Record<Exclude<Confirmar, null>, { titulo: string; cuerpo:
   borrar: {
     titulo: "Borrar datos locales",
     cuerpo:
-      "Se borrarán de este equipo los clientes, campañas, velocidad, conversaciones, turnos y la sesión de conexión Meta. No hay deshacer: la app se recargará con una planilla vacía.",
+      "Se borrarán de este equipo los clientes, campañas, velocidad, conversaciones, turnos, la sesión de conexión Meta y la configuración de webhooks. No hay deshacer: la app se recargará con una planilla vacía.",
     accion: "Borrar todo",
   },
 }
@@ -24,9 +24,9 @@ const CONFIRM_DETAIL: Record<Exclude<Confirmar, null>, { titulo: string; cuerpo:
 export function AccionesPanel() {
   const [confirmar, setConfirmar] = useState<Confirmar>(null)
 
-  const ejecutar = () => {
+  const ejecutar = async () => {
     if (confirmar === "demo") restablecerDemo()
-    if (confirmar === "borrar") borrarDatosLocales()
+    if (confirmar === "borrar") await borrarDatosLocales()
     setConfirmar(null)
     window.location.reload()
   }

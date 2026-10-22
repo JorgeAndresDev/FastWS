@@ -357,8 +357,9 @@ export function DashboardPage() {
               role="note"
               className="border-t border-rule-soft px-5 py-3 text-xs leading-relaxed text-ink-500"
             >
-              Entregado y leído dependen de los webhooks de Meta (fase backend): sus tarjetas dicen
-              «hasta confirmación por webhook» y los aceptados se muestran «en tránsito».
+              Entregado y leído se completan cuando el Worker de webhooks recibe la confirmación de
+              Meta: sin Worker configurado, sus tarjetas dicen «hasta confirmación por webhook» y los
+              aceptados se muestran «en tránsito».
             </p>
           </Panel>
         </div>
@@ -464,7 +465,7 @@ export function DashboardPage() {
 
       <p role="note" className="mt-4 max-w-2xl text-xs leading-relaxed text-ink-600">
         Cifras locales de este equipo. Las tarjetas con «hasta confirmación por webhook» se
-        completan cuando llegue la confirmación de Meta (fase backend). Las conversaciones de muestra
+        completan cuando el Worker de webhooks recibe la confirmación de Meta. Las conversaciones de muestra
         (demo) se excluyen de todas las métricas; un mensaje solo se cuenta como entregado con
         confirmación de origen.
       </p>

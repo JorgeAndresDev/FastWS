@@ -12,17 +12,17 @@ interfaz y tokens de diseño en [`DESIGN.md`](./DESIGN.md).
 
 | Capa | Estado |
 |---|---|
-| Interfaz (12 módulos del MVP) | Completa y verificada: **198 comprobaciones** end‑to‑end, 0 fallos |
-| Lógica pura | **65 tests unitarios** (Vitest) + **26 tests de persistencia** (Rust) |
+| Interfaz (12 módulos del MVP) | Completa y verificada: **200 comprobaciones** end‑to‑end, 0 fallos |
+| Lógica pura | **81 tests unitarios** (Vitest) + **26 tests de persistencia** (Rust) |
 | Capa de datos | **Real en escritorio**: SQLite relacional vía Tauri. `localStorage` en el navegador |
 | Shell de escritorio | **Tauri 2.12** compilando y arrancando; instaladores MSI/NSIS generados (sin firmar) |
 | Integración Meta | **Verificada contra la API real** (lectura); el envío real aún no se ha ejecutado |
 | Guardas de envío | Modo ensayo por defecto, lista blanca en desarrollo y confirmación por campaña |
-| Webhooks | **Pendiente** (los estados entregado/leído no llegan todavía) |
+| Webhooks | **Implementados** en `worker/` (Cloudflare + D1, polling cada 15 s); falta desplegarlos y validarlos con Meta |
 
 > La app **no está lista para producción**: los envíos reales nunca se han ejecutado, los
-> estados de entrega llegan simulados y varias plantillas de Meta deben recrearse con
-> variables con nombre. Ver la sección *Qué falta*.
+> estados de entrega reales requieren desplegar el Worker y varias plantillas de Meta deben
+> recrearse con variables con nombre. Ver la sección *Qué falta*.
 
 ## Requisitos
 
@@ -50,7 +50,7 @@ npm test               # tests unitarios (Vitest)
 npm run test:rust      # tests de la capa SQLite (cargo test)
 npm run verify         # lint + test + test:rust + build: el gate de calidad
 
-npm run sim            # simulacro end-to-end (198 checks, 8 pasadas)
+npm run sim            # simulacro end-to-end (200 checks, 8 pasadas)
 npm run smoke:meta     # validación de solo lectura contra la API real de Meta
 ```
 
@@ -74,13 +74,14 @@ sirve desde memoria y persiste en segundo plano, con una cola que respeta el ord
 **Alcances de persistencia** (`src/lib/db/session-scope.ts`):
 
 - **Duradero** — sobrevive al cierre. Clientes, campañas, conversaciones, auditoría, turnos,
-  identidad del equipo, sesión recordada, identificadores de Meta. Va a la base.
+  identidad del equipo, sesión recordada, identificadores de Meta y la URL/cursor de webhooks.
+  Va a la base.
 - **Efímero** — muere con la ventana. La sesión temporal. Se queda en `sessionStorage`
-  del webview incluso en Tauri. El **token de Meta** es la excepción: en escritorio se
-  cifra con **DPAPI** (`src-tauri/src/secrets.rs`), no vive en `sessionStorage`.
+  del webview incluso en Tauri. Los **tokens de Meta y del Worker** son la excepción: en
+  escritorio se cifran con **DPAPI** (`src-tauri/src/secrets.rs`), no viven en `sessionStorage`.
 
 **Migración:** la primera vez que la app de escritorio arranca con datos del navegador, los
-copia a SQLite y a partir de ahí SQLite manda. El token nunca se copia.
+copia a SQLite y a partir de ahí SQLite manda. Los tokens nunca se copian.
 
 El esquema es `src-tauri/schema.sql` (fuente única, la aplica Rust al abrir). Desde la
 Fase 4, las raíces de agregado viven en tablas relacionales: `users`, `clients`,
@@ -89,6 +90,17 @@ respaldo para JSON ilegible o datos de versiones anteriores; si existe un docume
 sobre la tabla. La migración de documentos corre en cada arranque con un *savepoint* por
 raíz, y las tablas del esquema viejo se conservan como `<tabla>_legacy` cuando tenían filas.
 
+## Webhooks (Worker + D1)
+
+`worker/` contiene el receptor de webhooks de Meta: valida la firma `X-Hub-Signature-256`,
+guarda los eventos en D1 con deduplicación y los expone al escritorio en `GET /events`. La app
+consulta ese endpoint cada 15 segundos desde **Configuración → Webhooks de Meta**, donde se
+pegan la URL del Worker y el `DESKTOP_TOKEN`.
+
+El despliegue (crear D1, migrar, cargar secretos, `wrangler deploy` y configurar la URL en
+Meta) está paso a paso en [`worker/README.md`](./worker/README.md). El token del escritorio se
+cifra con DPAPI; la URL y el cursor viven en la base local.
+
 ## Validación
 
 Hay tres capas complementarias, y conviene entender la diferencia.
@@ -96,7 +108,7 @@ Hay tres capas complementarias, y conviene entender la diferencia.
 ### 1. Simulacro end‑to‑end (`npm run sim`)
 
 Ocho pasadas que conducen un Edge headless por la interfaz con el **Graph API simulado**
-(ver `tools/simulacro/sim-base.mjs`, función `fetchStubSrc`). Comprueba 198 behaviours:
+(ver `tools/simulacro/sim-base.mjs`, función `fetchStubSrc`). Comprueba 200 behaviours:
 recorridos, formularios, estados de carga y error, persistencia, auditoría, permisos y las
 guardas de envío.
 
@@ -147,7 +159,7 @@ Conviene ser explícito, porque es donde una demo puede engañar:
 | Estados, filtros, auditoría | Reales. Sobre SQLite en escritorio, `localStorage` en navegador |
 | Persistencia | Real: SQLite relacional, sobrevive al cierre de la app |
 | Plantillas y envíos | Lectura de plantillas real; el envío contra Meta aún no se ha ejecutado |
-| Entregado / leído / respuestas | **Simulados.** Requiere webhooks (Fase 3) |
+| Entregado / leído / respuestas | **Reales vía Worker** cuando está configurado; sin Worker quedan pendientes de confirmación |
 | Guardas de envío | Reales: ensayo por defecto, lista blanca en desarrollo, confirmación explícita por campaña |
 | Token de Meta | Cifrado con DPAPI en escritorio; `sessionStorage` solo en el navegador |
 | Autenticación | Real: PBKDF2 con sal, hash y comparación en tiempo constante |
@@ -159,8 +171,9 @@ Conviene ser explícito, porque es donde una demo puede engañar:
 1. **Envío real validado** — las guardas y el flujo están listos, pero el despacho contra
    Meta no se ha ejecutado. Antes hay que recrear en el gestor de Meta las plantillas que
    usan `{{}}` sin nombre y correr una campaña de prueba con el modo real.
-2. **Webhooks** — un Worker de Cloudflare que reciba los estados y respuestas. Sin esto la
-   columna de entrega/read nunca se llena con datos reales.
+2. **Webhooks desplegados** — el Worker y el panel ya existen en `worker/`, pero falta crear
+   la base D1, cargar los secretos, desplegarlo y apuntar la URL de devolución de llamada de
+   Meta. Sin ese despliegue la columna de entrega/lectura queda pendiente de confirmación.
 3. **Firma del instalador** — `npm run tauri:build` ya produce
    `FastWS_0.1.0_x64_en-US.msi` y `FastWS_0.1.0_x64-setup.exe` en
    `src-tauri/target/release/bundle/`, pero sin certificado de firma de código. Windows
@@ -171,6 +184,6 @@ Conviene ser explícito, porque es donde una demo puede engañar:
 
 - [`docs/simulacro-hallazgos.md`](./docs/simulacro-hallazgos.md) — ficha de hallazgos con
   severidad, evidencia y estado (confirmado / descartado / corregido).
-- [`docs/simulacro-resultados.md`](./docs/simulacro-resultados.md) — resultado de las 198
+- [`docs/simulacro-resultados.md`](./docs/simulacro-resultados.md) — resultado de las 200
   comprobaciones, una por una.
 - [`docs/simulacro.md`](./docs/simulacro.md) — cómo se ejecuta y cómo se lee el simulacro.

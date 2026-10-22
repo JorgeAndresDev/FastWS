@@ -5,6 +5,7 @@ import { formatDateStamp } from "@/app/date-stamp"
 import { VelocidadesPanel } from "./velocidades-panel"
 import { EnvioPanel } from "./envio-panel"
 import { IntegracionPanel } from "./integracion-panel"
+import { WebhooksPanel } from "./webhooks-panel"
 import { DatosPanel } from "./datos-panel"
 import { ParametrosPanel } from "./parametros-panel"
 import { AccionesPanel } from "./acciones-panel"
@@ -37,6 +38,7 @@ export function SettingsPage() {
         <VelocidadesPanel />
         <EnvioPanel />
         <IntegracionPanel />
+        <WebhooksPanel />
         <DatosPanel />
         <ParametrosPanel />
         <AccionesPanel />

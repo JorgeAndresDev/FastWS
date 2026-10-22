@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     // Solo el código del producto: el repo contiene carpetas de tooling del
     // agente con sus propios tests, que no forman parte de FastWS.
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "worker/**/*.test.js"],
     environment: "node",
   },
 })

@@ -2,13 +2,14 @@ import type { ReactNode } from "react"
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, createContext } from "react"
 import { sileo } from "sileo"
 
-import type { Campaign, CampaignRecipient, CampaignStatus } from "@/types"
+import type { Campaign, CampaignRecipient, CampaignStatus, MessageStatus } from "@/types"
 
 import { getDeviceIdentity } from "@/features/auth/device"
 import { readSession } from "@/features/auth/session"
 import { registrarAuditoria } from "@/lib/audit-log"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
 import { getModoEnvio } from "@/lib/envio"
+import { puedeAvanzarEstado } from "@/lib/message-status"
 import { useConexion } from "@/features/connection/conexion-store"
 import {
   engineCancel,
@@ -37,6 +38,11 @@ interface CampaignsContextValue {
   pausar: (id: string) => void
   reanudar: (id: string) => void
   cancelar: (id: string) => void
+  aplicarEstadoMeta: (
+    metaId: string,
+    estado: MessageStatus,
+    error?: { code?: string; message?: string }
+  ) => number
 }
 
 const CampaignsContext = createContext<CampaignsContextValue | null>(null)
@@ -396,6 +402,33 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
     [commit]
   )
 
+  const aplicarEstadoMeta = useCallback(
+    (metaId: string, estado: MessageStatus, error?: { code?: string; message?: string }) => {
+      if (!metaId) return 0
+      let cambios = 0
+      const next = campaignsRef.current.map((campaign) => {
+        let tocada = false
+        const recipients = campaign.recipients.map((recipient) => {
+          if (recipient.metaId !== metaId) return recipient
+          if (!puedeAvanzarEstado(recipient.status, estado)) return recipient
+          tocada = true
+          return {
+            ...recipient,
+            status: estado,
+            ...(error?.code ? { errorCode: error.code } : {}),
+            ...(error?.message ? { errorMessage: error.message } : {}),
+          }
+        })
+        if (!tocada) return campaign
+        cambios += 1
+        return { ...campaign, recipients }
+      })
+      if (cambios > 0) commit(next)
+      return cambios
+    },
+    [commit]
+  )
+
   const setVelocidad = useCallback((value: string) => {
     velocidadRef.current = value
     setVelocidadState(value)
@@ -412,8 +445,9 @@ export function CampaignsProvider({ children }: { children: ReactNode }) {
       pausar,
       reanudar,
       cancelar,
+      aplicarEstadoMeta,
     }),
-    [campaigns, velocidad, setVelocidad, guardar, iniciar, pausar, reanudar, cancelar]
+    [campaigns, velocidad, setVelocidad, guardar, iniciar, pausar, reanudar, cancelar, aplicarEstadoMeta]
   )
 
   return <CampaignsContext.Provider value={value}>{children}</CampaignsContext.Provider>

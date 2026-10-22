@@ -28,7 +28,7 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 - **Oráculo de storage**: antes y después de cada acción determinista se vuelca el juego de claves `fastws.*` + `sessionStorage` (`sim-oracle.mjs`) para detectar escrituras silenciosas, claves sobrevivientes y eventos de auditoría.
 - **Fetch-stub**: las pasadas que tocan `graph.facebook.com` inyectan un mock de `window.fetch` (`sim-fetch-stub.mjs`) vía `Page.addScriptToEvaluateOnNewDocument` con escenarios `ok | rate | auth | terminal | 5xx | network`. Todo offline.
 - **Severidad de hueco**: `P0` pérdida de datos / seguridad · `P1` función rota o miente · `P2` pulido, a11y, etiquetas.
-- **Claves conocidas**: `fastws.clientes`, `fastws.campanas`, `fastws.campanas.velocidad`, `fastws.conversaciones` (`{threads, merged}`), `fastws.sesiones`, `fastws.auditoria`, `fastws.conexion.ids`, `fastws.conexion.meta`, `fastws.app.locale`, `fastws.device`, `fastws.session` (local **o** sessionStorage según "recordar"). El token de Meta ya no va en una clave propia: vive en la guarda de secretos (`fastws.meta-token` en sessionStorage sin Tauri, DPAPI en escritorio).
+- **Claves conocidas**: `fastws.clientes`, `fastws.campanas`, `fastws.campanas.velocidad`, `fastws.conversaciones` (`{threads, merged}`), `fastws.sesiones`, `fastws.auditoria`, `fastws.conexion.ids`, `fastws.conexion.meta`, `fastws.app.locale`, `fastws.device`, `fastws.session` (local **o** sessionStorage según "recordar"), `fastws.webhooks.url`, `fastws.webhooks.cursor`, `fastws.webhooks.ultimo`, `fastws.webhooks.error`. Los tokens viven en la guarda de secretos (`fastws.meta-token` para Meta y `fastws.secret.webhook-token` para el Worker en sessionStorage sin Tauri; DPAPI en escritorio).
 
 ## Criterio de "hueco"
 
@@ -42,9 +42,9 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 |---|---|---|---|
 | Dev server | `npm run dev` | `http://localhost:5173` responde | Sin server, todo el simulacro falla |
 | Perfil limpio | Edge headless con `--user-data-dir` desechable | `localStorage` vacío antes del seed | Estado heredado invalida los checks |
-| Seed baseline | `sim-base.mjs` siembra las 12 claves | Todas las claves con forma esperada; auditar con 2 registros | Clave mal formada rompe la app |
+| Seed baseline | `sim-base.mjs` siembra las 14 claves | Todas las claves con forma esperada; auditar con 2 registros | Clave mal formada rompe la app |
 | Fetch-stub | Inyectar mock en documento nuevo | `window.fetch` intercepta urls `graph.facebook.com` | El stub no aplica → llamadas reales (inaceptable offline) |
-| Snapshot oracle | `sim-oracle.mjs` | Dump de 12 claves + `sessionStorage` + cola auditoría | Dump incompleto |
+| Snapshot oracle | `sim-oracle.mjs` | Dump de 14 claves + `sessionStorage` + cola auditoría | Dump incompleto |
 | Detector + build | `npm run build`, `impeccable detect --json src` | `tsc` 0 · detector `[]` (código está ok al arrancar el simulacro) | Ruido previo |
 
 **Pré-condición de todas las pasadas**: build verde + detector `[]`.
@@ -197,7 +197,9 @@ Credenciales demo: `admin@fastws.local` / `despacho2026`. Código de recuperaci�
 
 | # | Función | Precondición | Pasos | Resultado esperado | Señal de hueco |
 |---|---|---|---|---|---|
-| 7.1 | Configuración: 6 paneles visibles | Logueado | Ver página | Velocidades · Envío · Integración · Datos del equipo · Parámetros · Acciones | Panel ausente |
+| 7.1 | Configuración: 7 paneles visibles | Logueado | Ver página | Velocidades · Envío · Integración · Webhooks · Datos del equipo · Parámetros · Acciones | Panel ausente |
+| 7.1c | Webhooks: panel y contrato | Sin configurar | Ver panel | URL, token, Guardar y Probar presentes; declara `/webhook` y `messages`; sin consultas ni error | Panel ausente o poller consultando sin config |
+| 7.1d | Webhooks: poller aplica eventos | URL + token guardados | Worker simulado devuelve `/events` | Un estado pasa a ENTREGADO, el mensaje entrante aparece en el hilo y se guardan cursor/último sync sin error | Eventos no aplicados o cursor sin avanzar |
 | 7.2 | Velocidad: chips | Logueado | Cambiar a `2000/h` | Persiste `fastws.campanas.velocidad` (`"\"2000/h\""` con comillas → JSON válido al parsear); audita "Velocidad de despacho actualizada" | Sin auditoría / lectura rota |
 | 7.3 | Velocidad: aplica en caliente al engine | EN_PROCESO activo | Cambiar velocidad | El presupuesto del tick usa la nueva tasa **sin avisar** (hueco candidato) | No aplica |
 | 7.4 | Integración: resumen | Conectada / sin / error | Ver sellos | Sellos y botones a `/app/conexion`; caja de error si `error` | Sello "Conectada" sin verificación (optimista) |

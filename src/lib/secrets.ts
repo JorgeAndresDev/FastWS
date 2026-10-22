@@ -1,5 +1,5 @@
 /**
- * Guardado de secretos (hoy: el token de la API de WhatsApp).
+ * Guardado de secretos (hoy: el token de Meta y el token del Worker de webhooks).
  *
  * Por que existe esto: el token estaba en `sessionStorage` del webview, que en
  * Tauri muere con la ventana. Al cerrar y abrir la app había que escribirlo
@@ -14,7 +14,7 @@
  * cifrada.
  *
  * `borrar` es importante que no dependa del backend: si el comando no está (o
- * falla), el fallback limpia igual. Desconectar nunca debe dejar el token vivo
+ * falla), el fallback limpia igual. Desconectar nunca debe dejar el secreto vivo
  * por un fallo del almacén seguro.
  */
 const CLAVE_TOKEN = "fastws.meta-token"
@@ -29,66 +29,79 @@ async function invocar<T>(comando: string, args: Record<string, unknown>): Promi
   return invoke<T>(comando, args)
 }
 
+function claveFallback(label: string): string {
+  return label === "meta-token" ? CLAVE_TOKEN : `fastws.secret.${label}`
+}
+
 /**
- * Guarda el token cifrado. Devuelve `true` si quedó persistido en el almacén
- * seguro; `false` si solo quedó en la sesión (navegador), para que la UI pueda
- * avisar de que en este equipo no se va a recordar.
+ * Guarda un secreto con una etiqueta propia. Devuelve `true` si quedó persistido
+ * en el almacén seguro; `false` si solo quedó en la sesión (navegador).
  */
-export async function guardarToken(token: string): Promise<boolean> {
+export async function guardarSecreto(label: string, plano: string): Promise<boolean> {
   if (hayTauri()) {
     try {
-      await invocar("secret_write", { label: "meta-token", plain: token })
+      await invocar("secret_write", { label, plain: plano })
       return true
     } catch (err) {
-      // Si el almacén seguro falla, el token sigue siendo válido en memoria:
-      // que la conexión funcione ahora importa más que que se recuerde después.
-      console.warn("No se pudo guardar el token cifrado:", err)
+      console.warn(`No se pudo guardar el secreto "${label}":`, err)
       return false
     }
   }
   try {
-    window.sessionStorage.setItem(CLAVE_TOKEN, token)
+    window.sessionStorage.setItem(claveFallback(label), plano)
   } catch {
     /* sin sessionStorage */
   }
   return false
 }
 
-/** Recupera el token guardado, o `null` si no hay ninguno. */
-export async function leerToken(): Promise<string | null> {
+/** Recupera un secreto guardado, o `null` si no hay ninguno. */
+export async function leerSecreto(label: string): Promise<string | null> {
   if (hayTauri()) {
     try {
-      return (await invocar<string | null>("secret_read", { label: "meta-token" })) ?? null
+      return (await invocar<string | null>("secret_read", { label })) ?? null
     } catch (err) {
-      console.warn("No se pudo leer el token cifrado:", err)
+      console.warn(`No se pudo leer el secreto "${label}":`, err)
       return null
     }
   }
   try {
-    return window.sessionStorage.getItem(CLAVE_TOKEN)
+    return window.sessionStorage.getItem(claveFallback(label))
   } catch {
     return null
   }
 }
 
-/** Borra el token del almacén seguro y del fallback. Idempotente. */
-export async function borrarToken(): Promise<void> {
+/** Borra un secreto del almacén seguro y del fallback. Idempotente. */
+export async function borrarSecreto(label: string): Promise<void> {
   if (hayTauri()) {
     try {
-      await invocar("secret_delete", { label: "meta-token" })
+      await invocar("secret_delete", { label })
     } catch (err) {
-      console.warn("No se pudo borrar el token cifrado:", err)
+      console.warn(`No se pudo borrar el secreto "${label}":`, err)
     }
   }
   try {
-    window.sessionStorage.removeItem(CLAVE_TOKEN)
+    window.sessionStorage.removeItem(claveFallback(label))
   } catch {
     /* sin sessionStorage */
   }
 }
 
+export function guardarToken(token: string): Promise<boolean> {
+  return guardarSecreto("meta-token", token)
+}
+
+export function leerToken(): Promise<string | null> {
+  return leerSecreto("meta-token")
+}
+
+export function borrarToken(): Promise<void> {
+  return borrarSecreto("meta-token")
+}
+
 /**
- * Si el token va a sobrevivir al cierre de la ventana. La UI lo usa para no
+ * Si el secreto va a sobrevivir al cierre de la ventana. La UI lo usa para no
  * prometer "recordado" cuando en realidad solo vive en la sesión.
  */
 export function persiste(): boolean {

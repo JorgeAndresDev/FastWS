@@ -7,12 +7,16 @@ import type {
   ConvoStatus,
   ConversationMessage,
   ConversationThread,
+  MessageStatus,
 } from "@/types"
 
 import { graphError, sendTemplate, sendText } from "@/lib/wsb/api"
 import type { TemplateParams } from "@/lib/wsb/api"
 import { readDurable, writeDurable } from "@/lib/db/session-scope"
 import { motivoBloqueoEnvio } from "@/lib/envio"
+import { puedeAvanzarEstado } from "@/lib/message-status"
+import { toWhatsAppNumber } from "@/lib/phone"
+import type { MensajeEntrante } from "@/lib/webhooks"
 
 import { useConexion } from "@/features/connection/conexion-store"
 import { useCampaigns } from "@/features/campaigns/campaigns-store"
@@ -33,6 +37,12 @@ interface ConversationsContextValue {
   sembrarDemo: () => void
   limpiarDemo: () => void
   reescanearCampañas: () => void
+  aplicarEstadoMeta: (
+    metaId: string,
+    estado: MessageStatus,
+    error?: { code?: string; message?: string }
+  ) => number
+  recibirMensaje: (mensaje: MensajeEntrante) => boolean
 }
 
 const ConversationsContext = createContext<ConversationsContextValue | null>(null)
@@ -100,20 +110,32 @@ function loadPersisted(): Persisted {
   return { threads: [], merged: {} }
 }
 
-function upsertMessage(threads: ConversationThread[], message: ConversationMessage): ConversationThread[] {
+function upsertMessage(
+  threads: ConversationThread[],
+  message: ConversationMessage,
+  clientId?: string
+): ConversationThread[] {
   const existing = threads.find((t) => t.phone === message.phone)
   if (existing) {
     const already = existing.messages.some((m) => m.id === message.id)
-    if (already) return threads
+    if (already) {
+      if (!clientId || existing.clientId) return threads
+      return threads.map((t) => (t.phone === message.phone ? { ...t, clientId } : t))
+    }
     return threads.map((t) =>
       t.phone === message.phone
-        ? finalizeThread({ ...t, messages: [...t.messages, message] })
+        ? finalizeThread({
+            ...t,
+            ...(clientId && !t.clientId ? { clientId } : {}),
+            messages: [...t.messages, message],
+          })
         : t
     )
   }
   const created: ConversationThread = {
     id: message.phone,
     phone: message.phone,
+    ...(clientId ? { clientId } : {}),
     lastMessage: message.text,
     lastAt: message.sentAt ?? new Date().toISOString(),
     status: "pendiente",
@@ -380,6 +402,59 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     [commit]
   )
 
+  const aplicarEstadoMeta = useCallback(
+    (metaId: string, estado: MessageStatus, error?: { code?: string; message?: string }) => {
+      if (!metaId) return 0
+      let cambios = 0
+      const next = threadsRef.current.map((thread) => {
+        let tocado = false
+        const messages = thread.messages.map((message) => {
+          if (message.metaId !== metaId) return message
+          if (!puedeAvanzarEstado(message.status, estado)) return message
+          tocado = true
+          return {
+            ...message,
+            status: estado,
+            ...(error?.code ? { errorCode: error.code } : {}),
+            ...(error?.message ? { errorMessage: error.message } : {}),
+          }
+        })
+        if (!tocado) return thread
+        cambios += 1
+        return finalizeThread({ ...thread, messages })
+      })
+      if (cambios > 0) commit(next)
+      return cambios
+    },
+    [commit]
+  )
+
+  const recibirMensaje = useCallback(
+    (entrante: MensajeEntrante) => {
+      if (!entrante.wamid || !entrante.phone) return false
+      const existe = threadsRef.current.some((thread) =>
+        thread.messages.some((message) => message.id === entrante.wamid)
+      )
+      if (existe) return false
+      const cliente = clientsRef.current.find(
+        (c) =>
+          toWhatsAppNumber(c.phone) === entrante.phone ||
+          (c.phones ?? []).some((phone) => toWhatsAppNumber(phone) === entrante.phone)
+      )
+      const message: ConversationMessage = {
+        id: entrante.wamid,
+        phone: entrante.phone,
+        direction: "entrante",
+        text: entrante.text || "[mensaje]",
+        status: "ENTREGADO",
+        sentAt: entrante.sentAt,
+      }
+      commit(upsertMessage(threadsRef.current, message, cliente?.id))
+      return true
+    },
+    [commit]
+  )
+
   const sembrarDemo = useCallback(() => {
     const candidates = clientsRef.current
       .filter((c) => c.valid && /^3\d{9}$/.test(c.phone.replace(/\D/g, "")))
@@ -453,8 +528,19 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       sembrarDemo,
       limpiarDemo,
       reescanearCampañas,
+      aplicarEstadoMeta,
+      recibirMensaje,
     }),
-    [persisted.threads, responder, responderPlantilla, sembrarDemo, limpiarDemo, reescanearCampañas]
+    [
+      persisted.threads,
+      responder,
+      responderPlantilla,
+      sembrarDemo,
+      limpiarDemo,
+      reescanearCampañas,
+      aplicarEstadoMeta,
+      recibirMensaje,
+    ]
   )
 
   return <ConversationsContext.Provider value={value}>{children}</ConversationsContext.Provider>

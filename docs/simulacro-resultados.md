@@ -22,6 +22,13 @@ cubren la confirmación obligatoria antes de arrancar un despacho real, el bloqu
 ensayo y el panel de guardas en Configuración. El simulacro siembra `modo = real` para poder
 ejercitar el motor; el valor de fábrica de la app sigue siendo `ensayo`.
 
+**Re-ejecución `2026-10-21` tras los webhooks (Fase 7):** **200 checks, 200 OK, 0 fallos**.
+La pasada 7 sube a 19 checks: el panel de Webhooks de Meta (URL/token, contrato `/webhook` y
+campo `messages`, sin consultas mientras no esté configurado) y el poller, que aplica un
+estado ENTREGADO y un mensaje entrante simulados. El borrado local ahora verifica también que
+se elimina el token del Worker y el diálogo declara los webhooks. Los tests unitarios suben a
+81 (6 del Worker y 10 del cliente de webhooks).
+
 ## Resumen
 
 | Fase | Checks | OK | HUECO | Notas |
@@ -33,8 +40,8 @@ ejercitar el motor; el valor de fábrica de la app sigue siendo `ensayo`.
 | 4 Clientes, Importación, Segmentos | 19 | 19 | 0 | **CORREGIDOS S5/S6/S7/S17/N3** (CRUD clientes + estado vacío, panel de duplicados, hoja `generic`, grupo 31-60 d, sub-tabla de miembros) + 4.1b/4.1c/4.3b (alta y tablas sin scroll); S18 descartado |
 | 5 Plantillas, Conversaciones, Mensajes | 46 | 46 | 0 | **CORREGIDOS S3/S9/S14/S16/S19/S22/S2 + N4-N8** (cache de plantillas, validación header/footer, textarea en fallo, params al cambiar pestaña, headerParams, mensaje renderizado, opciones filtro, reescaneo ENTREGADO/LEIDO, cursor de paginación, auditoría) + **R1-R4** (`parameter_name` en NAMED, cabecera fija sin parámetros, número de prueba configurable y persistente, bloqueo de `{{}}` sin nombre) |
 | 6 Reportes, Historial, Auditoría, Dispositivos | 28 | 28 | 0 | **CORREGIDOS S20/S21/S24/S25/S29 + N10/N11** (rango de fechas acotado, CSV sin inyección de fórmulas, clave de día con relleno, KPI coherentes con la lista); S24/S25/S29 **descartados** |
-| 7 Configuración, Sync, integridad | 17 | 17 | 0 | **CORREGIDOS S1/S12 + N12** (demo siembra `{threads, merged}`, copy de velocidad en caliente, «Borrar todo» borra el token) + **Fase 5** (panel de guardas de envío); S4 **descartado** (la página declara que la sincronización aún no existe) |
-| **Total** | **198** | **198** | **0** | todos los huecos confirmados corregidos y verificados en verde (pasadas 1-7) |
+| 7 Configuración, Sync, integridad | 19 | 19 | 0 | **CORREGIDOS S1/S12 + N12** (demo siembra `{threads, merged}`, copy de velocidad en caliente, «Borrar todo» borra los tokens) + **Fase 5** (panel de guardas de envío) + **Fase 7** (panel de Webhooks de Meta, contrato del Worker y poller aplicando eventos); S4 **descartado** (la página declara que la sincronización aún no existe) |
+| **Total** | **200** | **200** | **0** | todos los huecos confirmados corregidos y verificados en verde (pasadas 1-7) |
 
 ## Detalle
 
@@ -197,8 +204,10 @@ ejercitar el motor; el valor de fábrica de la app sigue siendo `ensayo`.
 | 6.27 | Dispositivos: renombrar | OK | persiste en `fastws.device` y el botón queda en "Guardado" |
 | 6.28 | [S25] renombrar | **DESC a medias** | no deja rastro en Auditoría (por diseño: apodo local) pero el nombre vacío sí queda bloqueado |
 | 6.29 | Dispositivos: turno | OK | sello "Turno activo" + bitácora de 7 columnas con el turno abierto |
-| 7.1 | Configuración: paneles | OK | velocidad, guardas de envío, integración, estado, parámetros y acciones (6) |
+| 7.1 | Configuración: paneles | OK | velocidad, guardas de envío, integración, webhooks, estado, parámetros y acciones (7) |
 | 7.1b | Panel de guardas de envío | OK | modo real activo (semilla), grupo de modo y lista blanca presentes |
+| 7.1c | Panel de Webhooks | OK | URL/token/Guardar/Probar, contrato `/webhook` + `messages`; sin configurar no consulta ni deja error |
+| 7.1d | Poller de Webhooks | OK | consulta `/events` con cursor, aplica ENTREGADO a la campaña y crea el mensaje entrante; guarda cursor/último sync sin error |
 | 7.2 | Velocidad: opciones | OK | 4000/2000/1000/500 con 1000/h activo |
 | 7.3 | Velocidad: persistencia | OK | escribe `fastws.campanas.velocidad` y audita "Velocidad de despacho actualizada" |
 | 7.4 | [S12] copy de velocidad | OK | declara "aplica en caliente", como hace el motor (antes decía "desde la próxima tanda") |
@@ -207,8 +216,8 @@ ejercitar el motor; el valor de fábrica de la app sigue siendo `ensayo`.
 | 7.7 | Panel de integración | OK | "Conectada" + "Gestionar en Conexión" |
 | 7.8 | Acciones: diálogo | OK | "Restablecer datos de demostración" confirma y aclara que no toca sesión ni conexión; audita el cambio |
 | 7.9 | [S1] forma del seed | OK | `fastws.conversaciones` queda como `{threads, merged}` y el store lee el hilo sembrado |
-| 7.10 | [S29] diálogo de borrado | **DESC** | el diálogo **sí** declara clientes, campañas, velocidad, conversaciones, turnos y la sesión de conexión |
-| 7.11 | [N12] "Borrar todo" | OK | borra también el token de Meta (guarda de secretos): la app queda desconectada |
+| 7.10 | [S29] diálogo de borrado | **DESC** | el diálogo **sí** declara clientes, campañas, velocidad, conversaciones, turnos, la sesión de conexión y los webhooks |
+| 7.11 | [N12] "Borrar todo" | OK | borra también los tokens de Meta y del Worker (guarda de secretos): la app queda desconectada |
 | 7.12 | Sincronización: paneles | OK | 6 paneles con sellos estáticos ("Local solamente", "Base compartida: pendiente Tauri") |
 | 7.13 | Sincronización: conjuntos | OK | tabla con los 5 conjuntos y su conteo |
 | 7.14 | [S4] honestidad de Sincronización | **DESC** | declara que la sincronización "todavía no existe" (llega con Tauri), usa futuro para lo que llegará y no ofrece controles falsos |

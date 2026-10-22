@@ -18,6 +18,7 @@ const textos = (cdp, sel) => probe(cdp, `[...document.querySelectorAll(${J(sel)}
 const R = []
 let n = 0
 const ch = (label, ok, detalle) => { R.push({ n: ++n, label, ok: Boolean(ok), detalle }) }
+const WORKER = "https://fastws-webhooks.workers.dev"
 
 async function boot(cdp, route) {
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: fetchStubSrc() })
@@ -42,10 +43,10 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
     await boot(cdp, "/app/configuracion")
     await esperaConexion(cdp)
 
-    // 7.1 los 6 paneles
+    // 7.1 los 7 paneles
     const paneles = JSON.parse(await textos(cdp, 'main section.panel > header h2'))
-    ch("7.1 Configuración: los 6 paneles (velocidad, envío, integración, estado, parámetros, acciones)",
-      ["Intercambio con Meta", "Guardas de envío", "Integración de WhatsApp Business", "Estado del equipo", "Parámetros de la aplicación", "Acciones de datos"].every((p) => paneles.includes(p)),
+    ch("7.1 Configuración: los 7 paneles (velocidad, envío, integración, webhooks, estado, parámetros, acciones)",
+      ["Intercambio con Meta", "Guardas de envío", "Integración de WhatsApp Business", "Webhooks de Meta", "Estado del equipo", "Parámetros de la aplicación", "Acciones de datos"].every((p) => paneles.includes(p)),
       JSON.stringify(paneles))
 
     // 7.1b guardas de envío: el simulacro siembra modo real, pero la lista
@@ -54,6 +55,14 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
     ch("7.1b Guardas de envío: modo real activo (semilla), grupo de modo y lista blanca presentes",
       guardas.modo === "Envío real" && guardas.lista === true && guardas.texto === true,
       JSON.stringify(guardas))
+
+    // 7.1c webhooks: el panel existe con sus controles y declara el contrato
+    // del Worker (endpoint /webhook + campo messages). Sin configuración, el
+    // poller no debe consultar nada ni dejar error.
+    const webhooks = JSON.parse(await probe(cdp, `({url:!!document.querySelector('#webhooks-url'),token:!!document.querySelector('#webhooks-token'),guardar:!!document.querySelector('#webhooks-guardar'),probar:!!document.querySelector('#webhooks-probar'),endpoint:document.body.textContent.includes('/webhook'),campo:document.body.textContent.includes('messages'),sinConfigurar:document.body.textContent.includes('Sin configurar'),error:localStorage.getItem('fastws.webhooks.error')})`))
+    ch("7.1c Webhooks: panel con URL/token/Guardar/Probar, contrato /webhook + messages y sin consultas si no está configurado",
+      webhooks.url && webhooks.token && webhooks.guardar && webhooks.probar && webhooks.endpoint && webhooks.campo && webhooks.sinConfigurar && webhooks.error === null,
+      JSON.stringify(webhooks))
 
     // 7.2 velocidad: 4 opciones, 1000/h activo por defecto
     const vel = JSON.parse(await probe(cdp, `(()=>{const g=document.querySelector('[role="group"][aria-label="Velocidad de despacho global"]');if(!g)return null;return {grupo:g.getAttribute('aria-label'),botones:[...g.querySelectorAll('button')].map(b=>({t:b.textContent.trim(),p:b.getAttribute('aria-pressed')}))}})()`))
@@ -119,6 +128,37 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
     ch("7.9 [S1] Restablecer demo siembra fastws.conversaciones como {threads, merged}: el hilo sembrado lo lee el store",
       Boolean(formaConv) && formaConv.esArray === false && formaConv.tieneThreads === true && formaConv.hilos >= 1,
       JSON.stringify(formaConv))
+
+    // 7.1d el poller: con URL y token guardados consulta /events y aplica un
+    // estado ENTREGADO a la campaña y un mensaje entrante al hilo. El Worker se
+    // simula para no depender de la red; el contrato es el de worker/src.
+    const objetivo = JSON.parse(await probe(cdp, `(()=>{const cs=JSON.parse(localStorage.getItem('fastws.campanas')||'[]');for(const c of cs)for(const r of c.recipients||[])if(r.metaId&&r.status==='PROCESO')return {metaId:r.metaId};return null})()`))
+    await evalJson(cdp, `localStorage.setItem('fastws.webhooks.url', ${J(J(WORKER))});sessionStorage.setItem('fastws.secret.webhook-token','worker-sim-token');'ok'`)
+    const workerStub = `(() => {
+      const real = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        const url = String(input);
+        if (!url.startsWith(${J(WORKER + "/events")})) return real(input, init);
+        const now = Math.floor(Date.now() / 1000);
+        return Promise.resolve(new Response(JSON.stringify({
+          events: [
+            { id: 10, type: "status", received_at: Date.now(), payload: { id: ${J(objetivo ? objetivo.metaId : "")}, status: "delivered", timestamp: now } },
+            { id: 11, type: "message", received_at: Date.now(), payload: { id: "wamid-in-sim", from: "573001234001", timestamp: now, text: "Hola desde el Worker", contact_name: "Cafe La Roca" } }
+          ],
+          cursor: 11,
+          has_more: false
+        }), { status: 200, headers: { "content-type": "application/json" } }));
+      };
+    })()`
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: workerStub })
+    await cdp.send("Page.reload")
+    await waitSel(cdp, "header")
+    await wait(2500)
+    const polling = JSON.parse(await probe(cdp, `(()=>{const campanas=JSON.parse(localStorage.getItem('fastws.campanas')||'[]');const conv=JSON.parse(localStorage.getItem('fastws.conversaciones')||'{}');const recipiente=campanas.flatMap(c=>c.recipients||[]).find(r=>r.metaId===${J(objetivo ? objetivo.metaId : "")});const mensaje=(conv.threads||[]).flatMap(t=>t.messages||[]).find(m=>m.id==='wamid-in-sim');return {recipiente:recipiente?recipiente.status:null,cursor:localStorage.getItem('fastws.webhooks.cursor'),ultimo:localStorage.getItem('fastws.webhooks.ultimo'),error:localStorage.getItem('fastws.webhooks.error'),mensaje:mensaje?{text:mensaje.text,direction:mensaje.direction,phone:mensaje.phone}:null}})()`))
+    ch("7.1d Webhooks: el poller consulta /events y aplica un ENTREGADO y un mensaje entrante sin error",
+      Boolean(objetivo) && polling.recipiente === "ENTREGADO" && polling.mensaje?.text === "Hola desde el Worker" && polling.mensaje?.direction === "entrante" && polling.mensaje?.phone === "573001234001" && polling.cursor === "11" && polling.ultimo !== null && polling.error === null,
+      JSON.stringify({ objetivo, ...polling }))
+
     await writeArtifacts(outDir("pasada-7"), "7a-configuracion", { png: shot(cdp) })
 
     // 7.10 borrar datos locales: el diálogo NO menciona los turnos aunque los borra
@@ -127,23 +167,24 @@ const aud = async (cdp) => (await store(cdp, "fastws.auditoria") || []).map((a) 
     await wait(900)
     await clickMain(cdp, 'main button', "Borrar datos locales")
     await wait(600)
-    const dlgB = JSON.parse(await probe(cdp, `(()=>{const d=document.querySelector('[role="dialog"][aria-modal="true"]');return d?{titulo:d.querySelector('h2').textContent.trim(),mencionaTurnos:d.textContent.includes('turnos'),mencionaSesion:d.textContent.includes('sesión de conexión Meta'),botones:[...d.querySelectorAll('button')].map(b=>b.textContent.trim()).filter(Boolean)}:null})()`))
-    ch("7.10 [S29] el diálogo 'Borrar datos locales' SÍ declara qué borra (incluidos los turnos) y pide confirmación",
-      Boolean(dlgB) && dlgB.mencionaTurnos === true && dlgB.mencionaSesion === true && dlgB.botones.includes("Borrar todo"),
+    const dlgB = JSON.parse(await probe(cdp, `(()=>{const d=document.querySelector('[role="dialog"][aria-modal="true"]');return d?{titulo:d.querySelector('h2').textContent.trim(),mencionaTurnos:d.textContent.includes('turnos'),mencionaSesion:d.textContent.includes('sesión de conexión Meta'),mencionaWebhooks:d.textContent.includes('webhooks'),botones:[...d.querySelectorAll('button')].map(b=>b.textContent.trim()).filter(Boolean)}:null})()`))
+    ch("7.10 [S29] el diálogo 'Borrar datos locales' SÍ declara qué borra (turnos, conexión Meta y webhooks) y pide confirmación",
+      Boolean(dlgB) && dlgB.mencionaTurnos === true && dlgB.mencionaSesion === true && dlgB.mencionaWebhooks === true && dlgB.botones.includes("Borrar todo"),
       JSON.stringify(dlgB))
     await writeArtifacts(outDir("pasada-7"), "7a2-borrar-dialogo", { png: shot(cdp) })
 
-    // 7.11 el token vive en la guarda de secretos (DPAPI en escritorio), asi que
-    // "Borrar todo" tiene que llamarla explicitamente o el token sobrevive y la
-    // app se reconecta sola.
+    // 7.11 los tokens viven en la guarda de secretos (DPAPI en escritorio), asi que
+    // "Borrar todo" tiene que llamarla explicitamente o sobreviven y la app se
+    // reconecta sola. Cubre el token de Meta y el del Worker.
+    await evalJson(cdp, `sessionStorage.setItem('fastws.secret.webhook-token','worker-sim-token');localStorage.setItem('fastws.webhooks.url','https://fastws-webhooks.workers.dev');localStorage.setItem('fastws.webhooks.cursor','7');'ok'`)
     const tokenAntes = await evalJson(cdp, `!!sessionStorage.getItem('fastws.meta-token')`)
     await clickMain(cdp, '[role="dialog"] button', "Borrar todo")
     await wait(3000)
-    const post = JSON.parse(await probe(cdp, `({ids:localStorage.getItem('fastws.conexion.ids'),meta:localStorage.getItem('fastws.conexion.meta'),token:!!sessionStorage.getItem('fastws.meta-token'),clientes:localStorage.getItem('fastws.clientes'),turnoAntiguo:(()=>{try{return JSON.parse(localStorage.getItem('fastws.sesiones')||'[]').some(s=>s.id==='ses-1')}catch(e){return null}})()})`))
+    const post = JSON.parse(await probe(cdp, `({ids:localStorage.getItem('fastws.conexion.ids'),meta:localStorage.getItem('fastws.conexion.meta'),token:!!sessionStorage.getItem('fastws.meta-token'),workerToken:sessionStorage.getItem('fastws.secret.webhook-token'),workerUrl:localStorage.getItem('fastws.webhooks.url'),clientes:localStorage.getItem('fastws.clientes'),turnoAntiguo:(()=>{try{return JSON.parse(localStorage.getItem('fastws.sesiones')||'[]').some(s=>s.id==='ses-1')}catch(e){return null}})()})`))
     await wait(400)
     const reconectada = await hasTxt(cdp, "Listo para despacho")
-    ch("7.11 'Borrar todo' borra también el token de Meta: la app queda desconectada y no se reconecta sola",
-      tokenAntes === true && post.ids === null && post.meta === null && post.token === false && post.clientes === null && post.turnoAntiguo === false && reconectada === false,
+    ch("7.11 'Borrar todo' borra los tokens de Meta y del Worker: la app queda desconectada y no se reconecta sola",
+      tokenAntes === true && post.ids === null && post.meta === null && post.token === false && post.workerToken === null && post.workerUrl === null && post.clientes === null && post.turnoAntiguo === false && reconectada === false,
       JSON.stringify({ ...post, tokenAntes, reconectada }))
   } finally { edge.kill() }
 }

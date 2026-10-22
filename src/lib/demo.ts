@@ -6,7 +6,14 @@ import { readSession } from "@/features/auth/session"
 import { getStore } from "@/lib/db"
 import { clearDurable, writeDurable } from "@/lib/db/session-scope"
 import { MODO_ENVIO_KEY } from "@/lib/envio"
-import { borrarToken } from "@/lib/secrets"
+import { borrarSecreto, borrarToken } from "@/lib/secrets"
+import {
+  WEBHOOKS_CURSOR_KEY,
+  WEBHOOKS_ERROR_KEY,
+  WEBHOOKS_TOKEN_LABEL,
+  WEBHOOKS_ULTIMO_KEY,
+  WEBHOOKS_URL_KEY,
+} from "@/lib/webhooks"
 
 const KEYS = [
   "fastws.clientes",
@@ -18,6 +25,10 @@ const KEYS = [
   "fastws.conexion.meta",
   "fastws.envio.modo",
   "fastws.envio.listaBlanca",
+  WEBHOOKS_URL_KEY,
+  WEBHOOKS_CURSOR_KEY,
+  WEBHOOKS_ULTIMO_KEY,
+  WEBHOOKS_ERROR_KEY,
 ] as const
 
 function iso(minAgo: number) {
@@ -140,19 +151,20 @@ export function restablecerDemo() {
   })
 }
 
-export function borrarDatosLocales() {
+export async function borrarDatosLocales() {
   const store = getStore()
   store.removeMany(KEYS)
   // El token ya no vive en un `sessionStorage` que este `removeMany` alcanza:
-  // está en la guarda de secretos. Sin esta llamada sobrevivía al borrado y la
-  // app se reconectaba sola, que es justo lo contrario de lo que promete el
-  // diálogo.
-  void borrarToken()
+  // está en la guarda de secretos. Se espera el borrado antes de recargar o el
+  // `invoke` de DPAPI muere con la ventana y el token sobrevive.
+  await borrarToken()
+  await borrarSecreto(WEBHOOKS_TOKEN_LABEL)
 
   registrarAuditoria({
     categoria: "configuracion",
     titulo: "Datos locales borrados",
-    detalle: "Clientes, campañas, velocidad, conversaciones, turnos y conexión Meta de este equipo.",
+    detalle:
+      "Clientes, campañas, velocidad, conversaciones, turnos, conexión Meta y webhooks de este equipo.",
     entidad: "local",
     ...actor(),
   })

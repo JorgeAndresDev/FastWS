@@ -1,0 +1,10 @@
+name = "fastws-webhooks"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fastws-webhooks"
+database_id = "REEMPLAZAR_CON_EL_ID_DE_D1"
+migrations_dir = "migrations"

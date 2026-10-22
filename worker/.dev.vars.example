@@ -1,0 +1,4 @@
+META_VERIFY_TOKEN=cambia-este-token-de-verificacion
+META_APP_SECRET=pega-aqui-el-app-secret-de-meta
+DESKTOP_TOKEN=cambia-este-token-del-escritorio
+ALLOWED_ORIGINS=http://localhost:5173,http://tauri.localhost

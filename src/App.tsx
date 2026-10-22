@@ -9,6 +9,7 @@ import { CampaignsProvider } from "@/features/campaigns/campaigns-store"
 import { ClientsProvider } from "@/features/clients/clients-store"
 import { ConexionProvider } from "@/features/connection/conexion-store"
 import { ConversationsProvider } from "@/features/conversations/conversations-store"
+import { WebhooksPoller } from "@/features/webhooks/webhooks-poller"
 import { ThemeProvider, useTheme } from "@/lib/theme"
 
 const AuditPage = lazy(() => import("@/features/admin").then((m) => ({ default: m.AuditPage })))
@@ -84,6 +85,7 @@ function App() {
           </Route>
         </Routes>
                   </Suspense>
+                  <WebhooksPoller />
                 </ConversationsProvider>
               </CampaignsProvider>
             </ConexionProvider>
